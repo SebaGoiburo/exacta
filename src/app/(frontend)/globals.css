@@ -1,0 +1,533 @@
+@import 'tailwindcss';
+
+@custom-variant dark (&:where([data-theme='dark'], [data-theme='dark'] *));
+
+/*
+ * Exacta tokens. Brand colors come from the current identity:
+ * magenta #CC57C7, navy #1F2C3B / #31455D, gold #EEB72B.
+ * Gold is reserved for measurements (numbers, readouts, ticks).
+ */
+:root {
+  --brand: #cc57c7;
+  --brand-deep: #b24cb0;
+  --gold-brand: #eeb72b;
+  --navy: #1f2c3b;
+  --navy-2: #31455d;
+
+  /* Light theme */
+  --bg: #f3f5f8;
+  --bg-elev: #ffffff;
+  --surface: #e8ecf1;
+  --ink: #16202c;
+  --ink-soft: #46566a;
+  --ink-mute: #758295;
+  --line: rgb(31 44 59 / 0.12);
+  --line-strong: rgb(31 44 59 / 0.26);
+  --accent: #a63fa2;
+  --accent-hover: #8f3389;
+  --accent-ink: #ffffff;
+  --accent-soft: rgb(204 87 199 / 0.1);
+  --gold: #8a6500;
+  --grid: rgb(31 44 59 / 0.06);
+  --header-bg: rgb(243 245 248 / 0.78);
+
+  color-scheme: light;
+}
+
+[data-theme='dark'] {
+  --bg: #0d141e;
+  --bg-elev: #121c28;
+  --surface: #182434;
+  --ink: #eef1f5;
+  --ink-soft: #a7b2c0;
+  --ink-mute: #6c7a8c;
+  --line: rgb(174 190 210 / 0.11);
+  --line-strong: rgb(174 190 210 / 0.24);
+  --accent: #cc57c7;
+  --accent-hover: #d872d3;
+  --accent-ink: #0d141e;
+  --accent-soft: rgb(204 87 199 / 0.13);
+  --gold: #eeb72b;
+  --grid: rgb(174 190 210 / 0.05);
+  --header-bg: rgb(13 20 30 / 0.72);
+
+  color-scheme: dark;
+}
+
+@theme inline {
+  --color-bg: var(--bg);
+  --color-bg-elev: var(--bg-elev);
+  --color-surface: var(--surface);
+  --color-ink: var(--ink);
+  --color-ink-soft: var(--ink-soft);
+  --color-ink-mute: var(--ink-mute);
+  --color-line: var(--line);
+  --color-line-strong: var(--line-strong);
+  --color-accent: var(--accent);
+  --color-accent-hover: var(--accent-hover);
+  --color-accent-ink: var(--accent-ink);
+  --color-accent-soft: var(--accent-soft);
+  --color-brand: var(--brand);
+  --color-gold: var(--gold);
+
+  --font-display: var(--font-sora), ui-sans-serif, system-ui, sans-serif;
+  --font-sans: var(--font-manrope), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-martian), ui-monospace, monospace;
+
+  --ease-precise: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@layer base {
+  html {
+    -webkit-text-size-adjust: 100%;
+    text-rendering: optimizeLegibility;
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  ::selection {
+    background: var(--brand);
+    color: #0d141e;
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 3px;
+    border-radius: 4px;
+  }
+
+  h1,
+  h2,
+  h3 {
+    font-family: var(--font-display);
+    text-wrap: balance;
+  }
+
+  p {
+    text-wrap: pretty;
+  }
+}
+
+/* Lenis smooth scroll */
+html.lenis,
+html.lenis body {
+  height: auto;
+}
+.lenis.lenis-smooth {
+  scroll-behavior: auto !important;
+}
+.lenis.lenis-stopped {
+  overflow: hidden;
+}
+
+@layer components {
+  .container-x {
+    width: 100%;
+    max-width: 1280px;
+    margin-inline: auto;
+    padding-inline: 1.25rem;
+  }
+  @media (min-width: 768px) {
+    .container-x {
+      padding-inline: 2rem;
+    }
+  }
+
+  /* Mono label with a gold measurement tick. */
+  .eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.75rem;
+    font-family: var(--font-mono);
+    font-size: 0.6875rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+  }
+  .eyebrow::before {
+    content: '';
+    width: 1.5rem;
+    height: 1px;
+    background: var(--gold);
+  }
+
+  .h-display {
+    font-family: var(--font-display);
+    font-weight: 600;
+    letter-spacing: -0.035em;
+    line-height: 1.02;
+  }
+
+  .h-section {
+    font-family: var(--font-display);
+    font-weight: 600;
+    letter-spacing: -0.03em;
+    line-height: 1.06;
+    font-size: clamp(2rem, 1.2rem + 3vw, 3.5rem);
+  }
+
+  /* Buttons */
+  .btn {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.625rem;
+    height: 3.25rem;
+    padding-inline: 1.5rem;
+    border-radius: 999px;
+    font-weight: 600;
+    font-size: 0.9375rem;
+    letter-spacing: -0.005em;
+    transition:
+      background-color 0.3s var(--ease-precise),
+      color 0.3s var(--ease-precise),
+      border-color 0.3s var(--ease-precise);
+    will-change: transform;
+  }
+  .btn-primary {
+    background: var(--accent);
+    color: var(--accent-ink);
+  }
+  .btn-primary:hover {
+    background: var(--accent-hover);
+  }
+  .btn-ghost {
+    border: 1px solid var(--line-strong);
+    color: var(--ink);
+  }
+  .btn-ghost:hover {
+    border-color: var(--ink);
+  }
+  .btn .btn-arrow {
+    transition: transform 0.35s var(--ease-precise);
+  }
+  .btn:hover .btn-arrow {
+    transform: translateX(3px);
+  }
+  .btn-sm {
+    height: 2.5rem;
+    padding-inline: 1.125rem;
+    font-size: 0.875rem;
+  }
+
+  /*
+   * Precision card: registration marks in each corner move outward and
+   * turn magenta on hover; a soft light follows the cursor.
+   */
+  .reg-card {
+    --mx: 50%;
+    --my: 50%;
+    position: relative;
+    isolation: isolate;
+    background: var(--bg-elev);
+    border: 1px solid var(--line);
+    border-radius: 2px;
+    transition:
+      border-color 0.4s var(--ease-precise),
+      transform 0.5s var(--ease-precise);
+  }
+  .reg-card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    opacity: 0;
+    background: radial-gradient(420px circle at var(--mx) var(--my), var(--accent-soft), transparent 65%);
+    transition: opacity 0.4s var(--ease-precise);
+  }
+  .reg-card:hover {
+    border-color: var(--line-strong);
+    transform: translateY(-2px);
+  }
+  .reg-card:hover::before {
+    opacity: 1;
+  }
+  .reg-mark {
+    position: absolute;
+    width: 10px;
+    height: 10px;
+    border-color: var(--line-strong);
+    border-style: solid;
+    border-width: 0;
+    transition:
+      transform 0.45s var(--ease-precise),
+      border-color 0.45s var(--ease-precise);
+    pointer-events: none;
+  }
+  .reg-mark[data-c='tl'] {
+    top: -5px;
+    left: -5px;
+    border-top-width: 1px;
+    border-left-width: 1px;
+  }
+  .reg-mark[data-c='tr'] {
+    top: -5px;
+    right: -5px;
+    border-top-width: 1px;
+    border-right-width: 1px;
+  }
+  .reg-mark[data-c='bl'] {
+    bottom: -5px;
+    left: -5px;
+    border-bottom-width: 1px;
+    border-left-width: 1px;
+  }
+  .reg-mark[data-c='br'] {
+    bottom: -5px;
+    right: -5px;
+    border-bottom-width: 1px;
+    border-right-width: 1px;
+  }
+  .reg-card:hover .reg-mark {
+    border-color: var(--accent);
+  }
+  .reg-card:hover .reg-mark[data-c='tl'] {
+    transform: translate(-4px, -4px);
+  }
+  .reg-card:hover .reg-mark[data-c='tr'] {
+    transform: translate(4px, -4px);
+  }
+  .reg-card:hover .reg-mark[data-c='bl'] {
+    transform: translate(-4px, 4px);
+  }
+  .reg-card:hover .reg-mark[data-c='br'] {
+    transform: translate(4px, 4px);
+  }
+
+  /* Measurement grid used behind the hero. */
+  .bg-grid {
+    background-image:
+      linear-gradient(to right, var(--grid) 1px, transparent 1px),
+      linear-gradient(to bottom, var(--grid) 1px, transparent 1px);
+    background-size: 48px 48px;
+  }
+
+  /* Client logos are single-color PNGs used as masks, so they follow the theme. */
+  .logo-mask {
+    background-color: var(--ink-mute);
+    mask-repeat: no-repeat;
+    mask-position: center;
+    mask-size: contain;
+    -webkit-mask-repeat: no-repeat;
+    -webkit-mask-position: center;
+    -webkit-mask-size: contain;
+    transition: background-color 0.35s var(--ease-precise);
+  }
+  .logo-mask:hover {
+    background-color: var(--ink);
+  }
+
+  .marquee {
+    mask-image: linear-gradient(to right, transparent, #000 10%, #000 90%, transparent);
+  }
+  .marquee-track {
+    animation: marquee 48s linear infinite;
+  }
+  .marquee:hover .marquee-track {
+    animation-play-state: paused;
+  }
+
+  /* Service rows: fill sweeps in from the left, description unfolds. */
+  .svc-row {
+    position: relative;
+    isolation: isolate;
+  }
+  .svc-row::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    background: var(--accent-soft);
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform 0.6s var(--ease-precise);
+  }
+  .svc-row:hover::before,
+  .svc-row:focus-visible::before {
+    transform: scaleX(1);
+  }
+  .svc-body {
+    display: grid;
+    grid-template-rows: 0fr;
+    transition: grid-template-rows 0.5s var(--ease-precise);
+  }
+  .svc-body > div {
+    overflow: hidden;
+  }
+  .svc-row:hover .svc-body,
+  .svc-row:focus-visible .svc-body {
+    grid-template-rows: 1fr;
+  }
+  .svc-arrow {
+    transition:
+      transform 0.5s var(--ease-precise),
+      background-color 0.4s var(--ease-precise),
+      color 0.4s var(--ease-precise),
+      border-color 0.4s var(--ease-precise);
+  }
+  .svc-row:hover .svc-arrow,
+  .svc-row:focus-visible .svc-arrow {
+    transform: rotate(-45deg);
+    background: var(--accent);
+    border-color: var(--accent);
+    color: var(--accent-ink);
+  }
+  @media (hover: none) {
+    .svc-body {
+      grid-template-rows: 1fr;
+    }
+  }
+}
+
+@keyframes marquee {
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+@keyframes scroll-hint {
+  0% {
+    transform: scaleY(0);
+    transform-origin: top;
+  }
+  45% {
+    transform: scaleY(1);
+    transform-origin: top;
+  }
+  55% {
+    transform: scaleY(1);
+    transform-origin: bottom;
+  }
+  100% {
+    transform: scaleY(0);
+    transform-origin: bottom;
+  }
+}
+.scroll-hint-line {
+  animation: scroll-hint 2.2s var(--ease-precise) infinite;
+}
+
+/* Elements revealed by GSAP start hidden only when JS and motion are available. */
+html.js [data-reveal],
+html.js [data-intro] {
+  opacity: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html.js [data-reveal],
+  html.js [data-intro] {
+    opacity: 1;
+  }
+  .marquee-track,
+  .scroll-hint-line {
+    animation: none;
+  }
+  *,
+  *::before,
+  *::after {
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* Article body rendered from the CMS rich text. */
+.rich {
+  font-size: 1.125rem;
+  line-height: 1.7;
+  color: var(--ink);
+}
+.rich > * + * {
+  margin-top: 1.4em;
+}
+.rich h2,
+.rich h3 {
+  font-family: var(--font-display);
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  line-height: 1.15;
+  margin-top: 2em;
+}
+.rich h2 {
+  font-size: 1.75rem;
+}
+.rich h3 {
+  font-size: 1.35rem;
+}
+.rich ul,
+.rich ol {
+  padding-left: 1.4em;
+}
+.rich ul {
+  list-style: disc;
+}
+.rich ol {
+  list-style: decimal;
+}
+.rich li + li {
+  margin-top: 0.4em;
+}
+.rich li::marker {
+  color: var(--accent);
+}
+.rich a {
+  color: var(--accent);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.rich blockquote {
+  border-left: 2px solid var(--gold);
+  padding-left: 1.25rem;
+  color: var(--ink-soft);
+}
+.rich strong {
+  font-weight: 700;
+}
+
+/* FAQ: answers unfold smoothly where the browser supports animating details content. */
+:root {
+  interpolate-size: allow-keywords;
+}
+.faq::details-content {
+  block-size: 0;
+  overflow: hidden;
+  transition:
+    block-size 0.5s var(--ease-precise),
+    content-visibility 0.5s allow-discrete;
+}
+.faq[open]::details-content {
+  block-size: auto;
+}
+
+/* English words run longer; keep the hero headline to four lines. */
+html[lang='en'] [data-hero-title] {
+  font-size: clamp(2.3rem, 1.2rem + 2.6vw, 3.35rem);
+}
+
+/* Hero diagram on small screens: the SVG scales down, so text and nodes scale up in user units. */
+@media (max-width: 639px) {
+  [data-diagram] [data-lbl] {
+    font-size: 17px;
+    transform: translateY(8px);
+  }
+  [data-diagram] [data-cols] text {
+    font-size: 13px;
+    letter-spacing: 0.5px;
+  }
+  [data-diagram] [data-readout],
+  [data-diagram] [data-before],
+  [data-diagram] [data-after] {
+    font-size: 16px;
+  }
+  [data-diagram] [data-node] circle:first-child {
+    r: 13px;
+  }
+  [data-diagram] [data-node-core] {
+    r: 6px;
+  }
+}

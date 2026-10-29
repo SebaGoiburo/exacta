@@ -1,0 +1,256 @@
+{
+  "meta": {
+    "title": "Exacta · Transformación digital para empresas",
+    "description": "Software a medida, automatización con IA y estrategia digital para empresas y profesionales. Diagnosticamos tu operación, la ordenamos y medimos el resultado."
+  },
+  "nav": {
+    "label": "Navegación principal",
+    "services": "Servicios",
+    "method": "Método",
+    "products": "Productos",
+    "cases": "Casos",
+    "team": "Equipo",
+    "blog": "Blog",
+    "cta": "Diagnóstico gratuito",
+    "openMenu": "Abrir menú",
+    "closeMenu": "Cerrar menú",
+    "toLight": "Cambiar a tema claro",
+    "toDark": "Cambiar a tema oscuro",
+    "language": "Idioma",
+    "home": "Exacta, inicio",
+    "skip": "Saltar al contenido",
+    "contact": "Contacto"
+  },
+  "whatsapp": {
+    "diagnosis": "Hola, quiero mi diagnóstico gratuito.",
+    "service": "Hola, quiero saber más sobre: {service}"
+  },
+  "hero": {
+    "eyebrow": "Transformación digital",
+    "location": "Mendoza, AR",
+    "coords": "32°53′S 68°50′O",
+    "title": "Ordenamos tu operación con tecnología a medida.",
+    "lead": "Diagnosticamos cómo trabaja tu negocio, automatizamos lo que hoy se hace a mano y medimos el resultado. Sin herramientas genéricas.",
+    "ctaPrimary": "Quiero mi diagnóstico gratuito",
+    "ctaSecondary": "Ver qué hacemos",
+    "note": "Sesión de 45 minutos por videollamada, sin costo.",
+    "scrollHint": "Deslizá para ordenar",
+    "diagram": {
+      "title": "Diagrama: canales, sistemas y automatizaciones de un negocio que pasan de estar desordenados a conectados en un flujo.",
+      "before": "Tu operación hoy",
+      "after": "Tu operación con Exacta",
+      "order": "Orden",
+      "columns": [
+        "Canales",
+        "Sistema",
+        "Automatización",
+        "Resultados"
+      ],
+      "nodes": {
+        "whatsapp": "WhatsApp",
+        "web": "Web",
+        "email": "Email",
+        "calls": "Llamadas",
+        "crm": "CRM",
+        "bookings": "Turnos",
+        "billing": "Facturación",
+        "agent": "Agente IA",
+        "flows": "Flujos",
+        "dashboard": "Tablero"
+      }
+    }
+  },
+  "clients": {
+    "label": "Ya ordenaron su operación con Exacta"
+  },
+  "pain": {
+    "eyebrow": "Diagnóstico",
+    "title": "¿Alguna de estas situaciones te suena familiar?",
+    "costLabel": "Te cuesta",
+    "items": [
+      {
+        "cost": "clientes",
+        "title": "Todo avanza, menos vos",
+        "body": "Tu competencia se digitaliza rápido y la tecnología que probaste no dio el resultado que esperabas."
+      },
+      {
+        "cost": "horas",
+        "title": "Procesos lentos y costosos",
+        "body": "Tu equipo pierde horas en tareas manuales y repetitivas que hoy se pueden automatizar."
+      },
+      {
+        "cost": "errores",
+        "title": "Sistemas que no se hablan",
+        "body": "CRM, facturación y stock funcionan por separado. Cargás el mismo dato tres veces y algo siempre se pierde."
+      },
+      {
+        "cost": "presupuesto",
+        "title": "Tecnología sin resultados medibles",
+        "body": "Pagás herramientas y servicios, pero no sabés con certeza qué te devuelven."
+      }
+    ],
+    "statementA": "El problema no es la falta de tecnología. Es la falta de una",
+    "statementEmph": "estrategia digital",
+    "statementB": "que la ordene."
+  },
+  "services": {
+    "eyebrow": "Lo que hacemos",
+    "title": "No vendemos tecnología. Diseñamos soluciones.",
+    "lead": "Cada proyecto empieza con un diagnóstico y termina con métricas. En el medio, construimos lo que tu negocio necesita.",
+    "more": "Consultar",
+    "items": [
+      {
+        "title": "Operá digitalmente y crecé",
+        "body": "Software, sitios web y aplicaciones hechos a la medida de cómo trabaja tu negocio, no al revés.",
+        "tags": [
+          "Software a medida",
+          "Sitios web",
+          "Apps"
+        ]
+      },
+      {
+        "title": "Más clientes, mejor calificados",
+        "body": "Campañas en Meta, Google, LinkedIn y TikTok conectadas a embudos de venta que podés medir de punta a punta.",
+        "tags": [
+          "Meta Ads",
+          "Google Ads",
+          "Embudos de venta"
+        ]
+      },
+      {
+        "title": "Tu empresa trabaja aunque tu equipo no esté",
+        "body": "Agentes de IA que atienden consultas, turnos online y cobros automáticos, todo conectado entre sí.",
+        "tags": [
+          "Agentes de IA",
+          "Turnos online",
+          "Pagos online"
+        ]
+      },
+      {
+        "title": "Sabés que necesitás tecnología, pero no por dónde empezar",
+        "body": "Te ayudamos a definir prioridades y a elegir proveedores, sin venderte lo que no necesitás.",
+        "tags": [
+          "Consultoría",
+          "Selección de proveedores"
+        ]
+      }
+    ]
+  },
+  "footer": {
+    "tagline": "Transformación digital para empresas y profesionales que quieren operar con orden y medir resultados.",
+    "contact": "Contacto",
+    "follow": "Seguinos",
+    "rights": "Todos los derechos reservados."
+  },
+  "results": {
+    "title": "Resultados que se miden.",
+    "lead": "Cada proyecto arranca midiendo el punto de partida, así el resultado no es una opinión.",
+    "companies": "empresas y profesionales ya transformaron su operación con Exacta.",
+    "time": "menos tiempo en tareas manuales, en los procesos que automatizamos.",
+    "timePrefix": "hasta",
+    "costs": "Y en cada proyecto, métricas de impacto acordadas desde el diagnóstico: costos, tiempos y errores, medidos antes y después."
+  },
+  "method": {
+    "title": "Un proceso claro, resultados predecibles.",
+    "lead": "Seis pasos, siempre en el mismo orden. El primero es gratis.",
+    "progress": "Paso",
+    "of": "de",
+    "steps": [
+      {
+        "title": "Diagnóstico",
+        "body": "Analizamos tu operación, identificamos los cuellos de botella y cuantificamos el impacto potencial antes de proponer ninguna solución."
+      },
+      {
+        "title": "Estrategia",
+        "body": "Diseñamos el plan de transformación con foco en un retorno medible. Sin tecnología por tecnología: cada decisión responde a un objetivo de negocio."
+      },
+      {
+        "title": "Implementación",
+        "body": "Ejecutamos sin interrumpir tu operación. Trabajamos integrados con tu equipo hasta que la solución está funcionando."
+      },
+      {
+        "title": "Adopción",
+        "body": "Capacitamos a tu equipo para que sea autónomo con las nuevas herramientas. La transformación tiene que vivir adentro de tu empresa, no depender de nosotros."
+      },
+      {
+        "title": "Optimización",
+        "body": "Medimos, ajustamos y mejoramos. Una transformación no termina el día del lanzamiento: termina cuando los números lo confirman."
+      },
+      {
+        "title": "¿Empezamos?",
+        "body": "El primer paso es siempre una sesión de diagnóstico sin costo. En 45 minutos vemos si podemos ayudarte y cómo."
+      }
+    ],
+    "cta": "Agendar mi diagnóstico"
+  },
+  "cases": {
+    "title": "Casos de éxito",
+    "lead": "Operaciones reales, antes y después.",
+    "challenge": "El desafío",
+    "solution": "La solución",
+    "prev": "Caso anterior",
+    "next": "Caso siguiente",
+    "placeholder": "Caso en preparación",
+    "slide": "Caso {current} de {total}"
+  },
+  "products": {
+    "title": "Productos propios",
+    "lead": "Además de proyectos a medida, construimos productos para resolver problemas de un rubro completo. Los usamos, los medimos y los mejoramos todos los días.",
+    "for": "Para",
+    "visit": "Conocer {name}",
+    "soon": "Landing en preparación",
+    "exampleData": "Datos de ejemplo"
+  },
+  "team": {
+    "title": "Las personas detrás de Exacta",
+    "lead": "Un equipo chico, que trabaja integrado con el tuyo desde el diagnóstico hasta los resultados."
+  },
+  "faq": {
+    "title": "Preguntas frecuentes",
+    "lead": "Si tu pregunta no está acá, escribinos por WhatsApp y te respondemos.",
+    "ask": "Hacer una pregunta",
+    "askMessage": "Hola, tengo una pregunta sobre Exacta."
+  },
+  "blog": {
+    "title": "Blog",
+    "lead": "Ideas prácticas para ordenar tu operación con tecnología.",
+    "all": "Ver todos los artículos",
+    "read": "Leer artículo",
+    "minutes": "{n} min de lectura",
+    "sample": "Artículo de ejemplo",
+    "back": "Volver al blog",
+    "metaTitle": "Blog · Exacta"
+  },
+  "contact": {
+    "title": "¿Cuánto estás perdiendo por no digitalizarte?",
+    "lead": "La primera sesión es un diagnóstico real de tu operación, no una presentación de ventas. Salís con claridad sobre qué está frenando tu crecimiento y qué opciones tenés para resolverlo.",
+    "direct": "¿Preferís hablar ya?",
+    "form": {
+      "name": "Nombre y apellido",
+      "company": "Empresa u organización",
+      "optional": "opcional",
+      "email": "Email",
+      "phone": "WhatsApp o teléfono",
+      "interest": "¿Qué te interesa?",
+      "interests": [
+        "Software, web o apps",
+        "Publicidad y ventas",
+        "Automatización e IA",
+        "Consultoría",
+        "Todavía no lo sé"
+      ],
+      "message": "Contanos brevemente tu situación",
+      "submit": "Enviar consulta",
+      "sending": "Enviando…",
+      "success": "Recibimos tu consulta. Te escribimos dentro de las próximas 24 horas hábiles.",
+      "error": "No pudimos enviar la consulta. Probá de nuevo o escribinos por WhatsApp.",
+      "invalidEmail": "Revisá el email: falta la @ o el dominio.",
+      "required": "Completá este campo."
+    }
+  },
+  "plex": {
+    "metaTitle": "Plex-WordPress · Exacta",
+    "cta": "Quiero integrar mi farmacia",
+    "whatsapp": "Hola, quiero saber más sobre la integración Plex-WordPress."
+  }
+}

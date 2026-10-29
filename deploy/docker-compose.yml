@@ -1,0 +1,45 @@
+# Production stack for the Hostinger VPS. Lives at /opt/exacta/docker-compose.yml with an .env next to it.
+# The web image is built by GitHub Actions and pulled from GHCR.
+
+services:
+  web:
+    image: ghcr.io/sebagoiburo/exacta:latest
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      DATABASE_URL: postgres://exacta:${POSTGRES_PASSWORD}@db:5432/exacta
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - media:/app/media
+    ports:
+      # Only reachable from the VPS itself; the reverse proxy (with HTTPS) forwards to it.
+      - '127.0.0.1:3000:3000'
+    deploy:
+      resources:
+        limits:
+          memory: 1g
+
+  db:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: exacta
+      POSTGRES_DB: exacta
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U exacta']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    deploy:
+      resources:
+        limits:
+          memory: 512m
+
+volumes:
+  media:
+  pgdata:

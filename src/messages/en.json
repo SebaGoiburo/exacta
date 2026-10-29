@@ -1,0 +1,256 @@
+{
+  "meta": {
+    "title": "Exacta · Digital transformation for businesses",
+    "description": "Custom software, AI automation and digital strategy for businesses and professionals. We assess how you operate, put it in order and measure the result."
+  },
+  "nav": {
+    "label": "Main navigation",
+    "services": "Services",
+    "method": "Method",
+    "products": "Products",
+    "cases": "Cases",
+    "team": "Team",
+    "blog": "Blog",
+    "cta": "Free assessment",
+    "openMenu": "Open menu",
+    "closeMenu": "Close menu",
+    "toLight": "Switch to light theme",
+    "toDark": "Switch to dark theme",
+    "language": "Language",
+    "home": "Exacta, home",
+    "skip": "Skip to content",
+    "contact": "Contact"
+  },
+  "whatsapp": {
+    "diagnosis": "Hi, I'd like to book my free assessment.",
+    "service": "Hi, I'd like to know more about: {service}"
+  },
+  "hero": {
+    "eyebrow": "Digital transformation",
+    "location": "Mendoza, AR",
+    "coords": "32°53′S 68°50′W",
+    "title": "We put your operation in order with custom technology.",
+    "lead": "We map how your business works, automate what's still done by hand, and measure the result. No off-the-shelf tools.",
+    "ctaPrimary": "Book my free assessment",
+    "ctaSecondary": "See what we do",
+    "note": "A 45-minute video call, at no cost.",
+    "scrollHint": "Scroll to bring order",
+    "diagram": {
+      "title": "Diagram: a business's channels, systems and automations moving from disorder to a connected flow.",
+      "before": "Your operation today",
+      "after": "Your operation with Exacta",
+      "order": "Order",
+      "columns": [
+        "Channels",
+        "System",
+        "Automation",
+        "Results"
+      ],
+      "nodes": {
+        "whatsapp": "WhatsApp",
+        "web": "Web",
+        "email": "Email",
+        "calls": "Calls",
+        "crm": "CRM",
+        "bookings": "Bookings",
+        "billing": "Billing",
+        "agent": "AI agent",
+        "flows": "Workflows",
+        "dashboard": "Dashboard"
+      }
+    }
+  },
+  "clients": {
+    "label": "Already running in order with Exacta"
+  },
+  "pain": {
+    "eyebrow": "Assessment",
+    "title": "Does any of this sound familiar?",
+    "costLabel": "Costing you",
+    "items": [
+      {
+        "cost": "customers",
+        "title": "Everyone moves forward but you",
+        "body": "Your competitors are going digital fast, and the technology you tried didn't deliver what you expected."
+      },
+      {
+        "cost": "hours",
+        "title": "Slow, expensive processes",
+        "body": "Your team loses hours on manual, repetitive tasks that can be automated today."
+      },
+      {
+        "cost": "errors",
+        "title": "Systems that don't talk to each other",
+        "body": "CRM, billing and inventory run separately. You enter the same data three times and something always gets lost."
+      },
+      {
+        "cost": "budget",
+        "title": "Technology with no measurable results",
+        "body": "You pay for tools and services, but you don't know for sure what they give back."
+      }
+    ],
+    "statementA": "The problem isn't a lack of technology. It's the lack of a",
+    "statementEmph": "digital strategy",
+    "statementB": "to put it in order."
+  },
+  "services": {
+    "eyebrow": "What we do",
+    "title": "We don't sell technology. We design solutions.",
+    "lead": "Every project starts with an assessment and ends with metrics. In between, we build what your business needs.",
+    "more": "Ask us",
+    "items": [
+      {
+        "title": "Run digitally and grow",
+        "body": "Software, websites and apps built around how your business works, not the other way around.",
+        "tags": [
+          "Custom software",
+          "Websites",
+          "Apps"
+        ]
+      },
+      {
+        "title": "More customers, better qualified",
+        "body": "Campaigns on Meta, Google, LinkedIn and TikTok tied to sales funnels you can measure end to end.",
+        "tags": [
+          "Meta Ads",
+          "Google Ads",
+          "Sales funnels"
+        ]
+      },
+      {
+        "title": "Your business works even when your team doesn't",
+        "body": "AI agents that answer inquiries, online bookings and automatic payments, all connected.",
+        "tags": [
+          "AI agents",
+          "Online bookings",
+          "Online payments"
+        ]
+      },
+      {
+        "title": "You know you need technology, but not where to start",
+        "body": "We help you set priorities and choose vendors, without selling you what you don't need.",
+        "tags": [
+          "Consulting",
+          "Vendor selection"
+        ]
+      }
+    ]
+  },
+  "footer": {
+    "tagline": "Digital transformation for businesses and professionals who want to operate in order and measure results.",
+    "contact": "Contact",
+    "follow": "Follow us",
+    "rights": "All rights reserved."
+  },
+  "results": {
+    "title": "Results you can measure.",
+    "lead": "Every project starts by measuring the starting point, so the result isn't a matter of opinion.",
+    "companies": "businesses and professionals have already transformed how they operate with Exacta.",
+    "time": "less time on manual tasks, in the processes we automate.",
+    "timePrefix": "up to",
+    "costs": "And in every project, impact metrics agreed during the assessment: costs, time and errors, measured before and after."
+  },
+  "method": {
+    "title": "A clear process, predictable results.",
+    "lead": "Six steps, always in the same order. The first one is free.",
+    "progress": "Step",
+    "of": "of",
+    "steps": [
+      {
+        "title": "Assessment",
+        "body": "We analyze your operation, find the bottlenecks and size the potential impact before proposing any solution."
+      },
+      {
+        "title": "Strategy",
+        "body": "We design the transformation plan around a measurable return. No technology for its own sake: every decision serves a business goal."
+      },
+      {
+        "title": "Implementation",
+        "body": "We deliver without disrupting your operation, working alongside your team until the solution is up and running."
+      },
+      {
+        "title": "Adoption",
+        "body": "We train your team to be self-sufficient with the new tools. The transformation has to live inside your business, not depend on us."
+      },
+      {
+        "title": "Optimization",
+        "body": "We measure, adjust and improve. A transformation doesn't end on launch day: it ends when the numbers confirm it."
+      },
+      {
+        "title": "Shall we start?",
+        "body": "The first step is always a free assessment session. In 45 minutes we find out whether and how we can help."
+      }
+    ],
+    "cta": "Book my assessment"
+  },
+  "cases": {
+    "title": "Success stories",
+    "lead": "Real operations, before and after.",
+    "challenge": "The challenge",
+    "solution": "The solution",
+    "prev": "Previous case",
+    "next": "Next case",
+    "placeholder": "Case in progress",
+    "slide": "Case {current} of {total}"
+  },
+  "products": {
+    "title": "Our own products",
+    "lead": "Besides custom projects, we build products that solve problems for a whole industry. We use them, measure them and improve them every day.",
+    "for": "For",
+    "visit": "Explore {name}",
+    "soon": "Landing page coming soon",
+    "exampleData": "Sample data"
+  },
+  "team": {
+    "title": "The people behind Exacta",
+    "lead": "A small team that works alongside yours, from the assessment to the results."
+  },
+  "faq": {
+    "title": "Frequently asked questions",
+    "lead": "If your question isn't here, message us on WhatsApp and we'll answer.",
+    "ask": "Ask a question",
+    "askMessage": "Hi, I have a question about Exacta."
+  },
+  "blog": {
+    "title": "Blog",
+    "lead": "Practical ideas for putting your operation in order with technology.",
+    "all": "See all articles",
+    "read": "Read article",
+    "minutes": "{n} min read",
+    "sample": "Sample article",
+    "back": "Back to the blog",
+    "metaTitle": "Blog · Exacta"
+  },
+  "contact": {
+    "title": "How much is staying offline costing you?",
+    "lead": "The first session is a real assessment of your operation, not a sales pitch. You leave with a clear view of what's holding your growth back and what your options are.",
+    "direct": "Rather talk right away?",
+    "form": {
+      "name": "Full name",
+      "company": "Company or organization",
+      "optional": "optional",
+      "email": "Email",
+      "phone": "WhatsApp or phone",
+      "interest": "What are you interested in?",
+      "interests": [
+        "Software, web or apps",
+        "Advertising and sales",
+        "Automation and AI",
+        "Consulting",
+        "Not sure yet"
+      ],
+      "message": "Tell us briefly about your situation",
+      "submit": "Send inquiry",
+      "sending": "Sending…",
+      "success": "We got your inquiry. We'll reply within the next 24 business hours.",
+      "error": "We couldn't send your inquiry. Try again or message us on WhatsApp.",
+      "invalidEmail": "Check the email: it's missing the @ or the domain.",
+      "required": "Fill in this field."
+    }
+  },
+  "plex": {
+    "metaTitle": "Plex-WordPress · Exacta",
+    "cta": "I want to connect my pharmacy",
+    "whatsapp": "Hi, I'd like to know more about the Plex-WordPress integration."
+  }
+}
