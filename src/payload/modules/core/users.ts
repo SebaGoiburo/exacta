@@ -1,5 +1,5 @@
 import type { CollectionConfig } from 'payload'
-import { canUseAdmin, isAdmin, isAdminField, isAuthenticated } from '../../access'
+import { canUpdateUser, isAdmin, isAdminField, isPersonAccess } from '../../access'
 
 export const Users: CollectionConfig = {
   slug: 'users',
@@ -9,13 +9,11 @@ export const Users: CollectionConfig = {
     defaultColumns: ['name', 'email', 'role'],
     group: 'Sistema',
   },
-  // API keys let n8n authenticate with: Authorization: users API-Key <key>
-  auth: { useAPIKey: true },
+  auth: true,
   access: {
-    admin: canUseAdmin,
-    read: isAuthenticated,
+    read: isPersonAccess,
     create: isAdmin,
-    update: ({ req, id }) => (req.user as { role?: string } | null)?.role === 'admin' || req.user?.id === id,
+    update: canUpdateUser,
     delete: isAdmin,
   },
   fields: [
@@ -30,7 +28,6 @@ export const Users: CollectionConfig = {
       options: [
         { label: 'Administrador', value: 'admin' },
         { label: 'Editor', value: 'editor' },
-        { label: 'Integración (n8n, sin acceso al panel)', value: 'integration' },
       ],
       admin: { position: 'sidebar' },
     },

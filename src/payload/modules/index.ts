@@ -1,6 +1,7 @@
 import type { CollectionConfig } from 'payload'
 import { Media } from './core/media'
 import { Users } from './core/users'
+import { Integrations } from './core/integrations'
 import { Posts } from './content/posts'
 import { CaseStudies, Faqs, Products, TeamMembers } from './content/collections'
 import { Contacts, Leads } from './crm/collections'
@@ -13,7 +14,7 @@ import { Contacts, Leads } from './crm/collections'
 export type BackendModule = { name: string; collections: CollectionConfig[] }
 
 export const modules: BackendModule[] = [
-  { name: 'core', collections: [Users, Media] },
+  { name: 'core', collections: [Users, Integrations, Media] },
   { name: 'content', collections: [Posts, CaseStudies, Products, TeamMembers, Faqs] },
   { name: 'crm', collections: [Contacts, Leads] },
 ]
