@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation'
 import { getTranslations, setRequestLocale } from 'next-intl/server'
 import type { Locale } from '@/i18n/routing'
 import { getProducts } from '@/lib/content'
+import { pageAlternates } from '@/lib/seo'
 import { whatsappLink } from '@/lib/site'
 import { PlexSyncPanel } from '@/components/home/plex-sync-panel'
 import { RegMarks } from '@/components/motion/spotlight'
@@ -18,7 +19,11 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { locale } = (await params) as { locale: Locale }
   const t = await getTranslations({ locale, namespace: 'plex' })
   const plex = await getPlex()
-  return { title: t('metaTitle'), description: plex?.body[locale] }
+  return {
+    title: t('metaTitle'),
+    description: plex?.body[locale],
+    alternates: pageAlternates(locale, '/productos/plex-wordpress'),
+  }
 }
 
 // Commercial landing for Plex-WordPress. Skeleton with the product's real positioning; to be expanded.

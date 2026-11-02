@@ -3,6 +3,7 @@ import type { Locale } from '@/i18n/routing'
 import { getFaqs } from '@/lib/content'
 import { whatsappLink } from '@/lib/site'
 import { WhatsApp } from '@/components/ui/icons'
+import { JsonLd } from '@/components/seo/json-ld'
 
 export async function FaqSection() {
   const t = await getTranslations('faq')
@@ -11,6 +12,17 @@ export async function FaqSection() {
 
   return (
     <section className="border-t border-line py-24 md:py-36" aria-labelledby="faq-title">
+      <JsonLd
+        data={{
+          '@context': 'https://schema.org',
+          '@type': 'FAQPage',
+          mainEntity: faqs.map((f) => ({
+            '@type': 'Question',
+            name: f.q[locale],
+            acceptedAnswer: { '@type': 'Answer', text: f.a[locale] },
+          })),
+        }}
+      />
       <div className="container-x grid gap-12 lg:grid-cols-12">
         <div className="lg:col-span-5">
           <div className="lg:sticky lg:top-28">

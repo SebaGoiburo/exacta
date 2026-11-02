@@ -5,6 +5,9 @@ import { Link } from '@/i18n/navigation'
 import type { Locale } from '@/i18n/routing'
 import { RichText } from '@payloadcms/richtext-lexical/react'
 import { formatDate, getPost } from '@/lib/content'
+import { absoluteUrl, pageAlternates } from '@/lib/seo'
+import { site } from '@/lib/site'
+import { JsonLd } from '@/components/seo/json-ld'
 import { ArrowRight } from '@/components/ui/icons'
 
 type Props = { params: Promise<{ locale: string; slug: string }> }
@@ -16,7 +19,19 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { locale, slug } = (await params) as { locale: Locale; slug: string }
   const post = await getPost(slug)
   if (!post) return {}
-  return { title: `${post.title[locale]} · Exacta`, description: post.excerpt[locale] }
+  return {
+    title: `${post.title[locale]} · Exacta`,
+    description: post.excerpt[locale],
+    alternates: pageAlternates(locale, `/blog/${slug}`),
+    // Sample articles are placeholders and stay out of search engines.
+    ...(post.sample ? { robots: { index: false, follow: true } } : {}),
+    openGraph: {
+      type: 'article',
+      title: post.title[locale],
+      description: post.excerpt[locale],
+      publishedTime: post.date,
+    },
+  }
 }
 
 export default async function BlogPost({ params }: Props) {
@@ -28,6 +43,31 @@ export default async function BlogPost({ params }: Props) {
 
   return (
     <article className="container-x pt-40 pb-28 md:pt-48">
+      <JsonLd
+        data={{
+          '@context': 'https://schema.org',
+          '@graph': [
+            {
+              '@type': 'BlogPosting',
+              headline: post.title[locale],
+              description: post.excerpt[locale],
+              datePublished: post.date,
+              inLanguage: locale,
+              mainEntityOfPage: absoluteUrl(locale, `/blog/${slug}`),
+              author: { '@id': `${site.url}/#organization` },
+              publisher: { '@id': `${site.url}/#organization` },
+            },
+            {
+              '@type': 'BreadcrumbList',
+              itemListElement: [
+                { '@type': 'ListItem', position: 1, name: 'Exacta', item: absoluteUrl(locale) },
+                { '@type': 'ListItem', position: 2, name: 'Blog', item: absoluteUrl(locale, '/blog') },
+                { '@type': 'ListItem', position: 3, name: post.title[locale] },
+              ],
+            },
+          ],
+        }}
+      />
       <div className="mx-auto max-w-3xl">
         <Link
           href="/blog"

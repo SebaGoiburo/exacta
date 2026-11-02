@@ -3,6 +3,7 @@ import { getTranslations, setRequestLocale } from 'next-intl/server'
 import { Link } from '@/i18n/navigation'
 import type { Locale } from '@/i18n/routing'
 import { formatDate, getPosts } from '@/lib/content'
+import { pageAlternates } from '@/lib/seo'
 import { ArrowRight } from '@/components/ui/icons'
 
 // Reads the CMS on each request (cached per collection), so the build needs no database.
@@ -11,9 +12,9 @@ export const dynamic = 'force-dynamic'
 type Props = { params: Promise<{ locale: string }> }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const { locale } = await params
+  const { locale } = (await params) as { locale: Locale }
   const t = await getTranslations({ locale, namespace: 'blog' })
-  return { title: t('metaTitle'), description: t('lead') }
+  return { title: t('metaTitle'), description: t('lead'), alternates: pageAlternates(locale, '/blog') }
 }
 
 export default async function BlogIndex({ params }: Props) {

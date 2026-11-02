@@ -6,6 +6,8 @@ import { getTranslations, setRequestLocale } from 'next-intl/server'
 import { ThemeProvider } from 'next-themes'
 import { routing } from '@/i18n/routing'
 import { site } from '@/lib/site'
+import { absoluteUrl, isIndexable } from '@/lib/seo'
+import { JsonLd } from '@/components/seo/json-ld'
 import { MotionProvider } from '@/components/motion/motion-provider'
 import { SiteHeader } from '@/components/layout/site-header'
 import { SiteFooter } from '@/components/layout/site-footer'
@@ -33,10 +35,7 @@ export async function generateMetadata({ params }: Omit<Props, 'children'>): Pro
     title: t('title'),
     description: t('description'),
     icons: { icon: '/brand/exacta-mark.svg' },
-    alternates: {
-      canonical: locale === routing.defaultLocale ? '/' : `/${locale}`,
-      languages: { es: '/', en: '/en' },
-    },
+    robots: isIndexable() ? undefined : { index: false, follow: false },
     openGraph: {
       title: t('title'),
       description: t('description'),
@@ -53,6 +52,7 @@ export default async function LocaleLayout({ children, params }: Props) {
   setRequestLocale(locale)
 
   const t = await getTranslations({ locale, namespace: 'nav' })
+  const meta = await getTranslations({ locale, namespace: 'meta' })
 
   return (
     <html
@@ -65,6 +65,23 @@ export default async function LocaleLayout({ children, params }: Props) {
         <script dangerouslySetInnerHTML={{ __html: "document.documentElement.classList.add('js')" }} />
       </head>
       <body>
+        <JsonLd
+          data={{
+            '@context': 'https://schema.org',
+            '@type': 'ProfessionalService',
+            '@id': `${site.url}/#organization`,
+            name: 'Exacta Transformación Digital',
+            url: absoluteUrl(locale as 'es' | 'en'),
+            logo: `${site.url}/brand/exacta-mark.svg`,
+            image: `${site.url}/brand/exacta-mark.svg`,
+            description: meta('description'),
+            email: site.email,
+            telephone: site.phoneDisplay,
+            address: { '@type': 'PostalAddress', addressLocality: 'Mendoza', addressCountry: 'AR' },
+            areaServed: ['AR', 'Latin America'],
+            sameAs: Object.values(site.social),
+          }}
+        />
         <ThemeProvider attribute="data-theme" defaultTheme="system" enableSystem disableTransitionOnChange>
           <NextIntlClientProvider>
             <a
