@@ -6,7 +6,7 @@ import { gsap } from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import { SplitText } from 'gsap/SplitText'
 import { useGSAP } from '@gsap/react'
-import { whatsappLink } from '@/lib/site'
+import { Link } from '@/i18n/navigation'
 import { Magnetic } from '@/components/motion/magnetic'
 import { ArrowRight } from '@/components/ui/icons'
 import { HeroDiagram, type HeroDiagramHandle } from './hero-diagram'
@@ -15,7 +15,6 @@ gsap.registerPlugin(ScrollTrigger, SplitText)
 
 export function Hero() {
   const t = useTranslations('hero')
-  const tw = useTranslations('whatsapp')
   const sectionRef = useRef<HTMLElement>(null)
   const diagramRef = useRef<HeroDiagramHandle>(null)
   const hintRef = useRef<HTMLDivElement>(null)
@@ -118,10 +117,10 @@ export function Hero() {
 
           <div data-intro data-intro-item className="mt-9 flex flex-wrap items-center gap-3">
             <Magnetic>
-              <a href={whatsappLink(tw('diagnosis'))} target="_blank" rel="noopener" className="btn btn-primary">
+              <Link href="/diagnostico" className="btn btn-primary">
                 {t('ctaPrimary')}
                 <ArrowRight className="btn-arrow size-4" />
-              </a>
+              </Link>
             </Magnetic>
             <a href="#servicios" className="btn btn-ghost">
               {t('ctaSecondary')}

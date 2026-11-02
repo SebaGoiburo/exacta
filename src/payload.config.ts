@@ -17,6 +17,13 @@ export default buildConfig({
     user: 'users',
     importMap: { baseDir: path.resolve(dirname) },
     meta: { titleSuffix: ' · Exacta' },
+    components: {
+      beforeNavLinks: ['@/payload/views/nav-links#NavLinks'],
+      views: {
+        pipeline: { Component: '@/payload/views/pipeline#PipelineView', path: '/pipeline' },
+        prospecting: { Component: '@/payload/views/prospecting#ProspectingView', path: '/prospeccion' },
+      },
+    },
   },
   i18n: { supportedLanguages: { es, en }, fallbackLanguage: 'es' },
   localization: {
@@ -28,6 +35,7 @@ export default buildConfig({
     fallback: true,
   },
   collections: modules.flatMap((m) => m.collections),
+  globals: modules.flatMap((m) => m.globals ?? []),
   editor: lexicalEditor(),
   secret: process.env.PAYLOAD_SECRET || '',
   typescript: { outputFile: path.resolve(dirname, 'payload-types.ts') },

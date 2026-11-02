@@ -11,6 +11,8 @@ const crmAccess = { read: isAuthenticated, create: isAuthenticated, update: isAu
 
 export const SOURCES = [
   { label: 'Formulario web', value: 'web-contacto' },
+  { label: 'Diagnóstico', value: 'diagnostico' },
+  { label: 'Prospección', value: 'prospeccion' },
   { label: 'WhatsApp', value: 'whatsapp' },
   { label: 'Referido', value: 'referido' },
   { label: 'Carga manual', value: 'manual' },
@@ -32,7 +34,7 @@ export const Contacts: CollectionConfig = {
   admin: {
     useAsTitle: 'name',
     defaultColumns: ['name', 'company', 'email', 'phone', 'createdAt'],
-    group: 'CRM',
+    group: 'Comercial',
   },
   access: crmAccess,
   hooks: n8nEvents('contacts'),
@@ -45,7 +47,13 @@ export const Contacts: CollectionConfig = {
         { name: 'phone', type: 'text', label: 'Teléfono / WhatsApp' },
       ],
     },
-    { name: 'company', type: 'text', label: 'Empresa u organización' },
+    {
+      type: 'row',
+      fields: [
+        { name: 'company', type: 'text', label: 'Empresa u organización' },
+        { name: 'website', type: 'text', label: 'Sitio web' },
+      ],
+    },
     { name: 'source', type: 'select', label: 'Origen', options: SOURCES, defaultValue: 'manual' },
     { name: 'notes', type: 'textarea', label: 'Notas' },
     {
@@ -69,8 +77,8 @@ export const Leads: CollectionConfig = {
   labels: { singular: 'Oportunidad', plural: 'Oportunidades' },
   admin: {
     useAsTitle: 'title',
-    defaultColumns: ['title', 'contact', 'stage', 'priority', 'createdAt'],
-    group: 'CRM',
+    defaultColumns: ['title', 'contact', 'stage', 'tier', 'createdAt'],
+    group: 'Comercial',
     listSearchableFields: ['title', 'message', 'interest'],
   },
   access: crmAccess,
@@ -135,6 +143,19 @@ export const Leads: CollectionConfig = {
       ],
     },
     { name: 'assignedTo', type: 'relationship', relationTo: 'users', label: 'Responsable', admin: { position: 'sidebar' } },
+    {
+      name: 'tier',
+      type: 'select',
+      label: 'Perfil',
+      options: [
+        { label: 'A · Alto valor', value: 'A' },
+        { label: 'B · A evaluar', value: 'B' },
+        { label: 'C · Fuera de perfil', value: 'C' },
+      ],
+      admin: { position: 'sidebar' },
+    },
+    { name: 'fit', type: 'number', label: 'Ajuste al perfil (0-100)', admin: { position: 'sidebar', readOnly: true } },
+    { name: 'maturity', type: 'number', label: 'Madurez digital (0-100)', admin: { position: 'sidebar', readOnly: true } },
     { name: 'source', type: 'select', label: 'Origen', options: SOURCES, defaultValue: 'manual', admin: { position: 'sidebar' } },
     { name: 'page', type: 'text', label: 'Página de origen', admin: { position: 'sidebar', readOnly: true } },
     {
@@ -148,6 +169,7 @@ export const Leads: CollectionConfig = {
       ],
       admin: { position: 'sidebar' },
     },
+    { name: 'attribution', type: 'json', label: 'Origen de campaña', admin: { position: 'sidebar', readOnly: true } },
     {
       name: 'odooLeadId',
       type: 'number',

@@ -7,7 +7,9 @@ import { ThemeProvider } from 'next-themes'
 import { routing } from '@/i18n/routing'
 import { site } from '@/lib/site'
 import { absoluteUrl, isIndexable } from '@/lib/seo'
+import { getSettings } from '@/lib/settings'
 import { JsonLd } from '@/components/seo/json-ld'
+import { Analytics } from '@/components/analytics/analytics'
 import { MotionProvider } from '@/components/motion/motion-provider'
 import { SiteHeader } from '@/components/layout/site-header'
 import { SiteFooter } from '@/components/layout/site-footer'
@@ -53,6 +55,8 @@ export default async function LocaleLayout({ children, params }: Props) {
 
   const t = await getTranslations({ locale, namespace: 'nav' })
   const meta = await getTranslations({ locale, namespace: 'meta' })
+  const settings = await getSettings()
+  const hasTracking = Boolean(settings.metaPixelId || settings.ga4Id || settings.googleAdsId)
 
   return (
     <html
@@ -93,7 +97,13 @@ export default async function LocaleLayout({ children, params }: Props) {
             <MotionProvider>
               <SiteHeader />
               <main id="contenido">{children}</main>
-              <SiteFooter />
+              <SiteFooter hasTracking={hasTracking} />
+              <Analytics
+                metaPixelId={settings.metaPixelId}
+                ga4Id={settings.ga4Id}
+                googleAdsId={settings.googleAdsId}
+                googleAdsLeadLabel={settings.googleAdsLeadLabel}
+              />
             </MotionProvider>
           </NextIntlClientProvider>
         </ThemeProvider>

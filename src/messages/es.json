@@ -33,7 +33,7 @@
     "lead": "Diagnosticamos cómo trabaja tu negocio, automatizamos lo que hoy se hace a mano y medimos el resultado. Sin herramientas genéricas.",
     "ctaPrimary": "Quiero mi diagnóstico gratuito",
     "ctaSecondary": "Ver qué hacemos",
-    "note": "Sesión de 45 minutos por videollamada, sin costo.",
+    "note": "13 preguntas, unos 3 minutos, sin costo.",
     "scrollHint": "Deslizá para ordenar",
     "diagram": {
       "title": "Diagrama: canales, sistemas y automatizaciones de un negocio que pasan de estar desordenados a conectados en un flujo.",
@@ -140,7 +140,8 @@
     "tagline": "Transformación digital para empresas y profesionales que quieren operar con orden y medir resultados.",
     "contact": "Contacto",
     "follow": "Seguinos",
-    "rights": "Todos los derechos reservados."
+    "rights": "Todos los derechos reservados.",
+    "privacy": "Privacidad"
   },
   "results": {
     "title": "Resultados que se miden.",
@@ -252,5 +253,109 @@
     "metaTitle": "Plex-WordPress · Exacta",
     "cta": "Quiero integrar mi farmacia",
     "whatsapp": "Hola, quiero saber más sobre la integración Plex-WordPress."
+  },
+  "diagnostic": {
+    "metaTitle": "Diagnóstico digital gratuito para empresas · Exacta",
+    "metaDescription": "Respondé 13 preguntas y recibí una lectura de tu operación en cinco áreas, con qué conviene resolver primero. Sin costo, en unos 3 minutos.",
+    "intro": {
+      "eyebrow": "Diagnóstico gratuito",
+      "title": "¿Qué tan ordenada está tu operación?",
+      "lead": "Respondé 13 preguntas sobre cómo trabaja tu empresa y recibí una lectura en cinco áreas, con qué conviene resolver primero.",
+      "start": "Empezar el diagnóstico",
+      "note": "Unos 3 minutos. Sin costo.",
+      "measures": "Qué vamos a medir"
+    },
+    "step": "Pregunta {n} de {total}",
+    "back": "Anterior",
+    "gate": {
+      "step": "Último paso",
+      "title": "Tu lectura está lista",
+      "lead": "Dejanos tus datos para verla. También te la enviamos por email.",
+      "name": "Nombre y apellido",
+      "email": "Email de trabajo",
+      "phone": "Teléfono o WhatsApp",
+      "company": "Empresa",
+      "website": "Sitio web",
+      "optional": "opcional",
+      "message": "¿Qué te gustaría resolver primero?",
+      "consent": "Acepto que Exacta use estos datos para enviarme la lectura y contactarme, según la <link>política de privacidad</link>.",
+      "submit": "Ver mi lectura",
+      "sending": "Calculando…",
+      "required": "Completá este campo.",
+      "invalidEmail": "Revisá el email.",
+      "consentRequired": "Necesitamos tu aceptación para continuar.",
+      "error": "No pudimos guardar tus respuestas. Probá de nuevo o escribinos por WhatsApp."
+    },
+    "result": {
+      "metaTitle": "Tu lectura · Exacta",
+      "eyebrow": "Lectura de tu operación",
+      "scoreLabel": "Madurez digital",
+      "of": "sobre 100",
+      "areasTitle": "Por área",
+      "bands": {
+        "low": "Inicial",
+        "mid": "En desarrollo",
+        "high": "Avanzado"
+      },
+      "nextTitle": "Por dónde empezar",
+      "disclaimer": "Esta lectura es orientativa y surge de tus respuestas.",
+      "book": "Agendar una reunión",
+      "whatsapp": "Escribir por WhatsApp",
+      "whatsappMessage": "Hola, completé el diagnóstico de {company} y quiero conversar.",
+      "blog": "Leer el blog",
+      "write": "Escribinos",
+      "cta": {
+        "A": {
+          "title": "Hablemos de tu caso",
+          "body": "Por lo que respondiste, hay espacio concreto para mejorar y es el tipo de proyecto en el que trabajamos. Reservá una reunión de 45 minutos con nuestro equipo, sin costo."
+        },
+        "B": {
+          "title": "¿Lo revisamos juntos?",
+          "body": "En una reunión de 45 minutos te contamos qué haríamos en tu caso y si tiene sentido avanzar ahora."
+        },
+        "C": {
+          "title": "Seguí a tu ritmo",
+          "body": "Empezá por estas recomendaciones. En el blog compartimos más ideas para ordenar la operación y, cuando quieras dar el siguiente paso, nos escribís."
+        }
+      }
+    }
+  },
+  "consent": {
+    "text": "Usamos cookies para medir el sitio y nuestras campañas. Solo se activan si aceptás.",
+    "accept": "Aceptar",
+    "reject": "Rechazar",
+    "more": "Más información",
+    "label": "Preferencias de cookies"
+  },
+  "privacy": {
+    "metaTitle": "Política de privacidad · Exacta",
+    "title": "Política de privacidad",
+    "updated": "Última actualización: noviembre de 2026",
+    "sections": [
+      {
+        "h": "Quién es responsable",
+        "p": "Exacta Transformación Digital, con domicilio en Mendoza, Argentina, es responsable de los datos personales que nos dejás en este sitio. Podés escribirnos a {email}."
+      },
+      {
+        "h": "Qué datos recopilamos",
+        "p": "Los que completás en nuestros formularios (nombre, email, teléfono, empresa y sitio web), tus respuestas al diagnóstico y lo que nos cuentes en tus mensajes. También registramos de qué campaña o página llegaste."
+      },
+      {
+        "h": "Para qué los usamos",
+        "p": "Para enviarte tu lectura, responder tu consulta, contactarte sobre nuestros servicios y evaluar si podemos ayudarte. Con tus respuestas calculamos internamente qué tan cerca está tu empresa de los proyectos en los que trabajamos."
+      },
+      {
+        "h": "Con quién los compartimos",
+        "p": "No vendemos tus datos. Los procesan los proveedores que usamos para operar: el alojamiento del sitio, el correo electrónico y las herramientas de automatización y mensajería. Si aceptás las cookies, Meta y Google reciben datos de navegación para medir nuestras campañas."
+      },
+      {
+        "h": "Cookies",
+        "p": "Las cookies de medición y publicidad solo se activan si las aceptás, y podés cambiar tu decisión desde el enlace del pie de página. Las que el sitio necesita para funcionar, como tu tema o idioma preferido, no requieren aceptación."
+      },
+      {
+        "h": "Tus derechos",
+        "p": "Podés acceder a tus datos, corregirlos o pedirnos que los borremos escribiendo a {email}. Según la Ley 25.326, podés ejercer el derecho de acceso en forma gratuita a intervalos no inferiores a seis meses, salvo que acredites un interés legítimo. La Agencia de Acceso a la Información Pública, órgano de control de esa ley, atiende denuncias y reclamos."
+      }
+    ]
   }
 }

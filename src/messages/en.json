@@ -31,9 +31,9 @@
     "coords": "32°53′S 68°50′W",
     "title": "We put your operation in order with custom technology.",
     "lead": "We map how your business works, automate what's still done by hand, and measure the result. No off-the-shelf tools.",
-    "ctaPrimary": "Book my free assessment",
+    "ctaPrimary": "Start my free assessment",
     "ctaSecondary": "See what we do",
-    "note": "A 45-minute video call, at no cost.",
+    "note": "13 questions, about 3 minutes, at no cost.",
     "scrollHint": "Scroll to bring order",
     "diagram": {
       "title": "Diagram: a business's channels, systems and automations moving from disorder to a connected flow.",
@@ -140,7 +140,8 @@
     "tagline": "Digital transformation for businesses and professionals who want to operate in order and measure results.",
     "contact": "Contact",
     "follow": "Follow us",
-    "rights": "All rights reserved."
+    "rights": "All rights reserved.",
+    "privacy": "Privacy"
   },
   "results": {
     "title": "Results you can measure.",
@@ -252,5 +253,109 @@
     "metaTitle": "Plex-WordPress · Exacta",
     "cta": "I want to connect my pharmacy",
     "whatsapp": "Hi, I'd like to know more about the Plex-WordPress integration."
+  },
+  "diagnostic": {
+    "metaTitle": "Free digital assessment for businesses · Exacta",
+    "metaDescription": "Answer 13 questions and get a reading of your operation across five areas, with what to solve first. Free, in about 3 minutes.",
+    "intro": {
+      "eyebrow": "Free assessment",
+      "title": "How orderly is your operation?",
+      "lead": "Answer 13 questions about how your company works and get a reading across five areas, with what to solve first.",
+      "start": "Start the assessment",
+      "note": "About 3 minutes. No cost.",
+      "measures": "What we’ll measure"
+    },
+    "step": "Question {n} of {total}",
+    "back": "Back",
+    "gate": {
+      "step": "Last step",
+      "title": "Your reading is ready",
+      "lead": "Leave your details to see it. We’ll also email it to you.",
+      "name": "Full name",
+      "email": "Work email",
+      "phone": "Phone or WhatsApp",
+      "company": "Company",
+      "website": "Website",
+      "optional": "optional",
+      "message": "What would you like to solve first?",
+      "consent": "I agree that Exacta may use this data to send me the reading and contact me, under the <link>privacy policy</link>.",
+      "submit": "See my reading",
+      "sending": "Calculating…",
+      "required": "Please fill in this field.",
+      "invalidEmail": "Please check the email.",
+      "consentRequired": "We need your agreement to continue.",
+      "error": "We couldn’t save your answers. Try again or message us on WhatsApp."
+    },
+    "result": {
+      "metaTitle": "Your reading · Exacta",
+      "eyebrow": "Reading of your operation",
+      "scoreLabel": "Digital maturity",
+      "of": "out of 100",
+      "areasTitle": "By area",
+      "bands": {
+        "low": "Early",
+        "mid": "Developing",
+        "high": "Advanced"
+      },
+      "nextTitle": "Where to start",
+      "disclaimer": "This reading is indicative and based on your answers.",
+      "book": "Book a meeting",
+      "whatsapp": "Message us on WhatsApp",
+      "whatsappMessage": "Hi, I completed the assessment for {company} and would like to talk.",
+      "blog": "Read the blog",
+      "write": "Write to us",
+      "cta": {
+        "A": {
+          "title": "Let’s talk about your case",
+          "body": "From your answers, there’s concrete room to improve and it’s the kind of project we work on. Book a 45-minute meeting with our team, at no cost."
+        },
+        "B": {
+          "title": "Shall we go over it together?",
+          "body": "In a 45-minute meeting we’ll tell you what we’d do in your case and whether it makes sense to move forward now."
+        },
+        "C": {
+          "title": "Keep going at your own pace",
+          "body": "Start with these recommendations. Our blog has more ideas for putting operations in order, and when you want to take the next step, write to us."
+        }
+      }
+    }
+  },
+  "consent": {
+    "text": "We use cookies to measure the site and our campaigns. They only turn on if you accept.",
+    "accept": "Accept",
+    "reject": "Reject",
+    "more": "Learn more",
+    "label": "Cookie preferences"
+  },
+  "privacy": {
+    "metaTitle": "Privacy policy · Exacta",
+    "title": "Privacy policy",
+    "updated": "Last updated: November 2026",
+    "sections": [
+      {
+        "h": "Who is responsible",
+        "p": "Exacta Transformación Digital, based in Mendoza, Argentina, is responsible for the personal data you leave on this site. You can write to us at {email}."
+      },
+      {
+        "h": "What we collect",
+        "p": "What you enter in our forms (name, email, phone, company and website), your assessment answers and whatever you tell us in your messages. We also record which campaign or page brought you here."
+      },
+      {
+        "h": "What we use it for",
+        "p": "To send you your reading, answer your inquiry, contact you about our services and assess whether we can help. From your answers we internally estimate how close your company is to the projects we work on."
+      },
+      {
+        "h": "Who we share it with",
+        "p": "We don’t sell your data. It’s processed by the providers we use to operate: site hosting, email, and automation and messaging tools. If you accept cookies, Meta and Google receive browsing data to measure our campaigns."
+      },
+      {
+        "h": "Cookies",
+        "p": "Measurement and advertising cookies only turn on if you accept them, and you can change your choice from the link in the footer. Those the site needs to work, such as your preferred theme or language, don’t require acceptance."
+      },
+      {
+        "h": "Your rights",
+        "p": "You can access your data, correct it or ask us to delete it by writing to {email}. Under Argentine Law 25,326, you may exercise the right of access free of charge at intervals of no less than six months, unless you prove a legitimate interest. The Agency for Access to Public Information, which oversees that law, handles complaints."
+      }
+    ]
   }
 }

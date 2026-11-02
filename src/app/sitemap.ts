@@ -18,8 +18,10 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   return [
     entry(''),
+    entry('/diagnostico'),
     entry('/blog'),
     entry('/productos/plex-wordpress'),
+    entry('/privacidad'),
     // Sample articles are placeholders and stay out of search engines.
     ...posts.filter((p) => !p.sample).map((p) => entry(`/blog/${p.slug}`, p.date)),
   ]

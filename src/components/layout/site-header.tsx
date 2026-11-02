@@ -3,7 +3,6 @@
 import { useEffect, useState } from 'react'
 import { useTranslations } from 'next-intl'
 import { Link } from '@/i18n/navigation'
-import { whatsappLink } from '@/lib/site'
 import { Logo } from '@/components/brand/logo'
 import { Magnetic } from '@/components/motion/magnetic'
 import { ArrowRight } from '@/components/ui/icons'
@@ -20,7 +19,6 @@ const NAV = [
 
 export function SiteHeader() {
   const t = useTranslations('nav')
-  const tw = useTranslations('whatsapp')
   const [scrolled, setScrolled] = useState(false)
   const [hidden, setHidden] = useState(false)
   const [open, setOpen] = useState(false)
@@ -85,10 +83,10 @@ export function SiteHeader() {
           </div>
           <div className="hidden md:block">
             <Magnetic>
-              <a href={whatsappLink(tw('diagnosis'))} target="_blank" rel="noopener" className="btn btn-primary btn-sm">
+              <Link href="/diagnostico" className="btn btn-primary btn-sm">
                 {t('cta')}
                 <ArrowRight className="btn-arrow size-3.5" />
-              </a>
+              </Link>
             </Magnetic>
           </div>
           <button
@@ -134,10 +132,10 @@ export function SiteHeader() {
               <LocaleSwitcher />
               <ThemeToggle />
             </div>
-            <a href={whatsappLink(tw('diagnosis'))} target="_blank" rel="noopener" className="btn btn-primary w-full">
+            <Link href="/diagnostico" onClick={() => setOpen(false)} className="btn btn-primary w-full">
               {t('cta')}
               <ArrowRight className="btn-arrow size-3.5" />
-            </a>
+            </Link>
           </div>
         </nav>
       </div>

@@ -1,32 +1,20 @@
 import { NextResponse } from 'next/server'
-import { getPayload } from 'payload'
-import config from '@payload-config'
+import { cleanAttribution } from '@/lib/attribution-shared'
+import { contactEmail, teamNotice } from '@/lib/emails'
+import { emitEvent, newEventId, publicUrl, saveLead } from '@/lib/leads'
+import { clientIp, rateLimited } from '@/lib/rate-limit'
+import { getSettings } from '@/lib/settings'
+import { site } from '@/lib/site'
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 const MAX = { name: 120, company: 160, email: 200, phone: 40, interest: 80, message: 3000, page: 200 }
 
-// Naive per-instance rate limit: enough to stop a single client hammering the form.
-const hits = new Map<string, number[]>()
-const WINDOW_MS = 10 * 60 * 1000
-const LIMIT = 5
-
-function rateLimited(ip: string) {
-  const now = Date.now()
-  const recent = (hits.get(ip) ?? []).filter((t) => now - t < WINDOW_MS)
-  recent.push(now)
-  hits.set(ip, recent)
-  return recent.length > LIMIT
-}
-
 const clean = (v: unknown, max: number) => (typeof v === 'string' ? v.trim().slice(0, max) : '')
 
-/**
- * Contact form → CRM. Finds or creates the contact by email and opens a new opportunity
- * in the "nuevo" stage. The CRM hooks then notify n8n (leads.created).
- */
+/** Contact form → CRM, then one complete event so n8n can thank the person and alert the team. */
 export async function POST(req: Request) {
-  const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown'
-  if (rateLimited(ip)) return NextResponse.json({ error: 'too_many_requests' }, { status: 429 })
+  const ip = clientIp(req)
+  if (rateLimited(`contact:${ip}`)) return NextResponse.json({ error: 'too_many_requests' }, { status: 429 })
 
   let body: Record<string, unknown>
   try {
@@ -53,47 +41,49 @@ export async function POST(req: Request) {
   if (missing.length) return NextResponse.json({ error: 'missing_fields', fields: missing }, { status: 422 })
   if (!EMAIL_RE.test(input.email)) return NextResponse.json({ error: 'invalid_email' }, { status: 422 })
 
+  const attribution = cleanAttribution(body.attribution)
+  const eventId = newEventId()
+
   try {
-    const payload = await getPayload({ config })
-
-    const existing = await payload.find({
-      collection: 'contacts',
-      where: { email: { equals: input.email } },
-      limit: 1,
-      overrideAccess: true,
+    const { contact, lead } = await saveLead({
+      ...input,
+      title: `${input.interest || 'Consulta web'} · ${input.company || input.name}`,
+      source: 'web-contacto',
+      attribution,
     })
-    const contact =
-      existing.docs[0] ??
-      (await payload.create({
-        collection: 'contacts',
-        overrideAccess: true,
-        data: {
-          name: input.name,
-          email: input.email,
-          phone: input.phone,
-          company: input.company || undefined,
-          source: 'web-contacto',
-        },
-      }))
 
-    await payload.create({
-      collection: 'leads',
-      overrideAccess: true,
-      data: {
-        title: `${input.interest || 'Consulta web'} · ${input.company || input.name}`,
-        contact: contact.id,
-        stage: 'nuevo',
-        interest: input.interest || undefined,
-        message: input.message || undefined,
-        source: 'web-contacto',
-        page: input.page || undefined,
-        locale: input.locale,
+    const settings = await getSettings()
+    const panelUrl = `${publicUrl()}/admin/collections/leads/${lead.id}`
+
+    emitEvent('lead.captured', {
+      kind: 'contact',
+      eventId,
+      locale: input.locale,
+      contact: { id: contact.id, name: input.name, email: input.email, phone: input.phone, company: input.company },
+      lead: { id: lead.id, title: lead.title, message: input.message, url: panelUrl },
+      attribution,
+      client: attribution.consent ? { ip, userAgent: req.headers.get('user-agent') } : undefined,
+      email: { to: input.email, ...contactEmail({ locale: input.locale, name: input.name }) },
+      notice: {
+        to: settings.leadNotifyEmail || site.email,
+        ...teamNotice({
+          title: `Nueva consulta: ${input.company || input.name}`,
+          url: panelUrl,
+          lines: [
+            ['Nombre', input.name],
+            ['Empresa', input.company],
+            ['Email', input.email],
+            ['Teléfono', input.phone],
+            ['Interés', input.interest],
+            ['Mensaje', input.message],
+          ],
+        }),
       },
     })
+
+    return NextResponse.json({ ok: true, eventId })
   } catch (err) {
     console.error('[contact] could not save lead', err)
     return NextResponse.json({ error: 'save_failed' }, { status: 500 })
   }
-
-  return NextResponse.json({ ok: true })
 }

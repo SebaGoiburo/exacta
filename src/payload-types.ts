@@ -78,6 +78,8 @@ export interface Config {
     faqs: Faq;
     contacts: Contact;
     leads: Lead;
+    diagnostics: Diagnostic;
+    prospects: Prospect;
     'payload-kv': PayloadKv;
     'payload-locked-documents': PayloadLockedDocument;
     'payload-preferences': PayloadPreference;
@@ -99,6 +101,8 @@ export interface Config {
     faqs: FaqsSelect<false> | FaqsSelect<true>;
     contacts: ContactsSelect<false> | ContactsSelect<true>;
     leads: LeadsSelect<false> | LeadsSelect<true>;
+    diagnostics: DiagnosticsSelect<false> | DiagnosticsSelect<true>;
+    prospects: ProspectsSelect<false> | ProspectsSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
     'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
     'payload-preferences': PayloadPreferencesSelect<false> | PayloadPreferencesSelect<true>;
@@ -108,8 +112,12 @@ export interface Config {
     defaultIDType: number;
   };
   fallbackLocale: ('false' | 'none' | 'null') | false | null | ('es' | 'en') | ('es' | 'en')[];
-  globals: {};
-  globalsSelect: {};
+  globals: {
+    settings: Setting;
+  };
+  globalsSelect: {
+    settings: SettingsSelect<false> | SettingsSelect<true>;
+  };
   locale: 'es' | 'en';
   widgets: {
     collections: CollectionsWidget;
@@ -393,7 +401,8 @@ export interface Contact {
   email?: string | null;
   phone?: string | null;
   company?: string | null;
-  source?: ('web-contacto' | 'whatsapp' | 'referido' | 'manual' | 'n8n') | null;
+  website?: string | null;
+  source?: ('web-contacto' | 'diagnostico' | 'prospeccion' | 'whatsapp' | 'referido' | 'manual' | 'n8n') | null;
   notes?: string | null;
   leads?: {
     docs?: (number | Lead)[];
@@ -427,10 +436,73 @@ export interface Lead {
       }[]
     | null;
   assignedTo?: (number | null) | User;
-  source?: ('web-contacto' | 'whatsapp' | 'referido' | 'manual' | 'n8n') | null;
+  tier?: ('A' | 'B' | 'C') | null;
+  fit?: number | null;
+  maturity?: number | null;
+  source?: ('web-contacto' | 'diagnostico' | 'prospeccion' | 'whatsapp' | 'referido' | 'manual' | 'n8n') | null;
   page?: string | null;
   locale?: ('es' | 'en') | null;
+  attribution?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
   odooLeadId?: number | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "diagnostics".
+ */
+export interface Diagnostic {
+  id: number;
+  token: string;
+  contact: number | Contact;
+  lead?: (number | null) | Lead;
+  tier: 'A' | 'B' | 'C';
+  fit: number;
+  maturity: number;
+  locale?: ('es' | 'en') | null;
+  areas:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  answers:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * Se buscan y gestionan desde Prospección. El contacto siempre lo hace una persona.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "prospects".
+ */
+export interface Prospect {
+  id: number;
+  placeId: string;
+  niche?: string | null;
+  zone?: string | null;
+  status: 'pendiente' | 'contactado' | 'interesado' | 'descartado';
+  notes?: string | null;
+  lead?: (number | null) | Lead;
   updatedAt: string;
   createdAt: string;
 }
@@ -497,6 +569,14 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'leads';
         value: number | Lead;
+      } | null)
+    | ({
+        relationTo: 'diagnostics';
+        value: number | Diagnostic;
+      } | null)
+    | ({
+        relationTo: 'prospects';
+        value: number | Prospect;
       } | null);
   globalSlug?: string | null;
   user:
@@ -732,6 +812,7 @@ export interface ContactsSelect<T extends boolean = true> {
   email?: T;
   phone?: T;
   company?: T;
+  website?: T;
   source?: T;
   notes?: T;
   leads?: T;
@@ -761,10 +842,45 @@ export interface LeadsSelect<T extends boolean = true> {
         id?: T;
       };
   assignedTo?: T;
+  tier?: T;
+  fit?: T;
+  maturity?: T;
   source?: T;
   page?: T;
   locale?: T;
+  attribution?: T;
   odooLeadId?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "diagnostics_select".
+ */
+export interface DiagnosticsSelect<T extends boolean = true> {
+  token?: T;
+  contact?: T;
+  lead?: T;
+  tier?: T;
+  fit?: T;
+  maturity?: T;
+  locale?: T;
+  areas?: T;
+  answers?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "prospects_select".
+ */
+export interface ProspectsSelect<T extends boolean = true> {
+  placeId?: T;
+  niche?: T;
+  zone?: T;
+  status?: T;
+  notes?: T;
+  lead?: T;
   updatedAt?: T;
   createdAt?: T;
 }
@@ -807,6 +923,39 @@ export interface PayloadMigrationsSelect<T extends boolean = true> {
   batch?: T;
   updatedAt?: T;
   createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "settings".
+ */
+export interface Setting {
+  id: number;
+  /**
+   * Google Calendar o Cal.com. Si está vacío, el diagnóstico deriva a WhatsApp.
+   */
+  bookingUrl?: string | null;
+  leadNotifyEmail?: string | null;
+  metaPixelId?: string | null;
+  ga4Id?: string | null;
+  googleAdsId?: string | null;
+  googleAdsLeadLabel?: string | null;
+  updatedAt?: string | null;
+  createdAt?: string | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "settings_select".
+ */
+export interface SettingsSelect<T extends boolean = true> {
+  bookingUrl?: T;
+  leadNotifyEmail?: T;
+  metaPixelId?: T;
+  ga4Id?: T;
+  googleAdsId?: T;
+  googleAdsLeadLabel?: T;
+  updatedAt?: T;
+  createdAt?: T;
+  globalType?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema

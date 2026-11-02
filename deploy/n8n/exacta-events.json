@@ -1,0 +1,158 @@
+{
+  "id": "exactaEvents00001",
+  "name": "Exacta · Eventos del sitio",
+  "active": false,
+  "settings": { "executionOrder": "v1" },
+  "connections": {
+    "Evento del sitio": { "main": [[{ "node": "Verificar firma", "type": "main", "index": 0 }]] },
+    "Verificar firma": { "main": [[{ "node": "¿Firma válida?", "type": "main", "index": 0 }]] },
+    "¿Firma válida?": {
+      "main": [
+        [{ "node": "Responder 200", "type": "main", "index": 0 }],
+        [{ "node": "Responder 401", "type": "main", "index": 0 }]
+      ]
+    },
+    "Responder 200": { "main": [[{ "node": "¿Lead nuevo?", "type": "main", "index": 0 }]] },
+    "¿Lead nuevo?": {
+      "main": [
+        [
+          { "node": "Email de agradecimiento", "type": "main", "index": 0 },
+          { "node": "Aviso al equipo", "type": "main", "index": 0 }
+        ],
+        []
+      ]
+    }
+  },
+  "nodes": [
+    {
+      "id": "6b1f0a10-0000-4000-8000-000000000001",
+      "name": "Evento del sitio",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [0, 0],
+      "webhookId": "exacta-events",
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "exacta-events",
+        "responseMode": "responseNode",
+        "options": { "rawBody": true }
+      }
+    },
+    {
+      "id": "6b1f0a10-0000-4000-8000-000000000002",
+      "name": "Verificar firma",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [220, 0],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "language": "javaScript",
+        "jsCode": "// Rejects anything not signed by the site. The signature covers the exact bytes received.\nconst crypto = require('crypto');\nconst item = $input.first();\nconst received = Buffer.from(item.json.headers?.['x-exacta-signature'] ?? '');\nconst raw = await this.helpers.getBinaryDataBuffer(0, 'data');\nconst expected = Buffer.from('sha256=' + crypto.createHmac('sha256', $env.N8N_WEBHOOK_SECRET).update(raw).digest('hex'));\nconst valid = received.length === expected.length && crypto.timingSafeEqual(received, expected);\nif (!valid) return [{ json: { valid: false } }];\nconst body = JSON.parse(raw.toString('utf8'));\nreturn [{ json: { valid: true, event: body.event, sentAt: body.sentAt, data: body.data } }];"
+      }
+    },
+    {
+      "id": "6b1f0a10-0000-4000-8000-000000000003",
+      "name": "¿Firma válida?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [440, 0],
+      "parameters": {
+        "conditions": {
+          "options": { "caseSensitive": true, "leftValue": "", "typeValidation": "strict", "version": 2 },
+          "conditions": [
+            {
+              "id": "valid",
+              "leftValue": "={{ $json.valid }}",
+              "rightValue": true,
+              "operator": { "type": "boolean", "operation": "true", "singleValue": true }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "6b1f0a10-0000-4000-8000-000000000004",
+      "name": "Responder 200",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [660, -100],
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { ok: true } }}",
+        "options": { "responseCode": 200 }
+      }
+    },
+    {
+      "id": "6b1f0a10-0000-4000-8000-000000000005",
+      "name": "Responder 401",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [660, 100],
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { error: 'invalid_signature' } }}",
+        "options": { "responseCode": 401 }
+      }
+    },
+    {
+      "id": "6b1f0a10-0000-4000-8000-000000000006",
+      "name": "¿Lead nuevo?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [880, -100],
+      "parameters": {
+        "conditions": {
+          "options": { "caseSensitive": true, "leftValue": "", "typeValidation": "strict", "version": 2 },
+          "conditions": [
+            {
+              "id": "captured",
+              "leftValue": "={{ $('Verificar firma').first().json.event }}",
+              "rightValue": "lead.captured",
+              "operator": { "type": "string", "operation": "equals" }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "6b1f0a10-0000-4000-8000-000000000007",
+      "name": "Email de agradecimiento",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [1100, -200],
+      "disabled": true,
+      "onError": "continueRegularOutput",
+      "notes": "Activar después de cargar la credencial SMTP de Hostinger.",
+      "parameters": {
+        "fromEmail": "Exacta <contacto@exactatransformaciondigital.com>",
+        "toEmail": "={{ $('Verificar firma').first().json.data.email.to }}",
+        "subject": "={{ $('Verificar firma').first().json.data.email.subject }}",
+        "emailFormat": "html",
+        "html": "={{ $('Verificar firma').first().json.data.email.html }}",
+        "options": { "appendAttribution": false }
+      }
+    },
+    {
+      "id": "6b1f0a10-0000-4000-8000-000000000008",
+      "name": "Aviso al equipo",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [1100, 0],
+      "disabled": true,
+      "onError": "continueRegularOutput",
+      "notes": "Activar después de cargar la credencial SMTP de Hostinger.",
+      "parameters": {
+        "fromEmail": "Exacta <contacto@exactatransformaciondigital.com>",
+        "toEmail": "={{ $('Verificar firma').first().json.data.notice.to }}",
+        "subject": "={{ $('Verificar firma').first().json.data.notice.subject }}",
+        "emailFormat": "html",
+        "html": "={{ $('Verificar firma').first().json.data.notice.html }}",
+        "options": { "appendAttribution": false }
+      }
+    }
+  ]
+}

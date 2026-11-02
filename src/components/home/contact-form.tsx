@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { useLocale, useTranslations } from 'next-intl'
 import { ArrowRight } from '@/components/ui/icons'
+import { getAttribution, track } from '@/lib/analytics'
 
 type Status = 'idle' | 'sending' | 'success' | 'error'
 type Errors = Partial<Record<'name' | 'email' | 'phone', string>>
@@ -40,9 +41,11 @@ export function ContactForm() {
       const res = await fetch('/api/contact', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...data, locale, source: 'web-contacto', page: window.location.pathname }),
+        body: JSON.stringify({ ...data, locale, page: window.location.pathname, attribution: getAttribution() }),
       })
       if (!res.ok) throw new Error(String(res.status))
+      const { eventId } = (await res.json()) as { eventId?: string }
+      track('lead', { kind: 'contact' }, eventId)
       setStatus('success')
       form.reset()
     } catch {

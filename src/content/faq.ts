@@ -46,8 +46,8 @@ export const faqs: Faq[] = [
   {
     q: { es: '¿Cómo empezamos?', en: 'How do we start?' },
     a: {
-      es: 'Con una sesión de diagnóstico de 45 minutos por videollamada, sin costo. En esa sesión vemos si podemos ayudarte y cómo.',
-      en: 'With a 45-minute assessment over video call, at no cost. In that session we find out whether and how we can help you.',
+      es: 'Con el diagnóstico online: 13 preguntas, unos 3 minutos y sin costo. Si hay una oportunidad clara, lo revisamos juntos en una reunión de 45 minutos por videollamada.',
+      en: 'With the online assessment: 13 questions, about 3 minutes and no cost. If there is a clear opportunity, we go over it together in a 45-minute video call.',
     },
   },
 ]

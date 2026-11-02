@@ -1,9 +1,11 @@
 import { useTranslations } from 'next-intl'
 import { site, whatsappLink } from '@/lib/site'
+import { Link } from '@/i18n/navigation'
 import { Logo } from '@/components/brand/logo'
+import { CookiePreferences } from '@/components/analytics/cookie-preferences'
 import { Facebook, Instagram, LinkedIn, WhatsApp } from '@/components/ui/icons'
 
-export function SiteFooter() {
+export function SiteFooter({ hasTracking = false }: { hasTracking?: boolean }) {
   const t = useTranslations('footer')
   const tw = useTranslations('whatsapp')
   const year = new Date().getFullYear()
@@ -70,7 +72,13 @@ export function SiteFooter() {
           <p>
             © {year} Exacta. {t('rights')}
           </p>
-          <p>{site.city}</p>
+          <div className="flex flex-wrap items-center gap-x-5 gap-y-2">
+            <Link href="/privacidad" className="transition-colors hover:text-accent">
+              {t('privacy')}
+            </Link>
+            {hasTracking && <CookiePreferences />}
+            <p>{site.city}</p>
+          </div>
         </div>
       </div>
     </footer>
