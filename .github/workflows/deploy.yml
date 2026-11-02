@@ -42,13 +42,10 @@ jobs:
     # Runs once the VPS secrets exist in the repository settings.
     if: ${{ vars.DEPLOY_ENABLED == 'true' }}
     steps:
+      # This key has a forced command on the server, so it can only run deploy/deploy.sh.
       - uses: appleboy/ssh-action@v1
         with:
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USER }}
           key: ${{ secrets.VPS_SSH_KEY }}
-          script: |
-            cd /opt/exacta
-            docker compose pull web
-            docker compose up -d web
-            docker image prune -f
+          script: /opt/exacta/deploy.sh

@@ -2,8 +2,8 @@ export const site = {
   name: 'Exacta',
   url: 'https://exactatransformaciondigital.com',
   email: 'contacto@exactatransformaciondigital.com',
-  phoneDisplay: '+54 261 691-8593',
-  whatsappNumber: '5492616918593',
+  phoneDisplay: '+54 9 263 434-3034',
+  whatsappNumber: '5492634343034',
   city: 'Mendoza, Argentina',
   social: {
     instagram: 'https://www.instagram.com/exacta_agencia/',
