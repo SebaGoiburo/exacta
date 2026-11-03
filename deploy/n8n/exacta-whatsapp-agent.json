@@ -1,0 +1,687 @@
+{
+  "id": "exactaWhatsAppA1",
+  "name": "Exacta · Agente de WhatsApp",
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "connections": {
+    "Verificación de Meta": {
+      "main": [
+        [
+          {
+            "node": "¿Token correcto?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "¿Token correcto?": {
+      "main": [
+        [
+          {
+            "node": "Responder desafío",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Rechazar",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Mensaje de Meta": {
+      "main": [
+        [
+          {
+            "node": "Verificar y extraer",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Verificar y extraer": {
+      "main": [
+        [
+          {
+            "node": "Firmar entrada",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Firmar entrada": {
+      "main": [
+        [
+          {
+            "node": "Guardar entrada",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Guardar entrada": {
+      "main": [
+        [
+          {
+            "node": "¿Consultar al modelo?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Modelo de IA": {
+      "main": [
+        [
+          {
+            "node": "Firmar resultado",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Firmar resultado": {
+      "main": [
+        [
+          {
+            "node": "Guardar resultado",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Guardar resultado": {
+      "main": [
+        [
+          {
+            "node": "¿Hay que enviar?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Enviar respuesta": {
+      "main": [
+        [
+          {
+            "node": "¿Falló el envío?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Firmar fallo": {
+      "main": [
+        [
+          {
+            "node": "Marcar fallido",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "¿Consultar al modelo?": {
+      "main": [
+        [
+          {
+            "node": "Modelo de IA",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "¿Hay que enviar?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "¿Hay que enviar?": {
+      "main": [
+        [
+          {
+            "node": "Enviar respuesta",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "¿Falló el envío?": {
+      "main": [
+        [
+          {
+            "node": "Firmar fallo",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "¿Avisar a un asesor?",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "¿Avisar a un asesor?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "¿Avisar a un asesor?": {
+      "main": [
+        [
+          {
+            "node": "Avisar a Gabriela",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "nodes": [
+    {
+      "id": "7c2f0b20-0000-4000-8000-000000000101",
+      "name": "Verificación de Meta",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        -300
+      ],
+      "parameters": {
+        "httpMethod": "GET",
+        "path": "whatsapp",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "webhookId": "exacta-whatsapp-get"
+    },
+    {
+      "id": "7c2f0b20-0000-4000-8000-000000000102",
+      "name": "¿Token correcto?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        220,
+        -300
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "c1",
+              "leftValue": "={{ $json.query['hub.verify_token'] }}",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              },
+              "rightValue": "={{ $env.WHATSAPP_VERIFY_TOKEN }}"
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "7c2f0b20-0000-4000-8000-000000000103",
+      "name": "Responder desafío",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        440,
+        -380
+      ],
+      "parameters": {
+        "respondWith": "text",
+        "responseBody": "={{ $json.query['hub.challenge'] }}",
+        "options": {
+          "responseCode": 200
+        }
+      }
+    },
+    {
+      "id": "7c2f0b20-0000-4000-8000-000000000104",
+      "name": "Rechazar",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        440,
+        -220
+      ],
+      "parameters": {
+        "respondWith": "text",
+        "responseBody": "forbidden",
+        "options": {
+          "responseCode": 403
+        }
+      }
+    },
+    {
+      "id": "7c2f0b20-0000-4000-8000-000000000105",
+      "name": "Mensaje de Meta",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "whatsapp",
+        "responseMode": "onReceived",
+        "options": {
+          "rawBody": true
+        }
+      },
+      "webhookId": "exacta-whatsapp-post"
+    },
+    {
+      "id": "7c2f0b20-0000-4000-8000-000000000106",
+      "name": "Verificar y extraer",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        220,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "language": "javaScript",
+        "jsCode": "// Rejects what Meta didn't sign. Status updates are ignored: only messages from people go on.\nconst crypto = require('crypto');\nconst secret = $env.META_APP_SECRET;\nif (!secret) return [];\nconst item = $input.first();\nconst raw = await this.helpers.getBinaryDataBuffer(0, 'data');\nconst received = Buffer.from(item.json.headers?.['x-hub-signature-256'] ?? '');\nconst expected = Buffer.from('sha256=' + crypto.createHmac('sha256', secret).update(raw).digest('hex'));\nif (received.length !== expected.length || !crypto.timingSafeEqual(received, expected)) return [];\n\nconst LABELS = { audio: 'un audio', image: 'una imagen', video: 'un video', document: 'un documento', sticker: 'un sticker', location: 'una ubicación', contacts: 'un contacto' };\nconst out = [];\nfor (const entry of JSON.parse(raw.toString('utf8')).entry ?? []) {\n  for (const change of entry.changes ?? []) {\n    const value = change.value ?? {};\n    for (const m of value.messages ?? []) {\n      const text = m.text?.body ?? m.button?.text ?? m.interactive?.button_reply?.title ?? m.interactive?.list_reply?.title\n        ?? `[La persona envió ${LABELS[m.type] ?? 'un mensaje'} que no podés ver ni escuchar. Pedile que lo escriba.]`;\n      out.push({ json: {\n        waId: m.from,\n        waMessageId: m.id,\n        text,\n        phoneNumberId: value.metadata?.phone_number_id,\n        profileName: value.contacts?.find((c) => c.wa_id === m.from)?.profile?.name ?? value.contacts?.[0]?.profile?.name,\n      } });\n    }\n  }\n}\nreturn out;"
+      }
+    },
+    {
+      "id": "7c2f0b20-0000-4000-8000-000000000107",
+      "name": "Firmar entrada",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        440,
+        0
+      ],
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "language": "javaScript",
+        "jsCode": "// Signs the body so the site knows this came from n8n.\nconst crypto = require('crypto');\nconst body = JSON.stringify({ step: 'inbound', ...$json });\nconst signature = 'sha256=' + crypto.createHmac('sha256', $env.N8N_WEBHOOK_SECRET).update(body).digest('hex');\nreturn { json: { body, signature } };"
+      }
+    },
+    {
+      "id": "7c2f0b20-0000-4000-8000-000000000108",
+      "name": "Guardar entrada",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        660,
+        0
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "http://web:3000/api/whatsapp/agent",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-exacta-signature",
+              "value": "={{ $json.signature }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "={{ $json.body }}",
+        "options": {
+          "timeout": 30000
+        }
+      }
+    },
+    {
+      "id": "7c2f0b20-0000-4000-8000-000000000109",
+      "name": "¿Consultar al modelo?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        880,
+        0
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "c1",
+              "leftValue": "={{ $json.action }}",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              },
+              "rightValue": "llm"
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "7c2f0b20-0000-4000-8000-000000000110",
+      "name": "Modelo de IA",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1100,
+        -100
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.anthropic.com/v1/messages",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "anthropic-version",
+              "value": "2023-06-01"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "={{ JSON.stringify($json.llm) }}",
+        "options": {
+          "timeout": 45000
+        }
+      },
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "exactaAnthropic1",
+          "name": "Anthropic API"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "id": "7c2f0b20-0000-4000-8000-000000000111",
+      "name": "Firmar resultado",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1320,
+        -100
+      ],
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "language": "javaScript",
+        "jsCode": "// Signs the body so the site knows this came from n8n.\nconst crypto = require('crypto');\nconst body = JSON.stringify({ step: 'result', conversationId: $('Guardar entrada').item.json.conversationId, response: $json });\nconst signature = 'sha256=' + crypto.createHmac('sha256', $env.N8N_WEBHOOK_SECRET).update(body).digest('hex');\nreturn { json: { body, signature } };"
+      }
+    },
+    {
+      "id": "7c2f0b20-0000-4000-8000-000000000112",
+      "name": "Guardar resultado",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1540,
+        -100
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "http://web:3000/api/whatsapp/agent",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-exacta-signature",
+              "value": "={{ $json.signature }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "={{ $json.body }}",
+        "options": {
+          "timeout": 30000
+        }
+      }
+    },
+    {
+      "id": "7c2f0b20-0000-4000-8000-000000000113",
+      "name": "¿Hay que enviar?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1760,
+        0
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "c1",
+              "leftValue": "={{ $json.action }}",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              },
+              "rightValue": "send"
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "7c2f0b20-0000-4000-8000-000000000114",
+      "name": "Enviar respuesta",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1980,
+        0
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "=https://graph.facebook.com/v24.0/{{ $json.send.phoneNumberId }}/messages",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "={{ JSON.stringify($json.send.body) }}",
+        "options": {
+          "timeout": 20000
+        }
+      },
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "exactaWhatsApp01",
+          "name": "WhatsApp Cloud API"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "id": "7c2f0b20-0000-4000-8000-000000000115",
+      "name": "¿Falló el envío?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        2200,
+        0
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "c1",
+              "leftValue": "={{ $json.messages?.[0]?.id }}",
+              "operator": {
+                "type": "string",
+                "operation": "notExists",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "7c2f0b20-0000-4000-8000-000000000116",
+      "name": "Firmar fallo",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2420,
+        100
+      ],
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "language": "javaScript",
+        "jsCode": "// Signs the body so the site knows this came from n8n.\nconst crypto = require('crypto');\nconst body = JSON.stringify({ step: 'failed', messageId: $('¿Hay que enviar?').item.json.messageId });\nconst signature = 'sha256=' + crypto.createHmac('sha256', $env.N8N_WEBHOOK_SECRET).update(body).digest('hex');\nreturn { json: { body, signature } };"
+      }
+    },
+    {
+      "id": "7c2f0b20-0000-4000-8000-000000000117",
+      "name": "Marcar fallido",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2640,
+        100
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "http://web:3000/api/whatsapp/agent",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-exacta-signature",
+              "value": "={{ $json.signature }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "={{ $json.body }}",
+        "options": {
+          "timeout": 30000
+        }
+      }
+    },
+    {
+      "id": "7c2f0b20-0000-4000-8000-000000000118",
+      "name": "¿Avisar a un asesor?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        2420,
+        -100
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "c1",
+              "leftValue": "={{ $('¿Hay que enviar?').item.json.notify?.phoneNumberId }}",
+              "operator": {
+                "type": "string",
+                "operation": "exists",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "7c2f0b20-0000-4000-8000-000000000119",
+      "name": "Avisar a Gabriela",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2640,
+        -100
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "=https://graph.facebook.com/v24.0/{{ $('¿Hay que enviar?').item.json.notify.phoneNumberId }}/messages",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "={{ JSON.stringify($('¿Hay que enviar?').item.json.notify.body) }}",
+        "options": {
+          "timeout": 20000
+        }
+      },
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "exactaWhatsApp01",
+          "name": "WhatsApp Cloud API"
+        }
+      },
+      "onError": "continueRegularOutput"
+    }
+  ]
+}

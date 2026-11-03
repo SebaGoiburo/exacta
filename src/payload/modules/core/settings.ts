@@ -31,6 +31,24 @@ export const Settings: GlobalConfig = {
     { name: 'leadNotifyEmail', type: 'email', label: 'Email que recibe los avisos de leads' },
     {
       type: 'collapsible',
+      label: 'Agente de WhatsApp',
+      fields: [
+        {
+          name: 'handoffPhone',
+          type: 'text',
+          label: 'WhatsApp que recibe las derivaciones',
+          admin: { description: 'Con código de país y sin espacios, por ejemplo 5492610000000.' },
+        },
+        {
+          name: 'handoffTemplate',
+          type: 'text',
+          label: 'Plantilla aprobada en Meta para el aviso',
+          defaultValue: 'aviso_derivacion',
+        },
+      ],
+    },
+    {
+      type: 'collapsible',
       label: 'Píxeles y analítica',
       admin: { description: 'Se cargan solo si la persona acepta las cookies.' },
       fields: [

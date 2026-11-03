@@ -21,6 +21,7 @@ export default buildConfig({
       beforeNavLinks: ['@/payload/views/nav-links#NavLinks'],
       views: {
         pipeline: { Component: '@/payload/views/pipeline#PipelineView', path: '/pipeline' },
+        conversations: { Component: '@/payload/views/conversations#ConversationsView', path: '/conversaciones' },
         prospecting: { Component: '@/payload/views/prospecting#ProspectingView', path: '/prospeccion' },
       },
     },

@@ -2,22 +2,74 @@
   "id": "exactaEvents00001",
   "name": "Exacta · Eventos del sitio",
   "active": false,
-  "settings": { "executionOrder": "v1" },
+  "settings": {
+    "executionOrder": "v1"
+  },
   "connections": {
-    "Evento del sitio": { "main": [[{ "node": "Verificar firma", "type": "main", "index": 0 }]] },
-    "Verificar firma": { "main": [[{ "node": "¿Firma válida?", "type": "main", "index": 0 }]] },
-    "¿Firma válida?": {
+    "Evento del sitio": {
       "main": [
-        [{ "node": "Responder 200", "type": "main", "index": 0 }],
-        [{ "node": "Responder 401", "type": "main", "index": 0 }]
+        [
+          {
+            "node": "Verificar firma",
+            "type": "main",
+            "index": 0
+          }
+        ]
       ]
     },
-    "Responder 200": { "main": [[{ "node": "¿Lead nuevo?", "type": "main", "index": 0 }]] },
+    "Verificar firma": {
+      "main": [
+        [
+          {
+            "node": "¿Firma válida?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "¿Firma válida?": {
+      "main": [
+        [
+          {
+            "node": "Responder 200",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Responder 401",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Responder 200": {
+      "main": [
+        [
+          {
+            "node": "¿Lead nuevo?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
     "¿Lead nuevo?": {
       "main": [
         [
-          { "node": "Email de agradecimiento", "type": "main", "index": 0 },
-          { "node": "Aviso al equipo", "type": "main", "index": 0 }
+          {
+            "node": "Email de agradecimiento",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Aviso al equipo",
+            "type": "main",
+            "index": 0
+          }
         ],
         []
       ]
@@ -29,13 +81,18 @@
       "name": "Evento del sitio",
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2,
-      "position": [0, 0],
+      "position": [
+        0,
+        0
+      ],
       "webhookId": "exacta-events",
       "parameters": {
         "httpMethod": "POST",
         "path": "exacta-events",
         "responseMode": "responseNode",
-        "options": { "rawBody": true }
+        "options": {
+          "rawBody": true
+        }
       }
     },
     {
@@ -43,7 +100,10 @@
       "name": "Verificar firma",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [220, 0],
+      "position": [
+        220,
+        0
+      ],
       "parameters": {
         "mode": "runOnceForAllItems",
         "language": "javaScript",
@@ -55,16 +115,28 @@
       "name": "¿Firma válida?",
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.2,
-      "position": [440, 0],
+      "position": [
+        440,
+        0
+      ],
       "parameters": {
         "conditions": {
-          "options": { "caseSensitive": true, "leftValue": "", "typeValidation": "strict", "version": 2 },
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
           "conditions": [
             {
               "id": "valid",
               "leftValue": "={{ $json.valid }}",
               "rightValue": true,
-              "operator": { "type": "boolean", "operation": "true", "singleValue": true }
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
             }
           ],
           "combinator": "and"
@@ -77,11 +149,16 @@
       "name": "Responder 200",
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.4,
-      "position": [660, -100],
+      "position": [
+        660,
+        -100
+      ],
       "parameters": {
         "respondWith": "json",
         "responseBody": "={{ { ok: true } }}",
-        "options": { "responseCode": 200 }
+        "options": {
+          "responseCode": 200
+        }
       }
     },
     {
@@ -89,11 +166,16 @@
       "name": "Responder 401",
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.4,
-      "position": [660, 100],
+      "position": [
+        660,
+        100
+      ],
       "parameters": {
         "respondWith": "json",
         "responseBody": "={{ { error: 'invalid_signature' } }}",
-        "options": { "responseCode": 401 }
+        "options": {
+          "responseCode": 401
+        }
       }
     },
     {
@@ -101,16 +183,27 @@
       "name": "¿Lead nuevo?",
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.2,
-      "position": [880, -100],
+      "position": [
+        880,
+        -100
+      ],
       "parameters": {
         "conditions": {
-          "options": { "caseSensitive": true, "leftValue": "", "typeValidation": "strict", "version": 2 },
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
           "conditions": [
             {
               "id": "captured",
               "leftValue": "={{ $('Verificar firma').first().json.event }}",
               "rightValue": "lead.captured",
-              "operator": { "type": "string", "operation": "equals" }
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
             }
           ],
           "combinator": "and"
@@ -123,7 +216,10 @@
       "name": "Email de agradecimiento",
       "type": "n8n-nodes-base.emailSend",
       "typeVersion": 2.1,
-      "position": [1100, -200],
+      "position": [
+        1100,
+        -200
+      ],
       "disabled": true,
       "onError": "continueRegularOutput",
       "notes": "Activar después de cargar la credencial SMTP de Hostinger.",
@@ -133,7 +229,15 @@
         "subject": "={{ $('Verificar firma').first().json.data.email.subject }}",
         "emailFormat": "html",
         "html": "={{ $('Verificar firma').first().json.data.email.html }}",
-        "options": { "appendAttribution": false }
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "credentials": {
+        "smtp": {
+          "id": "exactaSmtp000001",
+          "name": "SMTP Hostinger"
+        }
       }
     },
     {
@@ -141,7 +245,10 @@
       "name": "Aviso al equipo",
       "type": "n8n-nodes-base.emailSend",
       "typeVersion": 2.1,
-      "position": [1100, 0],
+      "position": [
+        1100,
+        0
+      ],
       "disabled": true,
       "onError": "continueRegularOutput",
       "notes": "Activar después de cargar la credencial SMTP de Hostinger.",
@@ -151,7 +258,15 @@
         "subject": "={{ $('Verificar firma').first().json.data.notice.subject }}",
         "emailFormat": "html",
         "html": "={{ $('Verificar firma').first().json.data.notice.html }}",
-        "options": { "appendAttribution": false }
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "credentials": {
+        "smtp": {
+          "id": "exactaSmtp000001",
+          "name": "SMTP Hostinger"
+        }
       }
     }
   ]

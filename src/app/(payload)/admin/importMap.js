@@ -23,6 +23,7 @@ import { BoldFeatureClient as BoldFeatureClient_e70f5e05f09f93e00b997edb1ef0c864
 import { ItalicFeatureClient as ItalicFeatureClient_e70f5e05f09f93e00b997edb1ef0c864 } from '@payloadcms/richtext-lexical/client'
 import { NavLinks as NavLinks_540a903eda1744b7360957c92fd6bca0 } from '@/payload/views/nav-links'
 import { PipelineView as PipelineView_edf438fd4e81c7d0d7300375f0eace50 } from '@/payload/views/pipeline'
+import { ConversationsView as ConversationsView_28c4e79e239e067b4054ae326e1aec32 } from '@/payload/views/conversations'
 import { ProspectingView as ProspectingView_3696abb3470fb706e7beb52a3a28a0a5 } from '@/payload/views/prospecting'
 import { CollectionCards as CollectionCards_f9c02e79a4aed9a3924487c0cd4cafb1 } from '@payloadcms/next/rsc'
 
@@ -53,6 +54,7 @@ export const importMap = {
   "@payloadcms/richtext-lexical/client#ItalicFeatureClient": ItalicFeatureClient_e70f5e05f09f93e00b997edb1ef0c864,
   "@/payload/views/nav-links#NavLinks": NavLinks_540a903eda1744b7360957c92fd6bca0,
   "@/payload/views/pipeline#PipelineView": PipelineView_edf438fd4e81c7d0d7300375f0eace50,
+  "@/payload/views/conversations#ConversationsView": ConversationsView_28c4e79e239e067b4054ae326e1aec32,
   "@/payload/views/prospecting#ProspectingView": ProspectingView_3696abb3470fb706e7beb52a3a28a0a5,
   "@payloadcms/next/rsc#CollectionCards": CollectionCards_f9c02e79a4aed9a3924487c0cd4cafb1
 }

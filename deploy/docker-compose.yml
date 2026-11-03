@@ -14,6 +14,7 @@ services:
       NODE_OPTIONS: --max-old-space-size=512
       # Reachable over the Docker network, so events never leave the server.
       N8N_EVENTS_WEBHOOK_URL: http://n8n:5678/webhook/exacta-events
+      N8N_WHATSAPP_SEND_URL: http://n8n:5678/webhook/exacta-whatsapp-send
       N8N_WEBHOOK_SECRET: ${N8N_WEBHOOK_SECRET}
       # Prospecting stays off until this is set.
       GOOGLE_MAPS_API_KEY: ${GOOGLE_MAPS_API_KEY:-}
@@ -63,6 +64,10 @@ services:
       N8N_WEBHOOK_SECRET: ${N8N_WEBHOOK_SECRET}
       N8N_BLOCK_ENV_ACCESS_IN_NODE: 'false'
       NODE_FUNCTION_ALLOW_BUILTIN: crypto
+      # WhatsApp: Meta's token and the AI key live in n8n's credentials. These two can't,
+      # because a Code node has to read them: the first checks Meta's signature, the second its setup.
+      META_APP_SECRET: ${META_APP_SECRET:-}
+      WHATSAPP_VERIFY_TOKEN: ${WHATSAPP_VERIFY_TOKEN:-}
     depends_on:
       db:
         condition: service_healthy

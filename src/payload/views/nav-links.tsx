@@ -2,6 +2,7 @@ import Link from 'next/link'
 
 const LINKS = [
   { href: '/admin/pipeline', label: 'Pipeline' },
+  { href: '/admin/conversaciones', label: 'Conversaciones' },
   { href: '/admin/prospeccion', label: 'Prospección' },
 ]
 

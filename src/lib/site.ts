@@ -1,5 +1,7 @@
 export const site = {
   name: 'Exacta',
+  legalName: 'Sebastián Darío Goiburo',
+  cuit: '20-34889769-2',
   url: 'https://exactatransformaciondigital.com',
   email: 'contacto@exactatransformaciondigital.com',
   phoneDisplay: '+54 9 263 434-3034',

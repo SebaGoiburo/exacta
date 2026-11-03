@@ -10,6 +10,8 @@ export type SiteSettings = {
   ga4Id?: string | null
   googleAdsId?: string | null
   googleAdsLeadLabel?: string | null
+  handoffPhone?: string | null
+  handoffTemplate?: string | null
 }
 
 const read = unstable_cache(
@@ -23,6 +25,8 @@ const read = unstable_cache(
       ga4Id: s.ga4Id,
       googleAdsId: s.googleAdsId,
       googleAdsLeadLabel: s.googleAdsLeadLabel,
+      handoffPhone: s.handoffPhone,
+      handoffTemplate: s.handoffTemplate,
     }
   },
   ['cms', 'settings'],

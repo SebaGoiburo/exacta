@@ -70,7 +70,7 @@ export function SiteFooter({ hasTracking = false }: { hasTracking?: boolean }) {
       <div className="border-t border-line">
         <div className="container-x flex flex-col gap-2 py-6 font-mono text-[11px] tracking-[0.06em] text-ink-mute sm:flex-row sm:items-center sm:justify-between">
           <p>
-            © {year} Exacta. {t('rights')}
+            © {year} {site.legalName} · CUIT {site.cuit}. {t('rights')}
           </p>
           <div className="flex flex-wrap items-center gap-x-5 gap-y-2">
             <Link href="/privacidad" className="transition-colors hover:text-accent">

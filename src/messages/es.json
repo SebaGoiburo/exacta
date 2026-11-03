@@ -334,11 +334,11 @@
     "sections": [
       {
         "h": "Quién es responsable",
-        "p": "Exacta Transformación Digital, con domicilio en Mendoza, Argentina, es responsable de los datos personales que nos dejás en este sitio. Podés escribirnos a {email}."
+        "p": "Sebastián Darío Goiburo (CUIT 20-34889769-2), con domicilio en Mendoza, Argentina, que opera con el nombre comercial Exacta Transformación Digital, es responsable de los datos personales que nos dejás en este sitio y por WhatsApp. Podés escribirnos a {email}."
       },
       {
         "h": "Qué datos recopilamos",
-        "p": "Los que completás en nuestros formularios (nombre, email, teléfono, empresa y sitio web), tus respuestas al diagnóstico y lo que nos cuentes en tus mensajes. También registramos de qué campaña o página llegaste."
+        "p": "Los que completás en nuestros formularios (nombre, email, teléfono, empresa y sitio web), tus respuestas al diagnóstico y lo que nos cuentes en tus mensajes, incluidas las conversaciones por WhatsApp, que primero atiende un asistente virtual con inteligencia artificial y después una persona. También registramos de qué campaña o página llegaste."
       },
       {
         "h": "Para qué los usamos",
@@ -346,7 +346,7 @@
       },
       {
         "h": "Con quién los compartimos",
-        "p": "No vendemos tus datos. Los procesan los proveedores que usamos para operar: el alojamiento del sitio, el correo electrónico y las herramientas de automatización y mensajería. Si aceptás las cookies, Meta y Google reciben datos de navegación para medir nuestras campañas."
+        "p": "No vendemos tus datos. Los procesan los proveedores que usamos para operar: el alojamiento del sitio, el correo electrónico, las herramientas de automatización y mensajería, Meta (WhatsApp) y Anthropic, que provee el modelo de inteligencia artificial del asistente. Si aceptás las cookies, Meta y Google reciben datos de navegación para medir nuestras campañas."
       },
       {
         "h": "Cookies",

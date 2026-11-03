@@ -27,17 +27,26 @@ Cada secreto se genera con `openssl rand -hex 32`. El archivo nunca se versiona.
 | `N8N_DB_PASSWORD` | Secreto |
 | `N8N_VERSION` | Opcional, para fijar otra versión de n8n |
 | `GOOGLE_MAPS_API_KEY` | Opcional. Sin ella, Prospección no busca |
+| `META_APP_SECRET` | Clave secreta de la app de Meta. Sin ella, se rechaza todo lo que llega de WhatsApp |
+| `WHATSAPP_VERIFY_TOKEN` | Texto al azar que se copia en la configuración del webhook en Meta |
+
+Para cargar un secreto sin que se vea en pantalla: `/opt/exacta/set-secret.sh META_APP_SECRET`.
 
 ## Flujo de n8n
 
-`n8n/exacta-events.json` recibe los eventos del sitio y verifica su firma. Sus dos emails quedan
-apagados hasta cargar la credencial SMTP y activar los nodos desde el editor de n8n.
+- `n8n/exacta-events.json` recibe los eventos del sitio y verifica su firma. Sus dos emails quedan
+  apagados hasta cargar la credencial SMTP y activar los nodos desde el editor de n8n.
+- `n8n/exacta-whatsapp-agent.json` es el agente: recibe los mensajes de Meta, consulta al modelo y responde.
+- `n8n/exacta-whatsapp-send.json` envía lo que escribe un asesor desde el panel.
+- `n8n/credentials.json` crea las credenciales vacías, sin ningún secreto, para completarlas en el editor.
 
 Para importarlo de nuevo en el servidor, cuando cambie el archivo:
 
 ```sh
 docker compose cp n8n/exacta-events.json n8n:/tmp/exacta-events.json
 docker compose exec n8n n8n import:workflow --input=/tmp/exacta-events.json
+docker compose exec n8n n8n publish:workflow --id=exactaEvents00001
+docker compose restart n8n
 ```
 
 ## Actualizar el sitio

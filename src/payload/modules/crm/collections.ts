@@ -54,6 +54,13 @@ export const Contacts: CollectionConfig = {
         { name: 'website', type: 'text', label: 'Sitio web' },
       ],
     },
+    {
+      type: 'row',
+      fields: [
+        { name: 'role', type: 'text', label: 'Cargo' },
+        { name: 'companySize', type: 'text', label: 'Tamaño de la empresa' },
+      ],
+    },
     { name: 'source', type: 'select', label: 'Origen', options: SOURCES, defaultValue: 'manual' },
     { name: 'notes', type: 'textarea', label: 'Notas' },
     {

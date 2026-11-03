@@ -80,6 +80,9 @@ export interface Config {
     leads: Lead;
     diagnostics: Diagnostic;
     prospects: Prospect;
+    conversations: Conversation;
+    'conversation-messages': ConversationMessage;
+    knowledge: Knowledge;
     'payload-kv': PayloadKv;
     'payload-locked-documents': PayloadLockedDocument;
     'payload-preferences': PayloadPreference;
@@ -103,6 +106,9 @@ export interface Config {
     leads: LeadsSelect<false> | LeadsSelect<true>;
     diagnostics: DiagnosticsSelect<false> | DiagnosticsSelect<true>;
     prospects: ProspectsSelect<false> | ProspectsSelect<true>;
+    conversations: ConversationsSelect<false> | ConversationsSelect<true>;
+    'conversation-messages': ConversationMessagesSelect<false> | ConversationMessagesSelect<true>;
+    knowledge: KnowledgeSelect<false> | KnowledgeSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
     'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
     'payload-preferences': PayloadPreferencesSelect<false> | PayloadPreferencesSelect<true>;
@@ -402,6 +408,8 @@ export interface Contact {
   phone?: string | null;
   company?: string | null;
   website?: string | null;
+  role?: string | null;
+  companySize?: string | null;
   source?: ('web-contacto' | 'diagnostico' | 'prospeccion' | 'whatsapp' | 'referido' | 'manual' | 'n8n') | null;
   notes?: string | null;
   leads?: {
@@ -508,6 +516,66 @@ export interface Prospect {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "conversations".
+ */
+export interface Conversation {
+  id: number;
+  waId: string;
+  phoneNumberId?: string | null;
+  profileName?: string | null;
+  status: 'agente' | 'derivada' | 'humano';
+  assignedTo?: (number | null) | User;
+  contact?: (number | null) | Contact;
+  lead?: (number | null) | Lead;
+  collected?: {
+    name?: string | null;
+    email?: string | null;
+    company?: string | null;
+    role?: string | null;
+    companySize?: string | null;
+    need?: string | null;
+  };
+  lastMessageAt?: string | null;
+  lastInboundAt?: string | null;
+  lastPreview?: string | null;
+  unread?: number | null;
+  aiReplies?: number | null;
+  sessionStart?: string | null;
+  handoffAt?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "conversation-messages".
+ */
+export interface ConversationMessage {
+  id: number;
+  conversation: number | Conversation;
+  sender: 'cliente' | 'agente' | 'asesor' | 'sistema';
+  text: string;
+  waMessageId?: string | null;
+  failed?: boolean | null;
+  author?: (number | null) | User;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * El agente de WhatsApp ya conoce los servicios, productos y preguntas frecuentes del sitio. Acá sumás lo que no está publicado.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "knowledge".
+ */
+export interface Knowledge {
+  id: number;
+  title: string;
+  content: string;
+  active?: boolean | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "payload-kv".
  */
 export interface PayloadKv {
@@ -577,6 +645,18 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'prospects';
         value: number | Prospect;
+      } | null)
+    | ({
+        relationTo: 'conversations';
+        value: number | Conversation;
+      } | null)
+    | ({
+        relationTo: 'conversation-messages';
+        value: number | ConversationMessage;
+      } | null)
+    | ({
+        relationTo: 'knowledge';
+        value: number | Knowledge;
       } | null);
   globalSlug?: string | null;
   user:
@@ -813,6 +893,8 @@ export interface ContactsSelect<T extends boolean = true> {
   phone?: T;
   company?: T;
   website?: T;
+  role?: T;
+  companySize?: T;
   source?: T;
   notes?: T;
   leads?: T;
@@ -886,6 +968,63 @@ export interface ProspectsSelect<T extends boolean = true> {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "conversations_select".
+ */
+export interface ConversationsSelect<T extends boolean = true> {
+  waId?: T;
+  phoneNumberId?: T;
+  profileName?: T;
+  status?: T;
+  assignedTo?: T;
+  contact?: T;
+  lead?: T;
+  collected?:
+    | T
+    | {
+        name?: T;
+        email?: T;
+        company?: T;
+        role?: T;
+        companySize?: T;
+        need?: T;
+      };
+  lastMessageAt?: T;
+  lastInboundAt?: T;
+  lastPreview?: T;
+  unread?: T;
+  aiReplies?: T;
+  sessionStart?: T;
+  handoffAt?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "conversation-messages_select".
+ */
+export interface ConversationMessagesSelect<T extends boolean = true> {
+  conversation?: T;
+  sender?: T;
+  text?: T;
+  waMessageId?: T;
+  failed?: T;
+  author?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "knowledge_select".
+ */
+export interface KnowledgeSelect<T extends boolean = true> {
+  title?: T;
+  content?: T;
+  active?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "payload-kv_select".
  */
 export interface PayloadKvSelect<T extends boolean = true> {
@@ -935,6 +1074,11 @@ export interface Setting {
    */
   bookingUrl?: string | null;
   leadNotifyEmail?: string | null;
+  /**
+   * Con código de país y sin espacios, por ejemplo 5492610000000.
+   */
+  handoffPhone?: string | null;
+  handoffTemplate?: string | null;
   metaPixelId?: string | null;
   ga4Id?: string | null;
   googleAdsId?: string | null;
@@ -949,6 +1093,8 @@ export interface Setting {
 export interface SettingsSelect<T extends boolean = true> {
   bookingUrl?: T;
   leadNotifyEmail?: T;
+  handoffPhone?: T;
+  handoffTemplate?: T;
   metaPixelId?: T;
   ga4Id?: T;
   googleAdsId?: T;
