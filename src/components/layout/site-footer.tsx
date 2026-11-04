@@ -1,6 +1,8 @@
-import { useTranslations } from 'next-intl'
+import { useLocale, useTranslations } from 'next-intl'
+import { landingPath, landingsOf } from '@/content/landings'
 import { site, whatsappLink } from '@/lib/site'
 import { Link } from '@/i18n/navigation'
+import type { Locale } from '@/i18n/routing'
 import { Logo } from '@/components/brand/logo'
 import { CookiePreferences } from '@/components/analytics/cookie-preferences'
 import { Facebook, Instagram, LinkedIn, WhatsApp } from '@/components/ui/icons'
@@ -8,7 +10,13 @@ import { Facebook, Instagram, LinkedIn, WhatsApp } from '@/components/ui/icons'
 export function SiteFooter({ hasTracking = false }: { hasTracking?: boolean }) {
   const t = useTranslations('footer')
   const tw = useTranslations('whatsapp')
+  const locale = useLocale() as Locale
   const year = new Date().getFullYear()
+
+  const groups = [
+    { title: t('solutions'), items: landingsOf('soluciones') },
+    { title: t('industries'), items: landingsOf('industrias') },
+  ]
 
   const socials = [
     { label: 'Instagram', href: site.social.instagram, Icon: Instagram },
@@ -18,13 +26,28 @@ export function SiteFooter({ hasTracking = false }: { hasTracking?: boolean }) {
 
   return (
     <footer className="border-t border-line">
-      <div className="container-x grid gap-12 py-16 md:grid-cols-12">
-        <div className="md:col-span-5">
+      <div className="container-x grid gap-12 py-16 sm:grid-cols-2 lg:grid-cols-12">
+        <div className="sm:col-span-2 lg:col-span-3">
           <Logo className="h-8 w-auto text-ink" />
           <p className="mt-5 max-w-sm text-sm leading-relaxed text-ink-soft">{t('tagline')}</p>
         </div>
 
-        <div className="md:col-span-4">
+        {groups.map((group) => (
+          <div key={group.title} className="lg:col-span-3">
+            <p className="eyebrow">{group.title}</p>
+            <ul className="mt-5 space-y-3 text-sm">
+              {group.items.map((item) => (
+                <li key={item.slug}>
+                  <Link href={landingPath(item)} className="text-ink transition-colors hover:text-accent">
+                    {item.name[locale]}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+        ))}
+
+        <div className="lg:col-span-3">
           <p className="eyebrow">{t('contact')}</p>
           <ul className="mt-5 space-y-3 text-sm">
             <li>
@@ -47,7 +70,7 @@ export function SiteFooter({ hasTracking = false }: { hasTracking?: boolean }) {
           </ul>
         </div>
 
-        <div className="md:col-span-3">
+        <div className="sm:col-span-2 lg:col-span-12">
           <p className="eyebrow">{t('follow')}</p>
           <ul className="mt-5 flex gap-2">
             {socials.map(({ label, href, Icon }) => (

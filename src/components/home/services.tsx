@@ -1,12 +1,12 @@
 import { useTranslations } from 'next-intl'
-import { whatsappLink } from '@/lib/site'
+import { SERVICE_LANDINGS } from '@/content/landings'
+import { Link } from '@/i18n/navigation'
 import { ArrowRight } from '@/components/ui/icons'
 
 type Item = { title: string; body: string; tags: string[] }
 
 export function Services() {
   const t = useTranslations('services')
-  const tw = useTranslations('whatsapp')
   const items = t.raw('items') as Item[]
 
   return (
@@ -27,12 +27,10 @@ export function Services() {
         </div>
 
         <ul className="mt-16 border-t border-line">
-          {items.map((item) => (
+          {items.map((item, i) => (
             <li key={item.title} className="border-b border-line" data-reveal>
-              <a
-                href={whatsappLink(tw('service', { service: item.title }))}
-                target="_blank"
-                rel="noopener"
+              <Link
+                href={`/soluciones/${SERVICE_LANDINGS[i]}`}
                 className="svc-row group grid gap-4 px-1 py-8 md:grid-cols-12 md:items-start md:gap-8 md:px-4 md:py-10"
               >
                 <div className="md:col-span-7">
@@ -61,7 +59,7 @@ export function Services() {
                   </span>
                 </div>
                 <span className="sr-only">{t('more')}</span>
-              </a>
+              </Link>
             </li>
           ))}
         </ul>

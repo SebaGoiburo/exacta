@@ -97,7 +97,7 @@
     "eyebrow": "Lo que hacemos",
     "title": "No vendemos tecnología. Diseñamos soluciones.",
     "lead": "Cada proyecto empieza con un diagnóstico y termina con métricas. En el medio, construimos lo que tu negocio necesita.",
-    "more": "Consultar",
+    "more": "Ver más",
     "items": [
       {
         "title": "Operá digitalmente y crecé",
@@ -141,7 +141,9 @@
     "contact": "Contacto",
     "follow": "Seguinos",
     "rights": "Todos los derechos reservados.",
-    "privacy": "Privacidad"
+    "privacy": "Privacidad",
+    "solutions": "Soluciones",
+    "industries": "Industrias"
   },
   "results": {
     "title": "Resultados que se miden.",
@@ -357,5 +359,60 @@
         "p": "Podés acceder a tus datos, corregirlos o pedirnos que los borremos escribiendo a {email}. Según la Ley 25.326, podés ejercer el derecho de acceso en forma gratuita a intervalos no inferiores a seis meses, salvo que acredites un interés legítimo. La Agencia de Acceso a la Información Pública, órgano de control de esa ley, atiende denuncias y reclamos."
       }
     ]
+  },
+  "landing": {
+    "whatsapp": "Escribinos por WhatsApp",
+    "today": "Hoy",
+    "after": "Con Exacta",
+    "problems": "Dónde se te va hoy",
+    "proof": "Trabajo real, no promesas",
+    "clients": "También trabajaron con Exacta",
+    "related": "También puede interesarte",
+    "solutions": "Soluciones",
+    "industries": "Industrias",
+    "calc": {
+      "title": "¿Cuánto tiempo te lleva hoy?",
+      "lead": "Hacé la cuenta con tus números: cuánto se va en {task}.",
+      "hours": "Horas por semana, por persona",
+      "people": "Personas que lo hacen",
+      "rate": "Costo por hora",
+      "optional": "opcional",
+      "reading": "horas por mes",
+      "workdays": "Jornadas de 8 horas",
+      "fullTime": "Personas a jornada completa",
+      "cost": "Costo por mes, en la moneda que usaste",
+      "note": "Es una cuenta con tus datos, no una promesa de ahorro. El diagnóstico te ayuda a ver qué conviene resolver primero.",
+      "cta": "Hacer el diagnóstico"
+    },
+    "tryIt": {
+      "agent": {
+        "title": "Probá nuestro asistente",
+        "body": "El asistente de nuestro WhatsApp funciona así: responde con lo que sabe, pide tus datos y, cuando hace falta, te pasa con una persona. Escribile y mirá cómo trabaja.",
+        "cta": "Escribirle al asistente",
+        "message": "Hola, quiero probar el asistente."
+      },
+      "diagnostic": {
+        "title": "Probá nuestro diagnóstico",
+        "body": "Es una herramienta en funcionamiento: hace preguntas, entrega una lectura y ayuda a decidir qué resolver primero. Completalo y miralo desde el lado del cliente.",
+        "cta": "Hacer el diagnóstico"
+      }
+    },
+    "steps": {
+      "title": "Cómo empezamos",
+      "items": [
+        {
+          "title": "Diagnóstico online",
+          "body": "13 preguntas, unos 3 minutos y sin costo."
+        },
+        {
+          "title": "Reunión de 45 minutos",
+          "body": "Si hay una oportunidad clara, revisamos juntos tu caso por videollamada."
+        },
+        {
+          "title": "Propuesta",
+          "body": "Recibís alcance, plazos y costo antes de empezar cualquier trabajo."
+        }
+      ]
+    }
   }
 }

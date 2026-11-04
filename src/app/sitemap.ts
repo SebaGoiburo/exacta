@@ -1,4 +1,5 @@
 import type { MetadataRoute } from 'next'
+import { landingPath, landings } from '@/content/landings'
 import { getPosts } from '@/lib/content'
 import { absoluteUrl } from '@/lib/seo'
 
@@ -21,6 +22,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     entry('/diagnostico'),
     entry('/blog'),
     entry('/productos/plex-wordpress'),
+    ...landings.map((l) => entry(landingPath(l))),
     entry('/privacidad'),
     // Sample articles are placeholders and stay out of search engines.
     ...posts.filter((p) => !p.sample).map((p) => entry(`/blog/${p.slug}`, p.date)),

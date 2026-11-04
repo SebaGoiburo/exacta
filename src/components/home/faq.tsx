@@ -1,14 +1,16 @@
 import { getLocale, getTranslations } from 'next-intl/server'
 import type { Locale } from '@/i18n/routing'
+import type { Faq } from '@/content/types'
 import { getFaqs } from '@/lib/content'
 import { whatsappLink } from '@/lib/site'
 import { WhatsApp } from '@/components/ui/icons'
 import { JsonLd } from '@/components/seo/json-ld'
 
-export async function FaqSection() {
+/** Shows the site's questions, or a page's own when it passes them. */
+export async function FaqSection({ items }: { items?: Faq[] }) {
   const t = await getTranslations('faq')
   const locale = (await getLocale()) as Locale
-  const faqs = await getFaqs()
+  const faqs = items ?? (await getFaqs())
 
   return (
     <section className="border-t border-line py-24 md:py-36" aria-labelledby="faq-title">

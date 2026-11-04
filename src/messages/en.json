@@ -97,7 +97,7 @@
     "eyebrow": "What we do",
     "title": "We don't sell technology. We design solutions.",
     "lead": "Every project starts with an assessment and ends with metrics. In between, we build what your business needs.",
-    "more": "Ask us",
+    "more": "Learn more",
     "items": [
       {
         "title": "Run digitally and grow",
@@ -141,7 +141,9 @@
     "contact": "Contact",
     "follow": "Follow us",
     "rights": "All rights reserved.",
-    "privacy": "Privacy"
+    "privacy": "Privacy",
+    "solutions": "Solutions",
+    "industries": "Industries"
   },
   "results": {
     "title": "Results you can measure.",
@@ -357,5 +359,60 @@
         "p": "You can access your data, correct it or ask us to delete it by writing to {email}. Under Argentine Law 25,326, you may exercise the right of access free of charge at intervals of no less than six months, unless you prove a legitimate interest. The Agency for Access to Public Information, which oversees that law, handles complaints."
       }
     ]
+  },
+  "landing": {
+    "whatsapp": "Message us on WhatsApp",
+    "today": "Today",
+    "after": "With Exacta",
+    "problems": "Where it goes today",
+    "proof": "Real work, not promises",
+    "clients": "Others who worked with Exacta",
+    "related": "You may also be interested in",
+    "solutions": "Solutions",
+    "industries": "Industries",
+    "calc": {
+      "title": "How much time does it take today?",
+      "lead": "Do the math with your own numbers: how much goes to {task}.",
+      "hours": "Hours per week, per person",
+      "people": "People doing it",
+      "rate": "Cost per hour",
+      "optional": "optional",
+      "reading": "hours per month",
+      "workdays": "8-hour workdays",
+      "fullTime": "Full-time people",
+      "cost": "Monthly cost, in the currency you used",
+      "note": "This is math on your numbers, not a savings promise. The assessment helps you see what's best to solve first.",
+      "cta": "Take the assessment"
+    },
+    "tryIt": {
+      "agent": {
+        "title": "Try our assistant",
+        "body": "The assistant on our WhatsApp works like this: it answers with what it knows, asks for your details and, when needed, passes you to a person. Write to it and see how it works.",
+        "cta": "Write to the assistant",
+        "message": "Hi, I'd like to try the assistant."
+      },
+      "diagnostic": {
+        "title": "Try our assessment",
+        "body": "It's a working tool: it asks questions, gives you a reading and helps decide what to solve first. Complete it and see it from the customer's side.",
+        "cta": "Take the assessment"
+      }
+    },
+    "steps": {
+      "title": "How we start",
+      "items": [
+        {
+          "title": "Online assessment",
+          "body": "13 questions, about 3 minutes and no cost."
+        },
+        {
+          "title": "45-minute meeting",
+          "body": "If there is a clear opportunity, we go over your case together by video call."
+        },
+        {
+          "title": "Proposal",
+          "body": "You get scope, timeline and cost before any work starts."
+        }
+      ]
+    }
   }
 }
