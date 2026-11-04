@@ -73,10 +73,38 @@ type GscRow = { keys: string[]; clicks: number; impressions: number; position: n
 
 export type QueryRow = { query: string; clicks: number; impressions: number; position: number; impressionsBefore: number }
 
+const BRAND = 'exacta'
+
+/** True when `word` is `target` with at most one typo: a missing, extra, changed or swapped letter. */
+function oneTypoFrom(word: string, target: string) {
+  if (word === target) return true
+  if (Math.abs(word.length - target.length) > 1) return false
+  let i = 0
+  while (i < word.length && word[i] === target[i]) i++
+  const swapped = word[i] === target[i + 1] && word[i + 1] === target[i] && word.slice(i + 2) === target.slice(i + 2)
+  return (
+    swapped ||
+    word.slice(i + 1) === target.slice(i + 1) ||
+    word.slice(i) === target.slice(i + 1) ||
+    word.slice(i + 1) === target.slice(i)
+  )
+}
+
+/** People looking for the company by name, misspelled or not, say nothing about demand for a topic. */
+export function isBrandQuery(query: string) {
+  const words = query
+    .normalize('NFD')
+    .replace(/\p{M}/gu, '')
+    .toLowerCase()
+    .split(/[^a-z0-9]+/)
+  return words.some((word) => oneTypoFrom(word, BRAND) || word.startsWith('exactatransformacion'))
+}
+
 /** Separates what the engine should look at: what already brings people, what's growing, what's within reach. */
 export function summarizeQueries(current: GscRow[], previous: GscRow[]) {
   const before = new Map(previous.map((r) => [r.keys[0], r.impressions]))
-  const rows: QueryRow[] = current.map((r) => ({
+  const brand = current.filter((r) => isBrandQuery(r.keys[0]))
+  const rows: QueryRow[] = current.filter((r) => !isBrandQuery(r.keys[0])).map((r) => ({
     query: r.keys[0],
     clicks: r.clicks,
     impressions: r.impressions,
@@ -85,6 +113,7 @@ export function summarizeQueries(current: GscRow[], previous: GscRow[]) {
   }))
   const byImpressions = (a: QueryRow, b: QueryRow) => b.impressions - a.impressions
   return {
+    brandExcluded: { queries: brand.length, impressions: brand.reduce((sum, r) => sum + r.impressions, 0) },
     top: [...rows].sort(byImpressions).slice(0, 40),
     rising: rows
       .filter((r) => r.impressions >= 10 && r.impressions >= r.impressionsBefore * 1.5)

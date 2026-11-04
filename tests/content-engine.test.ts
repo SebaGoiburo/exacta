@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
-import { summarizeQueries, type SearchData } from '../src/lib/content-engine/google'
+import { isBrandQuery, summarizeQueries, type SearchData } from '../src/lib/content-engine/google'
 import {
   blogRequest,
   cleanTopic,
@@ -130,6 +130,21 @@ test('search queries are split into top, rising and within reach', () => {
   assert.equal(top[0].query, 'estable')
   assert.deepEqual(rising.map((r) => r.query), ['crece'])
   assert.deepEqual(withinReach.map((r) => r.query), ['alcance'])
+})
+
+test('searches for the company name never reach the engine', () => {
+  for (const q of ['exacta', 'Exacta consultora', 'exsacta', 'excata', 'excacta', 'ecxacta', 'excta', 'exacta ia', 'exactatransformaciondigital.com']) {
+    assert.equal(isBrandQuery(q), true, q)
+  }
+  for (const q of ['software a medida', 'cuánto cuesta exactamente un sistema', 'extracto bancario', 'automatizar procesos']) {
+    assert.equal(isBrandQuery(q), false, q)
+  }
+
+  const row = (query: string, impressions: number) => ({ keys: [query], clicks: 0, impressions, position: 6 })
+  const { top, withinReach, brandExcluded } = summarizeQueries([row('exacta', 500), row('exsacta', 80), row('software a medida', 40)], [])
+  assert.deepEqual(top.map((r) => r.query), ['software a medida'])
+  assert.deepEqual(withinReach.map((r) => r.query), ['software a medida'])
+  assert.deepEqual(brandExcluded, { queries: 2, impressions: 580 })
 })
 
 test('share links carry the encoded address and title', () => {

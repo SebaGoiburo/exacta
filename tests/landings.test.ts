@@ -2,6 +2,7 @@ import assert from 'node:assert/strict'
 import test from 'node:test'
 import { cases } from '../src/content/cases'
 import { getLanding, landings, SERVICE_LANDINGS } from '../src/content/landings'
+import { OLD_SITE_REDIRECTS } from '../src/content/old-site-redirects'
 import { products } from '../src/content/products'
 import { manualCost } from '../src/lib/manual-cost'
 
@@ -14,6 +15,17 @@ function strings(value: unknown, path: string): [string, string][] {
   }
   return []
 }
+
+test('old site addresses lead to pages that exist, once each', () => {
+  const pages = new Set(['/', '/blog', ...landings.map((l) => `/${l.kind}/${l.slug}`)])
+  const sources = OLD_SITE_REDIRECTS.map((r) => r.source)
+  assert.equal(new Set(sources).size, sources.length)
+  for (const { source, destination } of OLD_SITE_REDIRECTS) {
+    const page = destination.split('#')[0]
+    assert.ok(pages.has(page), `${source} -> ${destination} does not exist`)
+    assert.ok(!pages.has(source), `${source} would hide a real page`)
+  }
+})
 
 test('each landing has a unique address', () => {
   const paths = landings.map((l) => `${l.kind}/${l.slug}`)

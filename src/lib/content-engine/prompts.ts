@@ -129,7 +129,7 @@ export function describeData(data: SearchData) {
   const { searchConsole: gsc, analytics: ga } = data
   if (gsc.status === 'ok' && gsc.data) {
     parts.push(
-      `SEARCH CONSOLE (${gsc.period}; impressionsBefore son los 28 días anteriores)\n${JSON.stringify(gsc.data)}`,
+      `SEARCH CONSOLE (${gsc.period}; impressionsBefore son los 28 días anteriores; brandExcluded resume las búsquedas del nombre de la empresa, que ya se quitaron porque no indican demanda de un tema)\n${JSON.stringify(gsc.data)}`,
     )
   } else {
     parts.push('SEARCH CONSOLE: sin datos disponibles. No cites Search Console como evidencia.')
