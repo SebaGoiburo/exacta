@@ -8,6 +8,7 @@ import {
   ENGINE_MODEL,
   parseOutput,
   topicsRequest,
+  unreadableReason,
   urlsSeen,
   type EngineContext,
   type TopicOutput,
@@ -90,15 +91,27 @@ test('the pages a search returned are collected', () => {
   assert.deepEqual(urlsSeen(response), ['https://a.example', 'https://b.example'])
 })
 
-test('the JSON is read from the last text block', () => {
+test('the JSON comes after the last search, even when split into blocks', () => {
   const response = {
     stop_reason: 'end_turn',
     content: [
       { type: 'text', text: 'Voy a buscar.' },
-      { type: 'text', text: '{"ok":true}' },
+      { type: 'server_tool_use' },
+      { type: 'web_search_tool_result', content: [] },
+      { type: 'text', text: '{"ok":' },
+      { type: 'text', text: 'true}' },
     ],
   }
   assert.deepEqual(parseOutput(response), { ok: true })
+})
+
+test('without searches, all the text is the answer', () => {
+  assert.deepEqual(parseOutput({ stop_reason: 'end_turn', content: [{ type: 'text', text: '{"ok":true}' }] }), { ok: true })
+})
+
+test('the reason for an unusable answer is specific', () => {
+  assert.match(unreadableReason({ stop_reason: 'max_tokens' }), /cortada/)
+  assert.match(unreadableReason({ stop_reason: 'end_turn' }), /end_turn/)
 })
 
 test('an answer that is cut off or refused is not used', () => {

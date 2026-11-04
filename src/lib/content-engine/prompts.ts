@@ -186,7 +186,7 @@ ${existingList(ctx)}
 
 ${describeData(data)}`,
     TOPICS_SCHEMA,
-    6000,
+    12000,
     'medium',
     true,
   )
@@ -209,7 +209,7 @@ ${existingList(ctx)}
 
 ${describeData(data)}`,
     IDEA_SCHEMA,
-    3000,
+    5000,
     'medium',
     true,
   )
@@ -251,7 +251,7 @@ ${describeTopic(topic)}
 FUENTES
 ${sourcesList(topic)}`,
     BLOG_SCHEMA,
-    6000,
+    8000,
     'medium',
     false,
   )
@@ -279,7 +279,7 @@ ${sourcesList(topic)}
 ARTÍCULO
 ${article}`,
     SOCIAL_SCHEMA,
-    7000,
+    10000,
     'medium',
     false,
   )
@@ -300,19 +300,33 @@ export function urlsSeen(response: ModelResponse): string[] {
   return urls.filter((u): u is string => typeof u === 'string')
 }
 
-/** The model's JSON, or null if it can't be used. With tools there may be text before it. */
+/**
+ * The model's JSON, or null if it can't be used. It comes after the last search, and citations
+ * can split it across several text blocks, so those get joined back together.
+ */
 export function parseOutput<T>(response: ModelResponse): T | null {
   if (!Array.isArray(response.content) || response.stop_reason === 'refusal' || response.stop_reason === 'max_tokens') {
     return null
   }
-  const texts = response.content.filter((b) => b.type === 'text' && b.text)
-  const last = texts[texts.length - 1]?.text
-  if (!last) return null
+  const lastTool = response.content.map((b) => b.type).lastIndexOf('web_search_tool_result')
+  const text = response.content
+    .slice(lastTool + 1)
+    .filter((b) => b.type === 'text' && b.text)
+    .map((b) => b.text)
+    .join('')
+  if (!text) return null
   try {
-    return JSON.parse(last) as T
+    return JSON.parse(text) as T
   } catch {
     return null
   }
+}
+
+/** Why an answer couldn't be used, in words that help when it shows up on the panel. */
+export function unreadableReason(response: ModelResponse) {
+  if (response.stop_reason === 'max_tokens') return 'La respuesta del modelo quedó cortada por su límite de longitud.'
+  if (response.stop_reason === 'refusal') return 'El modelo se negó a responder este pedido.'
+  return `La respuesta del modelo no tenía el formato esperado (${response.stop_reason ?? 'sin motivo'}).`
 }
 
 /**

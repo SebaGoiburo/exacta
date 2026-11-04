@@ -12,6 +12,7 @@ import {
   parseOutput,
   socialRequest,
   topicsRequest,
+  unreadableReason,
   urlsSeen,
   type EngineContext,
   type ModelResponse,
@@ -188,7 +189,7 @@ export async function handleResult(jobId: number, response: ModelResponse) {
 
   if (job.kind === 'topics') {
     const output = parseOutput<{ topics: TopicOutput[] }>(response)
-    if (!output?.topics?.length) return fail(payload, jobId, 'La respuesta del modelo no se pudo leer.')
+    if (!output?.topics?.length) return fail(payload, jobId, unreadableReason(response))
     for (const topic of output.topics) {
       await saveTopic(payload, cleanTopic(topic, seen, data), { origin: 'motor' })
     }
@@ -197,7 +198,7 @@ export async function handleResult(jobId: number, response: ModelResponse) {
 
   if (job.kind === 'idea') {
     const output = parseOutput<{ verdict: 'ratificada' | 'rectificada'; reason: string; topic: TopicOutput }>(response)
-    if (!output?.topic) return fail(payload, jobId, 'La respuesta del modelo no se pudo leer.')
+    if (!output?.topic) return fail(payload, jobId, unreadableReason(response))
     await saveTopic(payload, cleanTopic(output.topic, seen, data), {
       origin: 'idea',
       idea: job.idea ?? undefined,
@@ -212,7 +213,7 @@ export async function handleResult(jobId: number, response: ModelResponse) {
 
   if (job.kind === 'blog') {
     const article = parseOutput<Article>(response)
-    if (!article?.markdown) return fail(payload, jobId, 'El artículo no se pudo leer.')
+    if (!article?.markdown) return fail(payload, jobId, unreadableReason(response))
     const post = await payload.create({
       collection: 'posts',
       overrideAccess: true,
@@ -242,7 +243,7 @@ export async function handleResult(jobId: number, response: ModelResponse) {
   }
 
   const social = parseOutput<Social>(response)
-  if (!social?.video) return fail(payload, jobId, 'Las piezas no se pudieron leer.')
+  if (!social?.video) return fail(payload, jobId, unreadableReason(response))
   const pieces: { kind: 'video' | 'short' | 'linkedin_article' | 'linkedin_post'; title: string; body: string }[] = [
     { kind: 'video', title: social.video.title, body: `${social.video.script}\n\nDESCRIPCIÓN PARA YOUTUBE\n${social.video.description}` },
     ...social.shorts.map((s) => ({ kind: 'short' as const, title: s.title, body: s.script })),
