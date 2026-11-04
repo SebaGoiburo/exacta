@@ -532,6 +532,39 @@ html[lang='en'] [data-hero-title] {
   }
 }
 
+/* Slider: a line filled up to --fill, with a thumb that's easy to catch on a phone. */
+.range {
+  height: 2.25rem;
+  appearance: none;
+  background: transparent;
+  cursor: pointer;
+}
+.range::-webkit-slider-runnable-track {
+  height: 4px;
+  border-radius: 999px;
+  background: linear-gradient(to right, var(--accent) var(--fill), var(--line-strong) var(--fill));
+}
+.range::-moz-range-track {
+  height: 4px;
+  border-radius: 999px;
+  background: linear-gradient(to right, var(--accent) var(--fill), var(--line-strong) var(--fill));
+}
+.range::-webkit-slider-thumb {
+  appearance: none;
+  width: 22px;
+  height: 22px;
+  margin-top: -9px;
+  border-radius: 50%;
+  background: var(--accent);
+}
+.range::-moz-range-thumb {
+  width: 22px;
+  height: 22px;
+  border: 0;
+  border-radius: 50%;
+  background: var(--accent);
+}
+
 /* Measuring ruler: the site's instrument. A gold marker shows the reading on a tick scale. */
 .ruler {
   --v: 0%;

@@ -30,7 +30,7 @@ function Slider({
         <label htmlFor={id} className="font-semibold text-ink">
           {label}
         </label>
-        <output htmlFor={id} className="font-display text-2xl font-semibold text-gold tabular-nums">
+        <output htmlFor={id} className="font-display text-2xl font-semibold text-gold">
           {value}
         </output>
       </div>
@@ -41,7 +41,8 @@ function Slider({
         max={max}
         value={value}
         onChange={(e) => onChange(Number(e.target.value))}
-        className="mt-2 h-9 w-full cursor-pointer accent-[var(--accent)]"
+        className="range mt-2 w-full"
+        style={{ '--fill': `${((value - min) / (max - min)) * 100}%` } as React.CSSProperties}
       />
     </div>
   )
@@ -90,7 +91,7 @@ export function ManualCostCalculator({ task }: { task: string }) {
 
         <div className="lg:col-span-7" data-reveal data-reveal-delay="0.12">
           <div className="border border-line bg-bg-elev p-7 md:p-12" aria-live="polite">
-            <p className="h-display text-[clamp(4.5rem,3rem+8vw,10rem)] leading-[0.9] text-gold tabular-nums">
+            <p className="h-display text-[clamp(4.5rem,3rem+8vw,10rem)] leading-[0.9] text-gold">
               {number(result.hoursPerMonth)}
             </p>
             <p className="mt-4 text-xl font-medium text-ink">{t('reading')}</p>
@@ -102,16 +103,16 @@ export function ManualCostCalculator({ task }: { task: string }) {
             <dl className="mt-8 grid gap-6 sm:grid-cols-2">
               <div>
                 <dt className="text-sm text-ink-soft">{t('workdays')}</dt>
-                <dd className="mt-1 font-display text-3xl font-semibold text-ink tabular-nums">{number(result.workdays)}</dd>
+                <dd className="mt-1 font-display text-3xl font-semibold text-ink">{number(result.workdays)}</dd>
               </div>
               <div>
                 <dt className="text-sm text-ink-soft">{t('fullTime')}</dt>
-                <dd className="mt-1 font-display text-3xl font-semibold text-ink tabular-nums">{number(result.fullTimePeople)}</dd>
+                <dd className="mt-1 font-display text-3xl font-semibold text-ink">{number(result.fullTimePeople)}</dd>
               </div>
               {result.costPerMonth > 0 && (
                 <div className="sm:col-span-2">
                   <dt className="text-sm text-ink-soft">{t('cost')}</dt>
-                  <dd className="mt-1 font-display text-3xl font-semibold text-ink tabular-nums">{number(result.costPerMonth)}</dd>
+                  <dd className="mt-1 font-display text-3xl font-semibold text-ink">{number(result.costPerMonth)}</dd>
                 </div>
               )}
             </dl>

@@ -123,13 +123,11 @@ export async function LandingPage({ landing, locale }: Props) {
       </section>
 
       <section className="bg-surface py-24 md:py-32" aria-labelledby="build-title">
-        <div className="container-x grid gap-12 lg:grid-cols-12">
-          <div className="lg:col-span-4">
-            <h2 id="build-title" className="h-section text-ink lg:sticky lg:top-28" data-reveal>
-              {landing.buildTitle[locale]}
-            </h2>
-          </div>
-          <ul className="grid gap-x-10 gap-y-12 sm:grid-cols-2 lg:col-span-8">
+        <div className="container-x">
+          <h2 id="build-title" className="h-section text-ink" data-reveal>
+            {landing.buildTitle[locale]}
+          </h2>
+          <ul className="mt-14 grid gap-x-10 gap-y-12 sm:grid-cols-2 lg:grid-cols-4">
             {landing.build.map((b) => (
               <li key={b.title.es} className="border-t-2 border-accent pt-5" data-reveal>
                 <h3 className="text-xl font-semibold leading-snug tracking-[-0.015em] text-ink md:text-2xl">{b.title[locale]}</h3>
@@ -152,7 +150,7 @@ export async function LandingPage({ landing, locale }: Props) {
           <ol className="mt-14 grid gap-10 md:grid-cols-3">
             {(t.raw('steps.items') as { title: string; body: string }[]).map((step, i) => (
               <li key={step.title} data-reveal data-reveal-delay={i * 0.06}>
-                <span aria-hidden className="font-display text-5xl font-semibold tracking-[-0.04em] text-gold tabular-nums">
+                <span aria-hidden className="font-display text-5xl font-semibold tracking-[-0.04em] text-gold">
                   {i + 1}
                 </span>
                 <h3 className="mt-5 text-2xl font-semibold tracking-[-0.02em] text-ink">{step.title}</h3>
@@ -230,8 +228,9 @@ async function CaseProof({ story, locale }: { story: CaseStudy; locale: Locale }
         <p className="text-ink-soft">{story.role[locale]}</p>
       </div>
       <div className="lg:col-span-7">
-        <p className="h-display text-[clamp(3.25rem,2rem+6vw,7.5rem)] leading-[0.95] text-gold tabular-nums" data-reveal>
-          {story.metric.before[locale]} <span aria-hidden>→</span> {story.metric.after[locale]}
+        <p className="h-display text-[clamp(2.75rem,1.5rem+5vw,6rem)] leading-[0.95] text-gold" data-reveal>
+          <span className="whitespace-nowrap">{story.metric.before[locale]}</span> <span aria-hidden>→</span>{' '}
+          <span className="whitespace-nowrap">{story.metric.after[locale]}</span>
         </p>
         <p className="mt-4 text-lg text-ink" data-reveal>
           {story.metric.label[locale]}
