@@ -2,8 +2,8 @@ import type { Faq, Localized } from './types'
 
 /*
  * Pages by solution and by industry, aimed at search and at campaigns.
- * Proof only points to real work: a case, a product of ours, a client already public on the
- * site, or something a visitor can try. An industry without any of those doesn't get a page.
+ * Proof only points to real work: a case, a product of ours, or something a visitor can try.
+ * An industry without any of those doesn't get a page.
  */
 
 export type LandingKind = 'soluciones' | 'industrias'
@@ -29,8 +29,6 @@ export type Landing = {
     productSlugs?: string[]
     /** Something of ours a visitor can try right now. */
     tryIt?: 'agent' | 'diagnostic'
-    /** Files in /public/clients, from the client list already published on the home page. */
-    clients?: { name: string; file: string }[]
   }
   faqs: Faq[]
 }
@@ -519,6 +517,13 @@ export const landings: Landing[] = [
           en: 'Yes. We work with independent professionals, small and mid-sized businesses, larger companies and public bodies, and fit the scope to each operation.',
         },
       },
+      {
+        q: { es: '¿Trabajan con organismos públicos?', en: 'Do you work with public bodies?' },
+        a: {
+          es: 'Sí. La Municipalidad de Santa Rosa es cliente nuestro: desarrollamos sus sitios web y una aplicación, y la acompañamos con soporte, mantenimiento y asesoramiento en transformación digital.',
+          en: 'Yes. The Municipality of Santa Rosa is a current client: we built its websites and an application, and we support it with maintenance, support and digital transformation advice.',
+        },
+      },
       ask.cost,
     ],
   },
@@ -615,10 +620,7 @@ export const landings: Landing[] = [
       },
     ],
     task: { es: 'gestionar turnos, cambios y cobros', en: 'managing bookings, changes and payments' },
-    proof: {
-      caseSlug: 'soledad-greco',
-      clients: [{ name: 'Hospital Dr. Carlos Saporiti', file: 'hospital-saporiti' }],
-    },
+    proof: { caseSlug: 'soledad-greco' },
     faqs: [
       {
         q: { es: '¿Sirve para un consultorio chico?', en: 'Does it work for a small practice?' },
@@ -635,10 +637,10 @@ export const landings: Landing[] = [
         },
       },
       {
-        q: { es: '¿Trabajan también con instituciones?', en: 'Do you also work with institutions?' },
+        q: { es: '¿Trabajan con clínicas y empresas de salud?', en: 'Do you work with clinics and healthcare companies?' },
         a: {
-          es: 'Sí, también trabajamos con instituciones. Cada una tiene otros procesos y otros sistemas, así que el alcance se define en el diagnóstico.',
-          en: 'Yes, we also work with institutions. Each one has different processes and systems, so the scope is defined in the assessment.',
+          es: 'Sí, a ellas apuntamos. Hicimos numerosos sitios web para el sector y hoy tenemos como clientes activos a profesionales de la salud. Cada empresa tiene otros procesos y otros sistemas, así que el alcance se define en el diagnóstico.',
+          en: 'Yes, that is who we aim to serve. We have built many healthcare websites and currently have healthcare professionals as active clients. Each company has different processes and systems, so the scope is defined in the assessment.',
         },
       },
       ask.cost,
@@ -967,13 +969,7 @@ export const landings: Landing[] = [
       },
     ],
     task: { es: 'registrar pagos y avisar vencimientos', en: 'recording payments and sending due-date reminders' },
-    proof: {
-      productSlugs: ['cuota-al-dia'],
-      clients: [
-        { name: 'Municipalidad de Santa Rosa', file: 'santa-rosa' },
-        { name: 'Fundación De Todo Corazón', file: 'de-todo-corazon' },
-      ],
-    },
+    proof: { productSlugs: ['cuota-al-dia'] },
     faqs: [
       {
         q: { es: '¿Para qué organizaciones sirve?', en: 'What organizations is it for?' },

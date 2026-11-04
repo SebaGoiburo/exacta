@@ -50,8 +50,8 @@ test('every landing shows real proof, and it exists', () => {
   const realCases = cases.filter((c) => !c.placeholder).map((c) => c.slug)
   const productSlugs = products.map((p) => p.slug)
   for (const l of landings) {
-    const { caseSlug, productSlugs: used = [], tryIt, clients = [] } = l.proof
-    assert.ok(caseSlug || used.length || tryIt || clients.length, `${l.slug} has no proof`)
+    const { caseSlug, productSlugs: used = [], tryIt } = l.proof
+    assert.ok(caseSlug || used.length || tryIt, `${l.slug} has no proof`)
     if (caseSlug) assert.ok(realCases.includes(caseSlug), `${l.slug}: unknown case ${caseSlug}`)
     for (const slug of used) assert.ok(productSlugs.includes(slug), `${l.slug}: unknown product ${slug}`)
   }

@@ -171,7 +171,7 @@ export async function LandingPage({ landing, locale }: Props) {
 }
 
 async function Proof({ landing, locale }: Props) {
-  const { caseSlug, productSlugs = [], tryIt, clients = [] } = landing.proof
+  const { caseSlug, productSlugs = [], tryIt } = landing.proof
   const t = await getTranslations('landing')
   const cases = caseSlug ? await getCases() : []
   const products = productSlugs.length ? await getProducts() : []
@@ -190,23 +190,6 @@ async function Proof({ landing, locale }: Props) {
             <ProductProof key={p.slug} product={p} locale={locale} flip={i % 2 === 1} />
           ))}
           {tryIt && <TryIt kind={tryIt} />}
-          {clients.length > 0 && (
-            <div data-reveal>
-              <h3 className="text-xl font-semibold tracking-[-0.015em] text-ink">{t('clients')}</h3>
-              <ul className="mt-6 flex flex-wrap items-center gap-12">
-                {clients.map((c) => (
-                  <li key={c.file}>
-                    <div
-                      role="img"
-                      aria-label={c.name}
-                      className="logo-mask size-24"
-                      style={{ maskImage: `url(/clients/${c.file}.webp)`, WebkitMaskImage: `url(/clients/${c.file}.webp)` }}
-                    />
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
         </div>
       </div>
     </section>
