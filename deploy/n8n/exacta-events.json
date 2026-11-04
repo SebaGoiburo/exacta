@@ -71,6 +71,24 @@
             "index": 0
           }
         ],
+        [
+          {
+            "node": "¿Email suelto?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "¿Email suelto?": {
+      "main": [
+        [
+          {
+            "node": "Email suelto",
+            "type": "main",
+            "index": 0
+          }
+        ],
         []
       ]
     }
@@ -220,9 +238,7 @@
         1100,
         -200
       ],
-      "disabled": true,
       "onError": "continueRegularOutput",
-      "notes": "Activar después de cargar la credencial SMTP de Hostinger.",
       "parameters": {
         "fromEmail": "Exacta <contacto@exactatransformaciondigital.com>",
         "toEmail": "={{ $('Verificar firma').first().json.data.email.to }}",
@@ -249,15 +265,73 @@
         1100,
         0
       ],
-      "disabled": true,
       "onError": "continueRegularOutput",
-      "notes": "Activar después de cargar la credencial SMTP de Hostinger.",
       "parameters": {
         "fromEmail": "Exacta <contacto@exactatransformaciondigital.com>",
         "toEmail": "={{ $('Verificar firma').first().json.data.notice.to }}",
         "subject": "={{ $('Verificar firma').first().json.data.notice.subject }}",
         "emailFormat": "html",
         "html": "={{ $('Verificar firma').first().json.data.notice.html }}",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "credentials": {
+        "smtp": {
+          "id": "exactaSmtp000001",
+          "name": "SMTP Hostinger"
+        }
+      }
+    },
+    {
+      "id": "6b1f0a10-0000-4000-8000-000000000020",
+      "name": "¿Email suelto?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1100,
+        120
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "single",
+              "leftValue": "={{ $('Verificar firma').first().json.event }}",
+              "rightValue": "email.send",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "6b1f0a10-0000-4000-8000-000000000021",
+      "name": "Email suelto",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [
+        1320,
+        120
+      ],
+      "onError": "continueRegularOutput",
+      "parameters": {
+        "fromEmail": "Exacta <contacto@exactatransformaciondigital.com>",
+        "toEmail": "={{ $('Verificar firma').first().json.data.email.to }}",
+        "subject": "={{ $('Verificar firma').first().json.data.email.subject }}",
+        "emailFormat": "html",
+        "html": "={{ $('Verificar firma').first().json.data.email.html }}",
         "options": {
           "appendAttribution": false
         }

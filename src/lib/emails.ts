@@ -58,6 +58,37 @@ export function contactEmail(a: { locale: Locale; name: string }): Message {
   }
 }
 
+export function confirmSubscriptionEmail(a: { locale: Locale; url: string }): Message {
+  const es = a.locale === 'es'
+  return {
+    subject: es ? 'Confirmá tu suscripción al blog de Exacta' : 'Confirm your subscription to the Exacta blog',
+    html: shell(
+      `<p>${
+        es
+          ? 'Recibimos un pedido para enviar los artículos del blog de Exacta a este email. Confirmalo con este botón:'
+          : 'We received a request to send the Exacta blog articles to this email. Confirm it with this button:'
+      }</p>${button(a.url, es ? 'Confirmar suscripción' : 'Confirm subscription')}<p style="font-size:14px;color:#46566a">${
+        es ? 'Si no lo pediste, ignorá este mensaje y no vas a recibir nada más.' : "If you didn't ask for this, ignore this message and you won't get anything else."
+      }</p>`,
+    ),
+  }
+}
+
+export function postEmail(a: { locale: Locale; title: string; excerpt: string; url: string; unsubscribeUrl: string }): Message {
+  const es = a.locale === 'es'
+  return {
+    subject: a.title,
+    html: shell(
+      `<p style="margin:0 0 8px;font-size:22px;line-height:1.25;font-weight:bold">${esc(a.title)}</p><p>${esc(a.excerpt)}</p>${button(
+        a.url,
+        es ? 'Leer el artículo' : 'Read the article',
+      )}<p style="font-size:13px;color:#46566a">${
+        es ? 'Recibís este email porque te suscribiste al blog.' : 'You get this email because you subscribed to the blog.'
+      } <a href="${esc(a.unsubscribeUrl)}" style="color:#46566a">${es ? 'Darme de baja' : 'Unsubscribe'}</a></p>`,
+    ),
+  }
+}
+
 /** Internal notice for the team. */
 export function teamNotice(a: { title: string; lines: [string, string | number | undefined | null][]; url: string }): Message {
   const rows = a.lines

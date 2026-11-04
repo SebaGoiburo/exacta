@@ -23,6 +23,7 @@ export default buildConfig({
         pipeline: { Component: '@/payload/views/pipeline#PipelineView', path: '/pipeline' },
         conversations: { Component: '@/payload/views/conversations#ConversationsView', path: '/conversaciones' },
         prospecting: { Component: '@/payload/views/prospecting#ProspectingView', path: '/prospeccion' },
+        contentEngine: { Component: '@/payload/views/content-engine#ContentEngineView', path: '/contenidos' },
       },
     },
   },

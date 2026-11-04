@@ -4,6 +4,7 @@ const LINKS = [
   { href: '/admin/pipeline', label: 'Pipeline' },
   { href: '/admin/conversaciones', label: 'Conversaciones' },
   { href: '/admin/prospeccion', label: 'Prospección' },
+  { href: '/admin/contenidos', label: 'Contenidos' },
 ]
 
 /** Work screens that aren't collections. They go first in the side menu because they're used daily. */

@@ -83,6 +83,11 @@ export interface Config {
     conversations: Conversation;
     'conversation-messages': ConversationMessage;
     knowledge: Knowledge;
+    'management-tasks': ManagementTask;
+    'content-topics': ContentTopic;
+    'content-pieces': ContentPiece;
+    'content-jobs': ContentJob;
+    subscribers: Subscriber;
     'payload-kv': PayloadKv;
     'payload-locked-documents': PayloadLockedDocument;
     'payload-preferences': PayloadPreference;
@@ -109,6 +114,11 @@ export interface Config {
     conversations: ConversationsSelect<false> | ConversationsSelect<true>;
     'conversation-messages': ConversationMessagesSelect<false> | ConversationMessagesSelect<true>;
     knowledge: KnowledgeSelect<false> | KnowledgeSelect<true>;
+    'management-tasks': ManagementTasksSelect<false> | ManagementTasksSelect<true>;
+    'content-topics': ContentTopicsSelect<false> | ContentTopicsSelect<true>;
+    'content-pieces': ContentPiecesSelect<false> | ContentPiecesSelect<true>;
+    'content-jobs': ContentJobsSelect<false> | ContentJobsSelect<true>;
+    subscribers: SubscribersSelect<false> | SubscribersSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
     'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
     'payload-preferences': PayloadPreferencesSelect<false> | PayloadPreferencesSelect<true>;
@@ -286,7 +296,9 @@ export interface Post {
   coverImage?: (number | null) | Media;
   publishedAt?: string | null;
   readingMinutes?: number | null;
-  origin?: ('manual' | 'n8n' | 'sample') | null;
+  origin?: ('manual' | 'n8n' | 'motor' | 'sample') | null;
+  sendToSubscribers?: boolean | null;
+  newsletterSentAt?: string | null;
   updatedAt: string;
   createdAt: string;
   _status?: ('draft' | 'published') | null;
@@ -576,6 +588,113 @@ export interface Knowledge {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "management-tasks".
+ */
+export interface ManagementTask {
+  id: number;
+  title: string;
+  description?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "content-topics".
+ */
+export interface ContentTopic {
+  id: number;
+  title: string;
+  origin: 'motor' | 'idea';
+  idea?: string | null;
+  verdict?: ('ratificada' | 'rectificada') | null;
+  status: 'propuesto' | 'generando' | 'generado' | 'descartado';
+  score?: number | null;
+  service?: string | null;
+  analysis?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "content-pieces".
+ */
+export interface ContentPiece {
+  id: number;
+  topic: number | ContentTopic;
+  kind: 'blog' | 'video' | 'short' | 'linkedin_article' | 'linkedin_post';
+  title: string;
+  body?: string | null;
+  post?: (number | null) | Post;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "content-jobs".
+ */
+export interface ContentJob {
+  id: number;
+  kind: 'topics' | 'idea' | 'blog' | 'social';
+  status: 'running' | 'done' | 'failed';
+  topic?: (number | null) | ContentTopic;
+  idea?: string | null;
+  dataUsed?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  request?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  sourcesSeen?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  continuations?: number | null;
+  error?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "subscribers".
+ */
+export interface Subscriber {
+  id: number;
+  email: string;
+  status: 'pendiente' | 'confirmado' | 'baja';
+  locale?: string | null;
+  page?: string | null;
+  confirmedAt?: string | null;
+  token: string;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "payload-kv".
  */
 export interface PayloadKv {
@@ -657,6 +776,26 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'knowledge';
         value: number | Knowledge;
+      } | null)
+    | ({
+        relationTo: 'management-tasks';
+        value: number | ManagementTask;
+      } | null)
+    | ({
+        relationTo: 'content-topics';
+        value: number | ContentTopic;
+      } | null)
+    | ({
+        relationTo: 'content-pieces';
+        value: number | ContentPiece;
+      } | null)
+    | ({
+        relationTo: 'content-jobs';
+        value: number | ContentJob;
+      } | null)
+    | ({
+        relationTo: 'subscribers';
+        value: number | Subscriber;
       } | null);
   globalSlug?: string | null;
   user:
@@ -804,6 +943,8 @@ export interface PostsSelect<T extends boolean = true> {
   publishedAt?: T;
   readingMinutes?: T;
   origin?: T;
+  sendToSubscribers?: T;
+  newsletterSentAt?: T;
   updatedAt?: T;
   createdAt?: T;
   _status?: T;
@@ -1025,6 +1166,76 @@ export interface KnowledgeSelect<T extends boolean = true> {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "management-tasks_select".
+ */
+export interface ManagementTasksSelect<T extends boolean = true> {
+  title?: T;
+  description?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "content-topics_select".
+ */
+export interface ContentTopicsSelect<T extends boolean = true> {
+  title?: T;
+  origin?: T;
+  idea?: T;
+  verdict?: T;
+  status?: T;
+  score?: T;
+  service?: T;
+  analysis?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "content-pieces_select".
+ */
+export interface ContentPiecesSelect<T extends boolean = true> {
+  topic?: T;
+  kind?: T;
+  title?: T;
+  body?: T;
+  post?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "content-jobs_select".
+ */
+export interface ContentJobsSelect<T extends boolean = true> {
+  kind?: T;
+  status?: T;
+  topic?: T;
+  idea?: T;
+  dataUsed?: T;
+  request?: T;
+  sourcesSeen?: T;
+  continuations?: T;
+  error?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "subscribers_select".
+ */
+export interface SubscribersSelect<T extends boolean = true> {
+  email?: T;
+  status?: T;
+  locale?: T;
+  page?: T;
+  confirmedAt?: T;
+  token?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "payload-kv_select".
  */
 export interface PayloadKvSelect<T extends boolean = true> {
@@ -1079,6 +1290,20 @@ export interface Setting {
    */
   handoffPhone?: string | null;
   handoffTemplate?: string | null;
+  contentThemes?: string | null;
+  /**
+   * El motor prioriza los temas que puedan generar negocios en estos servicios.
+   */
+  contentPriorities?: string | null;
+  contentReader?: string | null;
+  /**
+   * Tal como figura en Search Console: sc-domain:tusitio.com o https://tusitio.com/
+   */
+  gscSiteUrl?: string | null;
+  /**
+   * El número que figura en Administrar → Detalles de la propiedad. No es el G-XXXXXXX.
+   */
+  ga4PropertyId?: string | null;
   metaPixelId?: string | null;
   ga4Id?: string | null;
   googleAdsId?: string | null;
@@ -1095,6 +1320,11 @@ export interface SettingsSelect<T extends boolean = true> {
   leadNotifyEmail?: T;
   handoffPhone?: T;
   handoffTemplate?: T;
+  contentThemes?: T;
+  contentPriorities?: T;
+  contentReader?: T;
+  gscSiteUrl?: T;
+  ga4PropertyId?: T;
   metaPixelId?: T;
   ga4Id?: T;
   googleAdsId?: T;

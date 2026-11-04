@@ -34,6 +34,9 @@ const CACHE_VERSION = 'v2'
 const cached = <T,>(slug: string, key: string, fn: () => Promise<T>) =>
   unstable_cache(fn, ['cms', CACHE_VERSION, slug, key], { tags: [cmsTag(slug)] })()
 
+/** English falls back to Spanish when it's missing, so a matching title means nobody translated it. */
+export const isTranslated = (post: Pick<Article, 'title'>) => post.title.en !== post.title.es
+
 export function getProducts(): Promise<Product[]> {
   return cached('products', 'all', async () => {
     const { docs } = await (await cms()).find({ collection: 'products', locale: 'all', sort: 'order', depth: 1, limit: 50 })

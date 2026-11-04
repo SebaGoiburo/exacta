@@ -25,6 +25,7 @@ import { NavLinks as NavLinks_540a903eda1744b7360957c92fd6bca0 } from '@/payload
 import { PipelineView as PipelineView_edf438fd4e81c7d0d7300375f0eace50 } from '@/payload/views/pipeline'
 import { ConversationsView as ConversationsView_28c4e79e239e067b4054ae326e1aec32 } from '@/payload/views/conversations'
 import { ProspectingView as ProspectingView_3696abb3470fb706e7beb52a3a28a0a5 } from '@/payload/views/prospecting'
+import { ContentEngineView as ContentEngineView_3ba54376c4fe1c9e6185d921628ae6d8 } from '@/payload/views/content-engine'
 import { CollectionCards as CollectionCards_f9c02e79a4aed9a3924487c0cd4cafb1 } from '@payloadcms/next/rsc'
 
 /** @type import('payload').ImportMap */
@@ -56,5 +57,6 @@ export const importMap = {
   "@/payload/views/pipeline#PipelineView": PipelineView_edf438fd4e81c7d0d7300375f0eace50,
   "@/payload/views/conversations#ConversationsView": ConversationsView_28c4e79e239e067b4054ae326e1aec32,
   "@/payload/views/prospecting#ProspectingView": ProspectingView_3696abb3470fb706e7beb52a3a28a0a5,
+  "@/payload/views/content-engine#ContentEngineView": ContentEngineView_3ba54376c4fe1c9e6185d921628ae6d8,
   "@payloadcms/next/rsc#CollectionCards": CollectionCards_f9c02e79a4aed9a3924487c0cd4cafb1
 }

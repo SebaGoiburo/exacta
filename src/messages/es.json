@@ -222,7 +222,15 @@
     "minutes": "{n} min de lectura",
     "sample": "Artículo de ejemplo",
     "back": "Volver al blog",
-    "metaTitle": "Blog · Exacta"
+    "metaTitle": "Blog · Exacta",
+    "share": {
+      "label": "Compartir",
+      "linkedin": "Compartir \"{title}\" en LinkedIn",
+      "whatsapp": "Compartir \"{title}\" por WhatsApp",
+      "x": "Compartir \"{title}\" en X",
+      "facebook": "Compartir \"{title}\" en Facebook",
+      "email": "Compartir \"{title}\" por email"
+    }
   },
   "contact": {
     "title": "¿Cuánto estás perdiendo por no digitalizarte?",
@@ -340,11 +348,11 @@
       },
       {
         "h": "Qué datos recopilamos",
-        "p": "Los que completás en nuestros formularios (nombre, email, teléfono, empresa y sitio web), tus respuestas al diagnóstico y lo que nos cuentes en tus mensajes, incluidas las conversaciones por WhatsApp, que primero atiende un asistente virtual con inteligencia artificial y después una persona. También registramos de qué campaña o página llegaste."
+        "p": "Los que completás en nuestros formularios (nombre, email, teléfono, empresa y sitio web), tus respuestas al diagnóstico y lo que nos cuentes en tus mensajes, incluidas las conversaciones por WhatsApp, que primero atiende un asistente virtual con inteligencia artificial y después una persona. También registramos de qué campaña o página llegaste. Si te suscribís al blog, guardamos tu email y la fecha en que confirmaste."
       },
       {
         "h": "Para qué los usamos",
-        "p": "Para enviarte tu lectura, responder tu consulta, contactarte sobre nuestros servicios y evaluar si podemos ayudarte. Con tus respuestas calculamos internamente qué tan cerca está tu empresa de los proyectos en los que trabajamos."
+        "p": "Para enviarte tu lectura, responder tu consulta, contactarte sobre nuestros servicios y evaluar si podemos ayudarte. Con tus respuestas calculamos internamente qué tan cerca está tu empresa de los proyectos en los que trabajamos. Si te suscribiste, también para enviarte los artículos del blog hasta que te des de baja, con el enlace que incluye cada email."
       },
       {
         "h": "Con quién los compartimos",
@@ -413,6 +421,42 @@
           "body": "Recibís alcance, plazos y costo antes de empezar cualquier trabajo."
         }
       ]
+    }
+  },
+  "subscribe": {
+    "title": "Recibí los próximos artículos",
+    "lead": "Ideas prácticas para ordenar la operación de tu empresa con tecnología. Te escribimos cuando publicamos algo nuevo.",
+    "email": "Tu email",
+    "submit": "Suscribirme",
+    "sending": "Enviando…",
+    "consent": "Acepto recibir los artículos por email, según la <link>política de privacidad</link>. Me puedo dar de baja cuando quiera.",
+    "consentRequired": "Necesitamos tu aceptación para suscribirte.",
+    "invalidEmail": "Revisá el email.",
+    "error": "No pudimos registrar tu suscripción. Probá de nuevo.",
+    "sent": "Te enviamos un email para confirmar la suscripción. Revisá tu bandeja de entrada.",
+    "steps": {
+      "confirmar": {
+        "title": "Confirmá tu suscripción",
+        "body": "Con este paso empezás a recibir los artículos del blog de Exacta.",
+        "cta": "Confirmar suscripción"
+      },
+      "baja": {
+        "title": "¿Querés darte de baja?",
+        "body": "Vas a dejar de recibir los artículos del blog de Exacta.",
+        "cta": "Darme de baja"
+      },
+      "confirmada": {
+        "title": "Suscripción confirmada",
+        "body": "Te vamos a escribir cuando publiquemos un artículo nuevo."
+      },
+      "baja-lista": {
+        "title": "Te diste de baja",
+        "body": "No vas a recibir más artículos. Podés volver a suscribirte desde el blog."
+      },
+      "invalido": {
+        "title": "Este enlace ya no sirve",
+        "body": "Puede que haya vencido o que ya lo hayas usado. Podés volver a suscribirte desde el blog."
+      }
     }
   }
 }

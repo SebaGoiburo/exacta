@@ -4,6 +4,8 @@ import { Link } from '@/i18n/navigation'
 import type { Locale } from '@/i18n/routing'
 import { formatDate, getPosts } from '@/lib/content'
 import { pageAlternates } from '@/lib/seo'
+import { ShareButtons } from '@/components/blog/share-buttons'
+import { SubscribeForm } from '@/components/blog/subscribe-form'
 import { ArrowRight } from '@/components/ui/icons'
 
 // Reads the CMS on each request (cached per collection), so the build needs no database.
@@ -37,7 +39,7 @@ export default async function BlogIndex({ params }: Props) {
           <li key={p.slug} className="border-b border-line" data-reveal data-reveal-delay={i * 0.05}>
             <Link
               href={`/blog/${p.slug}`}
-              className="svc-row group grid gap-3 px-1 py-9 md:grid-cols-12 md:items-baseline md:gap-8 md:px-4"
+              className="svc-row group grid gap-3 px-1 pt-9 pb-5 md:grid-cols-12 md:items-baseline md:gap-8 md:px-4"
             >
               <p className="text-sm text-ink-soft md:col-span-3">
                 {formatDate(p.date, locale)}
@@ -55,9 +57,18 @@ export default async function BlogIndex({ params }: Props) {
                 </span>
               </span>
             </Link>
+            <div className="px-1 pb-8 md:grid md:grid-cols-12 md:gap-8 md:px-4">
+              <div className="md:col-span-8 md:col-start-4">
+                <ShareButtons slug={p.slug} title={p.title[locale]} excerpt={p.excerpt[locale]} />
+              </div>
+            </div>
           </li>
         ))}
       </ul>
+
+      <div className="mt-20" data-reveal>
+        <SubscribeForm />
+      </div>
     </div>
   )
 }

@@ -54,6 +54,23 @@ export function LinkedIn({ className }: IconProps) {
   )
 }
 
+export function XLogo({ className }: IconProps) {
+  return (
+    <svg viewBox="0 0 24 24" fill="currentColor" className={className} aria-hidden>
+      <path d="M17.53 3h3.07l-6.7 7.66L21.8 21h-6.17l-4.83-6.32L5.27 21H2.2l7.17-8.2L1.8 3h6.33l4.37 5.77L17.53 3Zm-1.08 16.17h1.7L7.2 4.74H5.38l11.07 14.43Z" />
+    </svg>
+  )
+}
+
+export function Mail({ className }: IconProps) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className={className} aria-hidden>
+      <rect x="3" y="5" width="18" height="14" rx="2" />
+      <path d="m3.5 6.5 8.5 7 8.5-7" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  )
+}
+
 export function Facebook({ className }: IconProps) {
   return (
     <svg viewBox="0 0 24 24" fill="currentColor" className={className} aria-hidden>

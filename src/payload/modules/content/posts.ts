@@ -1,5 +1,6 @@
-import type { CollectionBeforeChangeHook, CollectionConfig } from 'payload'
+import { APIError, type CollectionAfterChangeHook, type CollectionBeforeChangeHook, type CollectionConfig } from 'payload'
 import { convertMarkdownToLexical, editorConfigFactory } from '@payloadcms/richtext-lexical'
+import { EXPERIENCE_MARKER } from '../../../lib/content-engine/markers'
 import { isAuthenticated, publishedOrAuthenticated } from '../../access'
 import { slugField } from '../../fields'
 import { revalidateCollection } from '../../hooks/revalidate'
@@ -22,8 +23,28 @@ const fromMarkdown: CollectionBeforeChangeHook = async ({ data, req }) => {
     const words = data.markdown.split(/\s+/).filter(Boolean).length
     data.readingMinutes = Math.max(1, Math.round(words / 200))
   }
+  if (data._status === 'published' && JSON.stringify(data.content ?? '').includes(EXPERIENCE_MARKER)) {
+    throw new APIError(
+      `Este artículo todavía tiene marcas ${EXPERIENCE_MARKER}…]: completalas con experiencia real o borralas antes de publicar.`,
+      400,
+      undefined,
+      true,
+    )
+  }
   if (data._status === 'published' && !data.publishedAt) data.publishedAt = new Date().toISOString()
   return data
+}
+
+/** Sends the article the first time it goes out. Editing it later never sends it again. */
+const notifySubscribers: CollectionAfterChangeHook = ({ doc, previousDoc, req }) => {
+  const justPublished = doc._status === 'published' && previousDoc?._status !== 'published'
+  if (justPublished && doc.sendToSubscribers && !doc.newsletterSentAt && doc.origin !== 'sample') {
+    // Loaded here because it reads the Payload config, which imports this file.
+    import('../../../lib/newsletter')
+      .then(({ sendPostToSubscribers }) => sendPostToSubscribers(req.payload, doc))
+      .catch((err) => console.error('[newsletter] not sent', err))
+  }
+  return doc
 }
 
 export const Posts: CollectionConfig = {
@@ -44,7 +65,7 @@ export const Posts: CollectionConfig = {
   defaultSort: '-publishedAt',
   hooks: {
     beforeChange: [fromMarkdown],
-    afterChange: [...revalidateCollection('posts').afterChange, ...n8nEvents('posts').afterChange],
+    afterChange: [...revalidateCollection('posts').afterChange, ...n8nEvents('posts').afterChange, notifySubscribers],
     afterDelete: revalidateCollection('posts').afterDelete,
   },
   fields: [
@@ -78,9 +99,23 @@ export const Posts: CollectionConfig = {
       options: [
         { label: 'Escrito en el panel', value: 'manual' },
         { label: 'Propuesto por n8n', value: 'n8n' },
+        { label: 'Motor de contenidos', value: 'motor' },
         { label: 'Ejemplo', value: 'sample' },
       ],
       admin: { position: 'sidebar' },
+    },
+    {
+      name: 'sendToSubscribers',
+      type: 'checkbox',
+      label: 'Enviar a los suscriptores al publicar',
+      defaultValue: true,
+      admin: { position: 'sidebar' },
+    },
+    {
+      name: 'newsletterSentAt',
+      type: 'date',
+      label: 'Enviado a los suscriptores el',
+      admin: { position: 'sidebar', readOnly: true, date: { pickerAppearance: 'dayAndTime' } },
     },
   ],
 }

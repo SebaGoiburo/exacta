@@ -49,6 +49,44 @@ export const Settings: GlobalConfig = {
     },
     {
       type: 'collapsible',
+      label: 'Motor de contenidos',
+      fields: [
+        {
+          name: 'contentThemes',
+          type: 'textarea',
+          label: 'Temáticas',
+          defaultValue: 'Transformación digital, desarrollo de software e IA aplicada a empresas.',
+        },
+        {
+          name: 'contentPriorities',
+          type: 'textarea',
+          label: 'Qué queremos vender primero',
+          admin: { description: 'El motor prioriza los temas que puedan generar negocios en estos servicios.' },
+          defaultValue:
+            '1. Software a medida\n2. Automatización e IA\n3. Sistema de reserva de turnos y notificaciones automáticas\n4. Agentes de IA',
+        },
+        {
+          name: 'contentReader',
+          type: 'textarea',
+          label: 'Lector objetivo',
+          defaultValue: 'Mandos medios y gerentes de empresas hispanohablantes de Latinoamérica.',
+        },
+        {
+          name: 'gscSiteUrl',
+          type: 'text',
+          label: 'Propiedad de Search Console',
+          admin: { description: 'Tal como figura en Search Console: sc-domain:tusitio.com o https://tusitio.com/' },
+        },
+        {
+          name: 'ga4PropertyId',
+          type: 'text',
+          label: 'ID de propiedad de Google Analytics',
+          admin: { description: 'El número que figura en Administrar → Detalles de la propiedad. No es el G-XXXXXXX.' },
+        },
+      ],
+    },
+    {
+      type: 'collapsible',
       label: 'Píxeles y analítica',
       admin: { description: 'Se cargan solo si la persona acepta las cookies.' },
       fields: [

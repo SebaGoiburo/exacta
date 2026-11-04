@@ -4,9 +4,11 @@ import { getTranslations, setRequestLocale } from 'next-intl/server'
 import { Link } from '@/i18n/navigation'
 import type { Locale } from '@/i18n/routing'
 import { RichText } from '@payloadcms/richtext-lexical/react'
-import { formatDate, getPost } from '@/lib/content'
-import { absoluteUrl, pageAlternates } from '@/lib/seo'
+import { formatDate, getPost, isTranslated } from '@/lib/content'
+import { absoluteUrl, localePath, pageAlternates } from '@/lib/seo'
 import { site } from '@/lib/site'
+import { ShareButtons } from '@/components/blog/share-buttons'
+import { SubscribeForm } from '@/components/blog/subscribe-form'
 import { JsonLd } from '@/components/seo/json-ld'
 import { ArrowRight } from '@/components/ui/icons'
 
@@ -19,12 +21,14 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { locale, slug } = (await params) as { locale: Locale; slug: string }
   const post = await getPost(slug)
   if (!post) return {}
+  // An article only in Spanish shown under /en would compete with itself, so it points to the original.
+  const untranslated = locale !== 'es' && !isTranslated(post)
   return {
     title: `${post.title[locale]} · Exacta`,
     description: post.excerpt[locale],
-    alternates: pageAlternates(locale, `/blog/${slug}`),
+    alternates: untranslated ? { canonical: localePath('es', `/blog/${slug}`) } : pageAlternates(locale, `/blog/${slug}`),
     // Sample articles are placeholders and stay out of search engines.
-    ...(post.sample ? { robots: { index: false, follow: true } } : {}),
+    ...(post.sample || untranslated ? { robots: { index: false, follow: true } } : {}),
     openGraph: {
       type: 'article',
       title: post.title[locale],
@@ -82,9 +86,18 @@ export default async function BlogPost({ params }: Props) {
         </p>
         <h1 className="h-display mt-5 text-[clamp(2.25rem,1.6rem+2.8vw,4rem)] text-ink">{post.title[locale]}</h1>
         <p className="mt-6 text-xl leading-relaxed text-ink-soft">{post.excerpt[locale]}</p>
-        <div className="mt-12 border-t border-line pt-12">
+        <div className="mt-8">
+          <ShareButtons slug={slug} title={post.title[locale]} excerpt={post.excerpt[locale]} />
+        </div>
+        <div className="mt-10 border-t border-line pt-12">
           {post.content[locale] && <RichText data={post.content[locale]} className="rich" />}
         </div>
+        <div className="mt-14 border-t border-line pt-8">
+          <ShareButtons slug={slug} title={post.title[locale]} excerpt={post.excerpt[locale]} />
+        </div>
+      </div>
+      <div className="mt-20">
+        <SubscribeForm />
       </div>
     </article>
   )

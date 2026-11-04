@@ -2,6 +2,7 @@ import * as migration_20261029_114539_initial from './20261029_114539_initial';
 import * as migration_20261029_121545_integrations from './20261029_121545_integrations';
 import * as migration_20261102_232253_phase1 from './20261102_232253_phase1';
 import * as migration_20261103_145803_whatsapp from './20261103_145803_whatsapp';
+import * as migration_20261104_142821_content_engine from './20261104_142821_content_engine';
 
 export const migrations = [
   {
@@ -22,6 +23,11 @@ export const migrations = [
   {
     up: migration_20261103_145803_whatsapp.up,
     down: migration_20261103_145803_whatsapp.down,
-    name: '20261103_145803_whatsapp'
+    name: '20261103_145803_whatsapp',
+  },
+  {
+    up: migration_20261104_142821_content_engine.up,
+    down: migration_20261104_142821_content_engine.down,
+    name: '20261104_142821_content_engine'
   },
 ];

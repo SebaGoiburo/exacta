@@ -15,9 +15,12 @@ services:
       # Reachable over the Docker network, so events never leave the server.
       N8N_EVENTS_WEBHOOK_URL: http://n8n:5678/webhook/exacta-events
       N8N_WHATSAPP_SEND_URL: http://n8n:5678/webhook/exacta-whatsapp-send
+      N8N_CONTENT_URL: http://n8n:5678/webhook/exacta-content
       N8N_WEBHOOK_SECRET: ${N8N_WEBHOOK_SECRET}
       # Prospecting stays off until this is set.
       GOOGLE_MAPS_API_KEY: ${GOOGLE_MAPS_API_KEY:-}
+      # Read-only access to Search Console and Analytics. The engine works without it, on web research alone.
+      GOOGLE_SERVICE_ACCOUNT_B64: ${GOOGLE_SERVICE_ACCOUNT_B64:-}
     depends_on:
       db:
         condition: service_healthy

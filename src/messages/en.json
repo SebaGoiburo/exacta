@@ -222,7 +222,15 @@
     "minutes": "{n} min read",
     "sample": "Sample article",
     "back": "Back to the blog",
-    "metaTitle": "Blog · Exacta"
+    "metaTitle": "Blog · Exacta",
+    "share": {
+      "label": "Share",
+      "linkedin": "Share \"{title}\" on LinkedIn",
+      "whatsapp": "Share \"{title}\" on WhatsApp",
+      "x": "Share \"{title}\" on X",
+      "facebook": "Share \"{title}\" on Facebook",
+      "email": "Share \"{title}\" by email"
+    }
   },
   "contact": {
     "title": "How much is staying offline costing you?",
@@ -340,11 +348,11 @@
       },
       {
         "h": "What we collect",
-        "p": "What you enter in our forms (name, email, phone, company and website), your assessment answers and whatever you tell us in your messages, including WhatsApp conversations, which a virtual assistant powered by artificial intelligence answers first and a person afterwards. We also record which campaign or page brought you here."
+        "p": "What you enter in our forms (name, email, phone, company and website), your assessment answers and whatever you tell us in your messages, including WhatsApp conversations, which a virtual assistant powered by artificial intelligence answers first and a person afterwards. We also record which campaign or page brought you here. If you subscribe to the blog, we keep your email and the date you confirmed."
       },
       {
         "h": "What we use it for",
-        "p": "To send you your reading, answer your inquiry, contact you about our services and assess whether we can help. From your answers we internally estimate how close your company is to the projects we work on."
+        "p": "To send you your reading, answer your inquiry, contact you about our services and assess whether we can help. From your answers we internally estimate how close your company is to the projects we work on. If you subscribed, also to send you the blog articles until you unsubscribe, using the link in each email."
       },
       {
         "h": "Who we share it with",
@@ -413,6 +421,42 @@
           "body": "You get scope, timeline and cost before any work starts."
         }
       ]
+    }
+  },
+  "subscribe": {
+    "title": "Get the next articles",
+    "lead": "Practical ideas to bring order to your business with technology. We write when we publish something new.",
+    "email": "Your email",
+    "submit": "Subscribe",
+    "sending": "Sending…",
+    "consent": "I agree to get the articles by email, under the <link>privacy policy</link>. I can unsubscribe at any time.",
+    "consentRequired": "We need your consent to subscribe you.",
+    "invalidEmail": "Check the email.",
+    "error": "We couldn't save your subscription. Please try again.",
+    "sent": "We sent you an email to confirm your subscription. Check your inbox.",
+    "steps": {
+      "confirmar": {
+        "title": "Confirm your subscription",
+        "body": "With this step you start getting the Exacta blog articles.",
+        "cta": "Confirm subscription"
+      },
+      "baja": {
+        "title": "Do you want to unsubscribe?",
+        "body": "You'll stop getting the Exacta blog articles.",
+        "cta": "Unsubscribe"
+      },
+      "confirmada": {
+        "title": "Subscription confirmed",
+        "body": "We'll write when we publish a new article."
+      },
+      "baja-lista": {
+        "title": "You're unsubscribed",
+        "body": "You won't get any more articles. You can subscribe again from the blog."
+      },
+      "invalido": {
+        "title": "This link no longer works",
+        "body": "It may have expired or already been used. You can subscribe again from the blog."
+      }
     }
   }
 }

@@ -2,6 +2,7 @@ import { getLocale, getTranslations } from 'next-intl/server'
 import { Link } from '@/i18n/navigation'
 import type { Locale } from '@/i18n/routing'
 import { formatDate, getPosts } from '@/lib/content'
+import { ShareButtons } from '@/components/blog/share-buttons'
 import { ArrowRight } from '@/components/ui/icons'
 
 export async function BlogTeaser() {
@@ -29,38 +30,47 @@ export async function BlogTeaser() {
         </div>
 
         <div className="mt-14 grid gap-6 lg:grid-cols-12">
-          <Link
-            href={`/blog/${featured.slug}`}
-            className="group flex min-h-[380px] flex-col bg-bg-elev p-8 transition-colors hover:bg-bg md:p-10 lg:col-span-7"
+          <article
+            className="group relative flex min-h-[380px] flex-col bg-bg-elev p-8 transition-colors hover:bg-bg md:p-10 lg:col-span-7"
             data-reveal
           >
             <p className="text-sm text-ink-soft">
               {formatDate(featured.date, locale)} · {t('minutes', { n: featured.readingMinutes })}
             </p>
             <h3 className="mt-auto pt-16 text-[clamp(1.75rem,1.2rem+2vw,2.75rem)] font-semibold leading-[1.08] tracking-[-0.03em] text-ink">
-              {featured.title[locale]}
+              {/* The link stretches over the whole card. The share buttons sit above it. */}
+              <Link href={`/blog/${featured.slug}`} className="after:absolute after:inset-0">
+                {featured.title[locale]}
+              </Link>
             </h3>
             <p className="mt-4 max-w-lg leading-relaxed text-ink-soft">{featured.excerpt[locale]}</p>
             <span className="mt-8 inline-flex items-center gap-2 text-sm font-semibold text-accent">
               {t('read')}
               <ArrowRight className="size-4 transition-transform duration-300 group-hover:translate-x-1" />
             </span>
-          </Link>
+            <div className="mt-6">
+              <ShareButtons slug={featured.slug} title={featured.title[locale]} excerpt={featured.excerpt[locale]} />
+            </div>
+          </article>
 
           <div className="grid gap-6 lg:col-span-5">
             {rest.map((p, i) => (
-              <Link
+              <article
                 key={p.slug}
-                href={`/blog/${p.slug}`}
-                className="group flex flex-col bg-bg-elev p-8 transition-colors hover:bg-bg"
+                className="group relative flex flex-col bg-bg-elev p-8 transition-colors hover:bg-bg"
                 data-reveal
                 data-reveal-delay={0.08 * (i + 1)}
               >
                 <p className="text-sm text-ink-soft">{formatDate(p.date, locale)}</p>
                 <h3 className="mt-6 text-xl font-semibold leading-snug tracking-[-0.02em] text-ink transition-colors group-hover:text-accent">
-                  {p.title[locale]}
+                  <Link href={`/blog/${p.slug}`} className="after:absolute after:inset-0">
+                    {p.title[locale]}
+                  </Link>
                 </h3>
-              </Link>
+                <div className="mt-5">
+                  <ShareButtons slug={p.slug} title={p.title[locale]} excerpt={p.excerpt[locale]} />
+                </div>
+              </article>
             ))}
           </div>
         </div>
