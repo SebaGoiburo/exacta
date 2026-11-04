@@ -121,7 +121,7 @@ function TopicCard({
           <h3>{topic.title}</h3>
           <p className={styles.meta}>
             {topic.service}
-            {' · Demanda: '}
+            {' · Demanda estimada: '}
             {DEMAND_LABEL[a.demand] ?? a.demand}
             {topic.origin === 'idea' && ' · Idea nuestra'}
           </p>

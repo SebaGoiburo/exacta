@@ -33,7 +33,7 @@ export function SiteFooter({ hasTracking = false }: { hasTracking?: boolean }) {
         </div>
 
         {groups.map((group) => (
-          <div key={group.title} className="lg:col-span-3">
+          <div key={group.title} className="lg:col-span-2">
             <p className="eyebrow">{group.title}</p>
             <ul className="mt-5 space-y-3 text-sm">
               {group.items.map((item) => (
@@ -47,7 +47,7 @@ export function SiteFooter({ hasTracking = false }: { hasTracking?: boolean }) {
           </div>
         ))}
 
-        <div className="lg:col-span-3">
+        <div className="sm:col-span-2 lg:col-span-5 lg:pl-8">
           <p className="eyebrow">{t('contact')}</p>
           <ul className="mt-5 space-y-3 text-sm">
             <li>

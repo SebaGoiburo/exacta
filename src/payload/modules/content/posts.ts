@@ -1,4 +1,4 @@
-import { APIError, type CollectionAfterChangeHook, type CollectionBeforeChangeHook, type CollectionConfig } from 'payload'
+import { ValidationError, type CollectionAfterChangeHook, type CollectionBeforeChangeHook, type CollectionConfig } from 'payload'
 import { convertMarkdownToLexical, editorConfigFactory } from '@payloadcms/richtext-lexical'
 import { EXPERIENCE_MARKER } from '../../../lib/content-engine/markers'
 import { isAuthenticated, publishedOrAuthenticated } from '../../access'
@@ -24,12 +24,15 @@ const fromMarkdown: CollectionBeforeChangeHook = async ({ data, req }) => {
     data.readingMinutes = Math.max(1, Math.round(words / 200))
   }
   if (data._status === 'published' && JSON.stringify(data.content ?? '').includes(EXPERIENCE_MARKER)) {
-    throw new APIError(
-      `Este artículo todavía tiene marcas ${EXPERIENCE_MARKER}…]: completalas con experiencia real o borralas antes de publicar.`,
-      400,
-      undefined,
-      true,
-    )
+    throw new ValidationError({
+      collection: 'posts',
+      errors: [
+        {
+          path: 'content',
+          message: `Este artículo todavía tiene marcas ${EXPERIENCE_MARKER}…]: completalas con experiencia real o borralas antes de publicar.`,
+        },
+      ],
+    })
   }
   if (data._status === 'published' && !data.publishedAt) data.publishedAt = new Date().toISOString()
   return data
