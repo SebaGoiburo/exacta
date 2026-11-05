@@ -54,8 +54,10 @@ docker compose restart n8n
 Cada push a `main` compila la imagen y la despliega. El usuario `exacta` del VPS solo puede
 ejecutar `deploy.sh` con la clave que usa GitHub.
 
-## Pasar al dominio principal
+## Dominios
 
-1. Agregar `exactatransformaciondigital.com` y `www` a `nginx/exacta-web.conf` y correr certbot.
-2. Cambiar `NEXT_PUBLIC_SERVER_URL` y recrear el contenedor `web`.
-3. Apuntar los registros `@` y `www` del DNS al VPS, sin tocar los de correo.
+- `exactatransformaciondigital.com` es el sitio (`nginx/exacta-main.conf`). `www` redirige ahí.
+- `nuevo.exactatransformaciondigital.com` redirige al dominio principal (`nginx/exacta-web.conf`), para que no se rompan los enlaces viejos.
+- El webhook de WhatsApp vive en `n8n.exactatransformaciondigital.com`.
+- El correo sigue en Hostinger: sus registros `MX`, `TXT` y `CNAME` no apuntan al VPS.
+- El sitio solo se indexa si `NEXT_PUBLIC_SERVER_URL` es exactamente el dominio principal.
