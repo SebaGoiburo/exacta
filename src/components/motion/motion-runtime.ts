@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, type RefObject } from 'react'
+import { useLayoutEffect, type RefObject } from 'react'
 import type { gsap as Gsap } from 'gsap'
 import type { ScrollTrigger as ScrollTriggerType } from 'gsap/ScrollTrigger'
 
@@ -47,6 +47,18 @@ export function whenIdle(run: () => void): () => void {
 }
 
 let refreshQueued = false
+let heldAnchor: { element: Element; top: number } | null = null
+
+// Pins add height above whatever follows them. A page opened at an anchor reaches it
+// before they exist, so remember where the anchor sits to put it back afterwards.
+function holdAnchor() {
+  if (heldAnchor || !window.location.hash) return
+  const element = document.getElementById(window.location.hash.slice(1))
+  if (!element) return
+  const top = element.getBoundingClientRect().top
+  const margin = parseFloat(getComputedStyle(element).scrollMarginTop) || 0
+  if (Math.abs(top - margin) <= 2) heldAnchor = { element, top }
+}
 
 // Triggers can be created in any order here, but pins must be measured top to bottom.
 function queueRefresh({ gsap, ScrollTrigger }: Motion) {
@@ -56,6 +68,12 @@ function queueRefresh({ gsap, ScrollTrigger }: Motion) {
     refreshQueued = false
     ScrollTrigger.sort()
     ScrollTrigger.refresh()
+
+    const anchor = heldAnchor
+    heldAnchor = null
+    if (!anchor?.element.isConnected) return
+    window.scrollBy({ top: anchor.element.getBoundingClientRect().top - anchor.top, behavior: 'instant' })
+    ScrollTrigger.update()
   })
 }
 
@@ -72,7 +90,9 @@ type Options = {
 export function useDeferredMotion(setup: (motion: Motion) => void | (() => void), options: Options = {}) {
   const { scope, media, near } = options
 
-  useEffect(() => {
+  // A pin moves its section into a spacer React doesn't know about. Only a layout
+  // effect's cleanup runs before React removes the section, so it can undo that first.
+  useLayoutEffect(() => {
     let stopped = false
     const cleanups: Array<() => void> = []
 
@@ -82,6 +102,7 @@ export function useDeferredMotion(setup: (motion: Motion) => void | (() => void)
           loadMotion()
             .then((motion) => {
               if (stopped) return
+              holdAnchor()
               let dispose: void | (() => void)
               const context = motion.gsap.context(() => {
                 dispose = setup(motion)

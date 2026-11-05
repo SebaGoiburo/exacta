@@ -58,6 +58,7 @@ ejecutar `deploy.sh` con la clave que usa GitHub.
 
 - `exactatransformaciondigital.com` es el sitio (`nginx/exacta-main.conf`). `www` redirige ahí.
 - `nuevo.exactatransformaciondigital.com` redirige al dominio principal (`nginx/exacta-web.conf`), para que no se rompan los enlaces viejos.
+- HTTP/2 está activo en el servidor: la primera línea `listen 443 ssl http2;` de `exacta-main.conf` lo habilita en todo el puerto 443, también para n8n y el middleware de farmacias. Ese bloque HTTPS se administra a mano en el VPS y no está en este repositorio. Los WebSocket de n8n siguen usando HTTP/1.1.
 - El webhook de WhatsApp vive en `n8n.exactatransformaciondigital.com`.
 - El correo sigue en Hostinger: sus registros `MX`, `TXT` y `CNAME` no apuntan al VPS.
 - El sitio solo se indexa si `NEXT_PUBLIC_SERVER_URL` es exactamente el dominio principal.

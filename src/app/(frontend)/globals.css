@@ -126,13 +126,6 @@ html.lenis body {
   overflow: hidden;
 }
 
-/* Touch screens scroll natively: anchors glide without loading Lenis. */
-@media (pointer: coarse) and (prefers-reduced-motion: no-preference) {
-  html {
-    scroll-behavior: smooth;
-  }
-}
-
 @layer components {
   .container-x {
     width: 100%;
