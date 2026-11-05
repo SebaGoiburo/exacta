@@ -1,50 +1,37 @@
 'use client'
 
-import { useRef } from 'react'
+import { useEffect, useRef } from 'react'
 import { useTranslations } from 'next-intl'
-import { gsap } from 'gsap'
-import { ScrollTrigger } from 'gsap/ScrollTrigger'
-import { SplitText } from 'gsap/SplitText'
-import { useGSAP } from '@gsap/react'
 import { Link } from '@/i18n/navigation'
 import { Magnetic } from '@/components/motion/magnetic'
+import { useDeferredMotion } from '@/components/motion/motion-runtime'
 import { ArrowRight } from '@/components/ui/icons'
 import { HeroDiagram, type HeroDiagramHandle } from './hero-diagram'
 
-gsap.registerPlugin(ScrollTrigger, SplitText)
+const PINNED = '(min-width: 1024px) and (prefers-reduced-motion: no-preference)'
+const SELF_PLAYING = '(max-width: 1023px) and (prefers-reduced-motion: no-preference)'
+const ORDERING_DELAY = 600
+const ORDERING_DURATION = 2800
+
+// Matches GSAP's power2.inOut.
+const easeInOutCubic = (t: number) => (t < 0.5 ? 4 * t * t * t : 1 - (-2 * t + 2) ** 3 / 2)
 
 export function Hero() {
   const t = useTranslations('hero')
   const sectionRef = useRef<HTMLElement>(null)
   const diagramRef = useRef<HeroDiagramHandle>(null)
+  const diagramBoxRef = useRef<HTMLDivElement>(null)
   const hintRef = useRef<HTMLDivElement>(null)
 
-  useGSAP(
-    () => {
+  // Desktop: pin the hero and let scrolling put the operation in order.
+  useDeferredMotion(
+    ({ gsap }) => {
       const state = diagramRef.current?.state
       const section = sectionRef.current
       if (!state || !section) return
 
       const mm = gsap.matchMedia()
-
-      mm.add('(prefers-reduced-motion: reduce)', () => {
-        gsap.set('[data-intro]', { opacity: 1 })
-      })
-
-      mm.add('(prefers-reduced-motion: no-preference)', () => {
-        // Intro: headline lines rise from behind a mask, the rest follows.
-        // Unhide first so the from() tweens below record opacity 1 as their end value.
-        gsap.set('[data-intro]', { opacity: 1 })
-        const split = SplitText.create('[data-hero-title]', { type: 'lines', mask: 'lines' })
-        const tl = gsap.timeline({ defaults: { ease: 'expo.out' } })
-        tl.from(split.lines, { yPercent: 110, duration: 1.2, stagger: 0.09 }, 0.1)
-          .from('[data-intro-item]', { opacity: 0, y: 18, duration: 1, stagger: 0.08 }, 0.35)
-          .from('[data-intro-diagram]', { opacity: 0, scale: 0.97, duration: 1.4 }, 0.2)
-        return () => split.revert()
-      })
-
-      // Desktop: pin the hero and let scrolling put the operation in order.
-      mm.add('(min-width: 1024px) and (prefers-reduced-motion: no-preference)', () => {
+      mm.add(PINNED, () => {
         const hint = hintRef.current
         gsap.to(state, {
           p: 1,
@@ -61,22 +48,39 @@ export function Hero() {
           },
         })
       })
-
-      // Smaller screens: no pinning, the diagram orders itself once visible.
-      mm.add('(max-width: 1023px) and (prefers-reduced-motion: no-preference)', () => {
-        gsap.to(state, {
-          p: 1,
-          duration: 2.8,
-          ease: 'power2.inOut',
-          delay: 0.6,
-          scrollTrigger: { trigger: '[data-intro-diagram]', start: 'top 70%', once: true },
-        })
-      })
-
       return () => mm.revert()
     },
-    { scope: sectionRef },
+    { scope: sectionRef, media: PINNED },
   )
+
+  // Smaller screens: no pinning, the diagram orders itself once visible.
+  useEffect(() => {
+    const state = diagramRef.current?.state
+    const box = diagramBoxRef.current
+    if (!state || !box || !window.matchMedia(SELF_PLAYING).matches) return
+
+    let frame = 0
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (!entry?.isIntersecting) return
+        observer.disconnect()
+        const startedAt = performance.now() + ORDERING_DELAY
+        const step = (now: number) => {
+          const progress = Math.min(1, Math.max(0, (now - startedAt) / ORDERING_DURATION))
+          state.p = easeInOutCubic(progress)
+          if (progress < 1) frame = requestAnimationFrame(step)
+        }
+        frame = requestAnimationFrame(step)
+      },
+      { rootMargin: '0px 0px -30% 0px' },
+    )
+    observer.observe(box)
+
+    return () => {
+      observer.disconnect()
+      cancelAnimationFrame(frame)
+    }
+  }, [])
 
   const diagramLabels = {
     title: t('diagram.title'),
@@ -96,26 +100,22 @@ export function Hero() {
 
       <div className="container-x relative grid min-h-[calc(100svh-72px)] items-center gap-12 py-12 lg:grid-cols-12 lg:gap-10 lg:py-10">
         <div className="lg:col-span-6 xl:pr-6">
-          <div data-intro data-intro-item>
+          <div data-intro="0">
             <p className="eyebrow">{t('eyebrow')}</p>
             <p className="mt-2 pl-9 font-mono text-[11px] tracking-[0.08em] text-ink-mute uppercase">
               {t('location')} <span className="ml-2 text-gold">{t('coords')}</span>
             </p>
           </div>
 
-          <h1
-            data-intro
-            data-hero-title
-            className="h-display mt-6 text-[clamp(2.5rem,1.3rem+3vw,3.9rem)] text-ink"
-          >
+          <h1 data-intro="1" data-hero-title className="h-display mt-6 text-[clamp(2.5rem,1.3rem+3vw,3.9rem)] text-ink">
             {t('title')}
           </h1>
 
-          <p data-intro data-intro-item className="mt-6 max-w-md text-lg leading-relaxed text-ink-soft">
+          <p data-intro="2" className="mt-6 max-w-md text-lg leading-relaxed text-ink-soft">
             {t('lead')}
           </p>
 
-          <div data-intro data-intro-item className="mt-9 flex flex-wrap items-center gap-3">
+          <div data-intro="3" className="mt-9 flex flex-wrap items-center gap-3">
             <Magnetic>
               <Link href="/diagnostico" className="btn btn-primary">
                 {t('ctaPrimary')}
@@ -127,12 +127,12 @@ export function Hero() {
             </a>
           </div>
 
-          <p data-intro data-intro-item className="mt-5 font-mono text-[11px] tracking-[0.04em] text-ink-mute">
+          <p data-intro="4" className="mt-5 font-mono text-[11px] tracking-[0.04em] text-ink-mute">
             {t('note')}
           </p>
         </div>
 
-        <div data-intro data-intro-diagram className="lg:col-span-6">
+        <div ref={diagramBoxRef} data-intro="1" data-intro-style="settle" className="lg:col-span-6">
           <HeroDiagram ref={diagramRef} labels={diagramLabels} />
         </div>
       </div>

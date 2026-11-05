@@ -27,10 +27,10 @@ export default async function BlogIndex({ params }: Props) {
 
   return (
     <div className="container-x pt-40 pb-28 md:pt-48">
-      <h1 className="h-display text-[clamp(3rem,2rem+5vw,6.5rem)] text-ink" data-reveal>
+      <h1 className="h-display text-[clamp(3rem,2rem+5vw,6.5rem)] text-ink" data-intro="0">
         {t('title')}
       </h1>
-      <p className="mt-6 max-w-lg text-lg leading-relaxed text-ink-soft" data-reveal data-reveal-delay="0.06">
+      <p className="mt-6 max-w-lg text-lg leading-relaxed text-ink-soft" data-intro="1">
         {t('lead')}
       </p>
 

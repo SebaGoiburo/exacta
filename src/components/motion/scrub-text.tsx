@@ -1,11 +1,7 @@
 'use client'
 
 import { useRef } from 'react'
-import { gsap } from 'gsap'
-import { ScrollTrigger } from 'gsap/ScrollTrigger'
-import { useGSAP } from '@gsap/react'
-
-gsap.registerPlugin(ScrollTrigger)
+import { useDeferredMotion } from './motion-runtime'
 
 type Part = { text: string; emphasis?: boolean }
 
@@ -13,8 +9,8 @@ type Part = { text: string; emphasis?: boolean }
 export function ScrubText({ parts, className }: { parts: Part[]; className?: string }) {
   const ref = useRef<HTMLParagraphElement>(null)
 
-  useGSAP(
-    () => {
+  useDeferredMotion(
+    ({ gsap }) => {
       const mm = gsap.matchMedia()
       mm.add('(prefers-reduced-motion: no-preference)', () => {
         gsap.fromTo(
@@ -30,7 +26,7 @@ export function ScrubText({ parts, className }: { parts: Part[]; className?: str
       })
       return () => mm.revert()
     },
-    { scope: ref },
+    { scope: ref, near: true },
   )
 
   return (

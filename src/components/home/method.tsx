@@ -2,12 +2,10 @@
 
 import { useRef, useState } from 'react'
 import { useTranslations } from 'next-intl'
-import { gsap } from 'gsap'
-import { ScrollTrigger } from 'gsap/ScrollTrigger'
-import { useGSAP } from '@gsap/react'
+import { useDeferredMotion } from '@/components/motion/motion-runtime'
 import { ArrowRight } from '@/components/ui/icons'
 
-gsap.registerPlugin(ScrollTrigger)
+const PINNED = '(min-width: 1024px) and (prefers-reduced-motion: no-preference)'
 
 type Step = { title: string; body: string }
 
@@ -25,10 +23,10 @@ export function Method() {
   const markerRef = useRef<HTMLSpanElement>(null)
   const [active, setActive] = useState(0)
 
-  useGSAP(
-    () => {
+  useDeferredMotion(
+    ({ gsap }) => {
       const mm = gsap.matchMedia()
-      mm.add('(min-width: 1024px) and (prefers-reduced-motion: no-preference)', () => {
+      mm.add(PINNED, () => {
         const track = trackRef.current!
         const viewport = viewportRef.current!
         const distance = () => {
@@ -57,7 +55,7 @@ export function Method() {
       })
       return () => mm.revert()
     },
-    { scope: sectionRef },
+    { scope: sectionRef, media: PINNED },
   )
 
   return (

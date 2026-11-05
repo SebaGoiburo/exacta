@@ -39,16 +39,16 @@ export default async function PlexPage({ params }: Props) {
     <div className="container-x pt-40 pb-28 md:pt-48">
       <div className="grid items-center gap-14 lg:grid-cols-12">
         <div className="lg:col-span-5">
-          <h1 className="h-display text-[clamp(2.75rem,1.8rem+4vw,5.5rem)] text-ink" data-reveal>
+          <h1 className="h-display text-[clamp(2.75rem,1.8rem+4vw,5.5rem)] text-ink" data-intro="0">
             {plex.name}
           </h1>
-          <p className="mt-6 text-xl leading-snug font-medium text-ink" data-reveal data-reveal-delay="0.06">
+          <p className="mt-6 text-xl leading-snug font-medium text-ink" data-intro="1">
             {plex.tagline[locale]}
           </p>
-          <p className="mt-4 text-lg leading-relaxed text-ink-soft" data-reveal data-reveal-delay="0.1">
+          <p className="mt-4 text-lg leading-relaxed text-ink-soft" data-intro="2">
             {plex.body[locale]}
           </p>
-          <ul className="mt-6 grid gap-2 sm:grid-cols-2" data-reveal data-reveal-delay="0.14">
+          <ul className="mt-6 grid gap-2 sm:grid-cols-2" data-intro="3">
             {plex.features[locale].map((f) => (
               <li key={f} className="flex gap-2.5 text-ink">
                 <span className="mt-[0.6em] size-1.5 shrink-0 rounded-full bg-accent" aria-hidden />
@@ -61,15 +61,14 @@ export default async function PlexPage({ params }: Props) {
             target="_blank"
             rel="noopener"
             className="btn btn-primary mt-10"
-            data-reveal
-            data-reveal-delay="0.18"
+            data-intro="4"
           >
             <WhatsApp className="size-4" />
             {t('cta')}
           </a>
           <p className="mt-4 text-sm text-ink-mute">{tp('soon')}</p>
         </div>
-        <div className="lg:col-span-7" data-reveal>
+        <div className="lg:col-span-7" data-intro="1">
           <figure className="reg-card relative">
             <RegMarks />
             <PlexSyncPanel exampleLabel={tp('exampleData')} locale={locale} />

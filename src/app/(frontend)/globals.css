@@ -126,6 +126,13 @@ html.lenis body {
   overflow: hidden;
 }
 
+/* Touch screens scroll natively: anchors glide without loading Lenis. */
+@media (pointer: coarse) and (prefers-reduced-motion: no-preference) {
+  html {
+    scroll-behavior: smooth;
+  }
+}
+
 @layer components {
   .container-x {
     width: 100%;
@@ -414,16 +421,54 @@ html.lenis body {
   animation: scroll-hint 2.2s var(--ease-precise) infinite;
 }
 
-/* Elements revealed by GSAP start hidden only when JS and motion are available. */
-html.js [data-reveal],
-html.js [data-intro] {
+/* Below the first screen: hidden until scrolled into view, only when JS can reveal them. */
+html.js [data-reveal]:not([data-revealed]) {
   opacity: 0;
 }
 
+/*
+ * The first screen enters with CSS alone and never waits for JavaScript. Text only
+ * rises, it does not fade: browsers do not count text as painted until its opacity
+ * is above zero, and that would hold LCP back behind the page's scripts.
+ * The value of data-intro is its place in the sequence.
+ */
+@keyframes intro-rise {
+  from {
+    transform: translateY(18px);
+  }
+}
+@keyframes intro-settle {
+  from {
+    opacity: 0;
+    transform: scale(0.97);
+  }
+}
+[data-intro] {
+  animation: intro-rise 0.9s var(--ease-precise) calc(var(--intro-step, 0) * 60ms) backwards;
+}
+[data-intro='1'] {
+  --intro-step: 1;
+}
+[data-intro='2'] {
+  --intro-step: 2;
+}
+[data-intro='3'] {
+  --intro-step: 3;
+}
+[data-intro='4'] {
+  --intro-step: 4;
+}
+[data-intro-style='settle'] {
+  animation-name: intro-settle;
+  animation-duration: 1.2s;
+}
+
 @media (prefers-reduced-motion: reduce) {
-  html.js [data-reveal],
-  html.js [data-intro] {
+  html.js [data-reveal]:not([data-revealed]) {
     opacity: 1;
+  }
+  [data-intro] {
+    animation: none;
   }
   .marquee-track,
   .scroll-hint-line {

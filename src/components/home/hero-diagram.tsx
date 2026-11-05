@@ -1,14 +1,15 @@
 'use client'
 
-import { forwardRef, useId, useImperativeHandle, useRef } from 'react'
-import { gsap } from 'gsap'
-import { useGSAP } from '@gsap/react'
+import { forwardRef, useEffect, useId, useImperativeHandle, useRef } from 'react'
+import { whenIdle } from '@/components/motion/motion-runtime'
 
 /*
  * The hero's signature: a business operation drawn as a node diagram.
  * At progress 0 it is tangled (scattered nodes, duplicated links, noise);
  * at progress 1 every node snaps into a four-column flow and data pulses
  * through it. Progress is driven from outside (scroll or a timed tween).
+ * The tangled state is complete in the server's HTML. The loop that moves it
+ * starts once the page is idle, runs only while visible and writes only what changed.
  */
 
 const W = 640
@@ -77,12 +78,24 @@ const NOISE: [number, number][] = [
 ]
 
 const clamp = (v: number, a = 0, b = 1) => Math.min(b, Math.max(a, v))
-const ease = gsap.parseEase('power3.inOut')
+// Matches GSAP's power3.inOut.
+const ease = (t: number) => (t < 0.5 ? 8 * t ** 4 : 1 - (-2 * t + 2) ** 4 / 2)
+const FRAME_MS_ON_TOUCH = 33
 
 function curve(x1: number, y1: number, x2: number, y2: number) {
   const dx = (x2 - x1) / 2
   return `M${x1.toFixed(1)} ${y1.toFixed(1)} C${(x1 + dx).toFixed(1)} ${y1.toFixed(1)} ${(x2 - dx).toFixed(1)} ${y2.toFixed(1)} ${x2.toFixed(1)} ${y2.toFixed(1)}`
 }
+
+const CHAOS = Object.fromEntries(NODES.map((n) => [n.key, n.chaos])) as Record<NodeKey, [number, number]>
+const tangledCurve = ([a, b]: [NodeKey, NodeKey]) => curve(...CHAOS[a], ...CHAOS[b])
+
+const RULER_X = Array.from({ length: W / 16 + 1 }, (_, i) => i * 16)
+const RULER_Y = Array.from({ length: Math.floor(H / 16) + 1 }, (_, i) => i * 16)
+const RULER_TICKS = [
+  ...RULER_X.map((x) => `M${x} 0V${x % 80 === 0 ? 9 : 4}`),
+  ...RULER_Y.map((y) => `M0 ${y}H${y % 80 === 0 ? 9 : 4}`),
+].join('')
 
 export type HeroDiagramHandle = { state: { p: number } }
 
@@ -101,123 +114,149 @@ export const HeroDiagram = forwardRef<HeroDiagramHandle, { labels: Labels }>(fun
   const state = useRef({ p: 0 }).current
   useImperativeHandle(ref, () => ({ state }), [state])
 
-  useGSAP(
-    () => {
-      const svg = svgRef.current
-      if (!svg) return
-      const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches
-      if (reduce) state.p = 1
+  useEffect(() => {
+    const svg = svgRef.current
+    if (!svg) return
+    const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    if (reduce) state.p = 1
 
-      const q = <T extends Element>(sel: string) => Array.from(svg.querySelectorAll<T>(sel))
-      const nodeEls = q<SVGGElement>('[data-node]')
-      const labelEls = q<SVGTextElement>('[data-node-label]')
-      const coreEls = q<SVGCircleElement>('[data-node-core]')
-      const edgeEls = q<SVGPathElement>('[data-edge]')
-      const tangleEls = q<SVGPathElement>('[data-tangle]')
-      const noiseEls = q<SVGCircleElement>('[data-noise]')
-      const colEls = q<SVGTextElement>('[data-col]')
-      const beforeEl = svg.querySelector<SVGTextElement>('[data-before]')!
-      const afterEl = svg.querySelector<SVGTextElement>('[data-after]')!
-      const readout = svg.querySelector<SVGTextElement>('[data-readout]')!
-      const pulses = svg.querySelector<SVGGElement>('[data-pulses]')!
+    const q = <T extends Element>(sel: string) => Array.from(svg.querySelectorAll<T>(sel))
+    const nodeEls = q<SVGGElement>('[data-node]')
+    const labelEls = q<SVGGElement>('[data-node-label]')
+    const coreEls = q<SVGCircleElement>('[data-node-core]')
+    const edgeEls = q<SVGPathElement>('[data-edge]')
+    const tangleEls = q<SVGPathElement>('[data-tangle]')
+    const noiseEls = q<SVGCircleElement>('[data-noise]')
+    const colEls = q<SVGTextElement>('[data-col]')
+    const beforeEl = svg.querySelector<SVGTextElement>('[data-before]')!
+    const afterEl = svg.querySelector<SVGTextElement>('[data-after]')!
+    const readout = svg.querySelector<SVGTextElement>('[data-readout]')!
+    const pulses = svg.querySelector<SVGGElement>('[data-pulses]')!
 
-      const pos: Record<string, [number, number]> = {}
+    const pos = { ...CHAOS }
+    const calm = reduce ? 0 : 1
+    let lastP = -1
 
-      const render = (time: number) => {
-        const p = state.p
-        const calm = reduce ? 0 : 1
+    const render = (time: number) => {
+      const p = state.p
+      const progressed = p !== lastP
+      // Once ordered nothing moves any more, apart from the pulses the browser animates.
+      if (!progressed && p === 1) return
 
-        NODES.forEach((n, i) => {
-          const local = ease(clamp((p - n.delay) / 0.7))
-          const wob = (1 - local) * calm
-          const jx = Math.sin(time * 0.9 + i * 1.7) * 6 * wob
-          const jy = Math.cos(time * 0.7 + i * 2.3) * 6 * wob
-          const x = n.chaos[0] + (n.order[0] - n.chaos[0]) * local + jx
-          const y = n.chaos[1] + (n.order[1] - n.chaos[1]) * local + jy
-          pos[n.key] = [x, y]
-          nodeEls[i].setAttribute('transform', `translate(${x.toFixed(1)} ${y.toFixed(1)})`)
-          labelEls[i].setAttribute('transform', `rotate(${(n.tilt * (1 - local)).toFixed(2)})`)
-          labelEls[i].style.opacity = String(0.55 + 0.45 * local)
-          const mix = Math.round(local * 100)
-          const target = n.key === 'dashboard' ? 'var(--gold)' : 'var(--brand)'
-          coreEls[i].style.fill = `color-mix(in oklab, ${target} ${mix}%, var(--ink-mute))`
-        })
+      NODES.forEach((n, i) => {
+        const local = ease(clamp((p - n.delay) / 0.7))
+        const wob = (1 - local) * calm
+        const jx = Math.sin(time * 0.9 + i * 1.7) * 6 * wob
+        const jy = Math.cos(time * 0.7 + i * 2.3) * 6 * wob
+        const x = n.chaos[0] + (n.order[0] - n.chaos[0]) * local + jx
+        const y = n.chaos[1] + (n.order[1] - n.chaos[1]) * local + jy
+        pos[n.key] = [x, y]
+        nodeEls[i].setAttribute('transform', `translate(${x.toFixed(1)} ${y.toFixed(1)})`)
+        if (!progressed) return
+        labelEls[i].setAttribute('transform', `rotate(${(n.tilt * (1 - local)).toFixed(2)})`)
+        labelEls[i].style.opacity = String(0.55 + 0.45 * local)
+        const mix = Math.round(local * 100)
+        const target = n.key === 'dashboard' ? 'var(--gold)' : 'var(--brand)'
+        coreEls[i].style.fill = `color-mix(in oklab, ${target} ${mix}%, var(--ink-mute))`
+      })
 
-        EDGES.forEach(([a, b], i) => {
-          const [x1, y1] = pos[a]
-          const [x2, y2] = pos[b]
-          edgeEls[i].setAttribute('d', curve(x1, y1, x2, y2))
-          edgeEls[i].setAttribute('stroke-dasharray', `3 ${(4 * (1 - p)).toFixed(2)}`)
-        })
+      EDGES.forEach(([a, b], i) => {
+        edgeEls[i].setAttribute('d', curve(...pos[a], ...pos[b]))
+        if (progressed) edgeEls[i].setAttribute('stroke-dasharray', `3 ${(4 * (1 - p)).toFixed(2)}`)
+      })
 
-        TANGLE.forEach(([a, b], i) => {
-          const [x1, y1] = pos[a]
-          const [x2, y2] = pos[b]
-          tangleEls[i].setAttribute('d', curve(x1, y1, x2, y2))
-          tangleEls[i].style.opacity = String(clamp(1 - p * 1.8))
-        })
+      TANGLE.forEach(([a, b], i) => {
+        tangleEls[i].setAttribute('d', curve(...pos[a], ...pos[b]))
+        if (progressed) tangleEls[i].style.opacity = String(clamp(1 - p * 1.8))
+      })
 
-        noiseEls.forEach((el, i) => {
-          const k = clamp(1 - p * 1.6)
-          el.setAttribute('r', (2.2 * k).toFixed(2))
-          el.setAttribute(
-            'transform',
-            `translate(${(Math.sin(time * 0.6 + i) * 5 * calm).toFixed(1)} ${(Math.cos(time * 0.5 + i * 1.3) * 5 * calm).toFixed(1)})`,
-          )
-        })
+      noiseEls.forEach((el, i) => {
+        if (progressed) el.setAttribute('r', (2.2 * clamp(1 - p * 1.6)).toFixed(2))
+        el.setAttribute(
+          'transform',
+          `translate(${(Math.sin(time * 0.6 + i) * 5 * calm).toFixed(1)} ${(Math.cos(time * 0.5 + i * 1.3) * 5 * calm).toFixed(1)})`,
+        )
+      })
 
-        const cols = clamp((p - 0.6) / 0.3)
-        colEls.forEach((el) => (el.style.opacity = String(cols)))
-        beforeEl.style.opacity = String(clamp(1 - p * 2))
-        afterEl.style.opacity = String(clamp(p * 2 - 1))
-        pulses.style.opacity = String(clamp((p - 0.92) / 0.08))
-        // Order readout: starts at the share of links already in place (none) plus a baseline.
-        readout.textContent = `${labels.order} ${String(Math.round(12 + 88 * p)).padStart(3, ' ')}%`
-      }
+      if (!progressed) return
+      const cols = clamp((p - 0.6) / 0.3)
+      colEls.forEach((el) => (el.style.opacity = String(cols)))
+      beforeEl.style.opacity = String(clamp(1 - p * 2))
+      afterEl.style.opacity = String(clamp(p * 2 - 1))
+      const pulsesOpacity = clamp((p - 0.92) / 0.08)
+      pulses.style.opacity = String(pulsesOpacity)
+      pulses.style.display = pulsesOpacity > 0 ? '' : 'none'
+      // Order readout: starts at the share of links already in place (none) plus a baseline.
+      // The figure space keeps the digits from shifting as the number grows.
+      readout.textContent = `${labels.order} ${String(Math.round(12 + 88 * p)).padStart(3, ' ')}%`
+      lastP = p
+    }
 
-      const tick = (time: number) => render(time)
-      gsap.ticker.add(tick)
+    if (reduce) {
       render(0)
+      return
+    }
 
-      // Crosshair with coordinate readout (precision instrument), pointer devices only.
-      const cross = svg.querySelector<SVGGElement>('[data-cross]')!
-      const cx = svg.querySelector<SVGLineElement>('[data-cross-x]')!
-      const cy = svg.querySelector<SVGLineElement>('[data-cross-y]')!
-      const ct = svg.querySelector<SVGTextElement>('[data-cross-t]')!
-      const canHover = window.matchMedia('(hover: hover)').matches
-      const pt = svg.createSVGPoint()
-      const move = (e: PointerEvent) => {
-        const m = svg.getScreenCTM()
-        if (!m) return
-        pt.x = e.clientX
-        pt.y = e.clientY
-        const { x, y } = pt.matrixTransform(m.inverse())
-        cx.setAttribute('y1', String(y))
-        cx.setAttribute('y2', String(y))
-        cy.setAttribute('x1', String(x))
-        cy.setAttribute('x2', String(x))
-        ct.setAttribute('x', String(Math.min(x + 10, W - 96)))
-        ct.setAttribute('y', String(Math.max(y - 10, 34)))
-        ct.textContent = `X ${Math.round(x).toString().padStart(3, '0')}  Y ${Math.round(y).toString().padStart(3, '0')}`
-        cross.style.opacity = '1'
-      }
-      const leave = () => (cross.style.opacity = '0')
-      if (canHover) {
-        svg.addEventListener('pointermove', move)
-        svg.addEventListener('pointerleave', leave)
-      }
+    const minFrameMs = window.matchMedia('(hover: hover)').matches ? 0 : FRAME_MS_ON_TOUCH
+    let frame = 0
+    let lastFrameAt = 0
 
-      return () => {
-        gsap.ticker.remove(tick)
-        svg.removeEventListener('pointermove', move)
-        svg.removeEventListener('pointerleave', leave)
-      }
-    },
-    { scope: svgRef },
-  )
+    const loop = (now: number) => {
+      frame = requestAnimationFrame(loop)
+      if (now - lastFrameAt < minFrameMs) return
+      lastFrameAt = now
+      render(now / 1000)
+    }
 
-  const ticksX = Array.from({ length: W / 16 + 1 }, (_, i) => i * 16)
-  const ticksY = Array.from({ length: Math.floor(H / 16) + 1 }, (_, i) => i * 16)
+    const observer = new IntersectionObserver(([entry]) => {
+      cancelAnimationFrame(frame)
+      if (entry?.isIntersecting) {
+        svg.unpauseAnimations()
+        frame = requestAnimationFrame(loop)
+      } else {
+        svg.pauseAnimations()
+      }
+    })
+    const cancelIdle = whenIdle(() => observer.observe(svg))
+
+    // Crosshair with coordinate readout (precision instrument), pointer devices only.
+    const cross = svg.querySelector<SVGGElement>('[data-cross]')!
+    const cx = svg.querySelector<SVGLineElement>('[data-cross-x]')!
+    const cy = svg.querySelector<SVGLineElement>('[data-cross-y]')!
+    const ct = svg.querySelector<SVGTextElement>('[data-cross-t]')!
+    const canHover = window.matchMedia('(hover: hover)').matches
+    const pt = svg.createSVGPoint()
+    const move = (e: PointerEvent) => {
+      const m = svg.getScreenCTM()
+      if (!m) return
+      pt.x = e.clientX
+      pt.y = e.clientY
+      const { x, y } = pt.matrixTransform(m.inverse())
+      cx.setAttribute('y1', String(y))
+      cx.setAttribute('y2', String(y))
+      cy.setAttribute('x1', String(x))
+      cy.setAttribute('x2', String(x))
+      ct.setAttribute('x', String(Math.min(x + 10, W - 96)))
+      ct.setAttribute('y', String(Math.max(y - 10, 34)))
+      ct.textContent = `X ${Math.round(x).toString().padStart(3, '0')}  Y ${Math.round(y).toString().padStart(3, '0')}`
+      cross.style.opacity = '1'
+    }
+    const leave = () => (cross.style.opacity = '0')
+    if (canHover) {
+      svg.addEventListener('pointermove', move)
+      svg.addEventListener('pointerleave', leave)
+    }
+
+    return () => {
+      cancelIdle()
+      observer.disconnect()
+      cancelAnimationFrame(frame)
+      svg.removeEventListener('pointermove', move)
+      svg.removeEventListener('pointerleave', leave)
+    }
+    // `state` is stable and the labels never change while mounted.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   return (
     <svg
@@ -230,17 +269,9 @@ export const HeroDiagram = forwardRef<HeroDiagramHandle, { labels: Labels }>(fun
     >
       {/* Frame and rulers */}
       <rect x="0.5" y="0.5" width={W - 1} height={H - 1} fill="var(--bg-elev)" fillOpacity="0.55" stroke="var(--line-strong)" />
-      <g stroke="var(--line-strong)" strokeWidth="1">
-        {ticksX.map((x) => (
-          <line key={`tx${x}`} x1={x} y1={0} x2={x} y2={x % 80 === 0 ? 9 : 4} />
-        ))}
-        {ticksY.map((y) => (
-          <line key={`ty${y}`} x1={0} y1={y} x2={y % 80 === 0 ? 9 : 4} y2={y} />
-        ))}
-      </g>
+      <path d={RULER_TICKS} stroke="var(--line-strong)" strokeWidth="1" />
       <g className="max-sm:hidden" fill="var(--ink-mute)" fontFamily="var(--font-mono)" fontSize="7" letterSpacing="0.5">
-        {ticksX
-          .filter((x) => x % 160 === 0 && x > 0 && x < W)
+        {RULER_X.filter((x) => x % 160 === 0 && x > 0 && x < W)
           .map((x) => (
             <text key={`nx${x}`} x={x + 3} y={16}>
               {x}
@@ -270,15 +301,30 @@ export const HeroDiagram = forwardRef<HeroDiagramHandle, { labels: Labels }>(fun
       {/* Links */}
       <g fill="none" strokeLinecap="round">
         {TANGLE.map(([a, b]) => (
-          <path key={`t-${a}-${b}`} data-tangle stroke="var(--ink-mute)" strokeOpacity="0.5" strokeDasharray="2 5" />
+          <path
+            key={`t-${a}-${b}`}
+            data-tangle
+            d={tangledCurve([a, b])}
+            stroke="var(--ink-mute)"
+            strokeOpacity="0.5"
+            strokeDasharray="2 5"
+          />
         ))}
         {EDGES.map(([a, b], i) => (
-          <path key={`e-${a}-${b}`} id={`${uid}-e${i}`} data-edge stroke="var(--line-strong)" strokeWidth="1.25" />
+          <path
+            key={`e-${a}-${b}`}
+            id={`${uid}-e${i}`}
+            data-edge
+            d={tangledCurve([a, b])}
+            stroke="var(--line-strong)"
+            strokeWidth="1.25"
+            strokeDasharray="3 4"
+          />
         ))}
       </g>
 
       {/* Data pulses travelling along the ordered flow */}
-      <g data-pulses style={{ opacity: 0 }} fill="var(--brand)">
+      <g data-pulses style={{ opacity: 0, display: 'none' }} fill="var(--brand)">
         {EDGES.map((_, i) => (
           <circle key={`p${i}`} r="2.6">
             <animateMotion dur={`${2.4 + (i % 4) * 0.35}s`} begin={`${(i * 0.37).toFixed(2)}s`} repeatCount="indefinite">
@@ -303,7 +349,7 @@ export const HeroDiagram = forwardRef<HeroDiagramHandle, { labels: Labels }>(fun
           <g key={n.key} data-node transform={`translate(${n.chaos[0]} ${n.chaos[1]})`}>
             <circle r="10" fill="var(--bg-elev)" stroke="var(--line-strong)" />
             <circle data-node-core r="4.5" fill="var(--ink-mute)" />
-            <g data-node-label transform={`rotate(${n.tilt})`}>
+            <g data-node-label transform={`rotate(${n.tilt})`} style={{ opacity: 0.55 }}>
               <text
                 data-lbl
                 y="27"

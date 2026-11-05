@@ -3,10 +3,11 @@
 import { useRef, useState } from 'react'
 import Image from 'next/image'
 import { useLocale, useTranslations } from 'next-intl'
-import { gsap } from 'gsap'
-import { useGSAP } from '@gsap/react'
+import { useDeferredMotion } from '@/components/motion/motion-runtime'
 import type { TeamMember } from '@/content/types'
 import type { Locale } from '@/i18n/routing'
+
+const FLOATING_PORTRAIT = '(hover: hover) and (min-width: 768px)'
 
 const initials = (name: string) =>
   name
@@ -38,13 +39,13 @@ export function Team({ members }: { members: TeamMember[] }) {
   const floatRef = useRef<HTMLDivElement>(null)
   const [hover, setHover] = useState<number | null>(null)
 
-  useGSAP(
-    () => {
+  useDeferredMotion(
+    ({ gsap }) => {
       const list = listRef.current
       const float = floatRef.current
       if (!list || !float) return
       const mm = gsap.matchMedia()
-      mm.add('(hover: hover) and (min-width: 768px)', () => {
+      mm.add(FLOATING_PORTRAIT, () => {
         const xTo = gsap.quickTo(float, 'x', { duration: 0.5, ease: 'power3.out' })
         const yTo = gsap.quickTo(float, 'y', { duration: 0.5, ease: 'power3.out' })
         const move = (e: PointerEvent) => {
@@ -57,7 +58,7 @@ export function Team({ members }: { members: TeamMember[] }) {
       })
       return () => mm.revert()
     },
-    { scope: listRef },
+    { scope: listRef, media: FLOATING_PORTRAIT },
   )
 
   return (

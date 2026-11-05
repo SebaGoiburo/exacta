@@ -53,16 +53,16 @@ export async function LandingPage({ landing, locale }: Props) {
       <section className="container-x pt-36 pb-20 md:pt-44 md:pb-28">
         <div className="grid items-center gap-14 lg:grid-cols-12 lg:gap-16">
           <div className="lg:col-span-7">
-            <p className="eyebrow" data-reveal>
+            <p className="eyebrow" data-intro="0">
               {name}
             </p>
-            <h1 className="h-display mt-6 text-[clamp(2.5rem,1.7rem+3.6vw,4.75rem)] text-ink" data-reveal data-reveal-delay="0.04">
+            <h1 className="h-display mt-6 text-[clamp(2.5rem,1.7rem+3.6vw,4.75rem)] text-ink" data-intro="1">
               {landing.title[locale]}
             </h1>
-            <p className="mt-6 max-w-2xl text-lg leading-relaxed text-ink-soft md:text-xl" data-reveal data-reveal-delay="0.08">
+            <p className="mt-6 max-w-2xl text-lg leading-relaxed text-ink-soft md:text-xl" data-intro="2">
               {landing.lead[locale]}
             </p>
-            <div className="mt-9 flex flex-wrap gap-3" data-reveal data-reveal-delay="0.12">
+            <div className="mt-9 flex flex-wrap gap-3" data-intro="3">
               <Link href="/diagnostico" className="btn btn-primary">
                 {hero('ctaPrimary')}
                 <ArrowRight className="btn-arrow size-4" />
@@ -72,12 +72,12 @@ export async function LandingPage({ landing, locale }: Props) {
                 {t('whatsapp')}
               </a>
             </div>
-            <p className="mt-4 text-sm text-ink-soft" data-reveal data-reveal-delay="0.14">
+            <p className="mt-4 text-sm text-ink-soft" data-intro="4">
               {hero('note')}
             </p>
           </div>
 
-          <div className="lg:col-span-5" data-reveal data-reveal-delay="0.1">
+          <div className="lg:col-span-5" data-intro="2">
             <div className="reg-card relative p-6 md:p-8">
               <RegMarks />
               <ul className="grid gap-6">

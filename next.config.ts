@@ -24,4 +24,12 @@ const nextConfig: NextConfig = {
   redirects: () => OLD_SITE_REDIRECTS,
 }
 
-export default withPayload(withNextIntl(nextConfig), { devBundleServerPackages: false })
+const config = withPayload(withNextIntl(nextConfig), { devBundleServerPackages: false })
+const payloadHeaders = config.headers
+
+// Payload asks every route for a colour scheme hint. It marks the hint as critical,
+// which makes Chrome request each first page twice, and only the admin panel reads it.
+config.headers = async () =>
+  (await payloadHeaders?.())?.map((rule) => (rule.source === '/:path*' ? { ...rule, source: '/admin/:path*' } : rule)) ?? []
+
+export default config

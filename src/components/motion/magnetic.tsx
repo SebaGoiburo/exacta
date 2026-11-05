@@ -1,15 +1,14 @@
 'use client'
 
 import { useRef } from 'react'
-import { gsap } from 'gsap'
-import { useGSAP } from '@gsap/react'
+import { useDeferredMotion } from './motion-runtime'
 
 /** Pulls its child slightly toward the pointer. Disabled on touch and reduced motion. */
 export function Magnetic({ children, strength = 0.28 }: { children: React.ReactNode; strength?: number }) {
   const ref = useRef<HTMLSpanElement>(null)
 
-  useGSAP(
-    () => {
+  useDeferredMotion(
+    ({ gsap }) => {
       const el = ref.current
       if (!el) return
       const mm = gsap.matchMedia()
@@ -34,7 +33,7 @@ export function Magnetic({ children, strength = 0.28 }: { children: React.ReactN
       })
       return () => mm.revert()
     },
-    { scope: ref },
+    { scope: ref, media: '(hover: hover) and (prefers-reduced-motion: no-preference)' },
   )
 
   return (

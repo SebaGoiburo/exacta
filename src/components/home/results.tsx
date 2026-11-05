@@ -2,11 +2,7 @@
 
 import { useRef } from 'react'
 import { useTranslations } from 'next-intl'
-import { gsap } from 'gsap'
-import { ScrollTrigger } from 'gsap/ScrollTrigger'
-import { useGSAP } from '@gsap/react'
-
-gsap.registerPlugin(ScrollTrigger)
+import { useDeferredMotion } from '@/components/motion/motion-runtime'
 
 const COMPANIES = 50
 const TIME_SAVED = 45
@@ -15,8 +11,8 @@ export function Results() {
   const t = useTranslations('results')
   const ref = useRef<HTMLElement>(null)
 
-  useGSAP(
-    () => {
+  useDeferredMotion(
+    ({ gsap }) => {
       const mm = gsap.matchMedia()
       mm.add('(prefers-reduced-motion: no-preference)', () => {
         const count = (sel: string, to: number) => {
@@ -60,7 +56,7 @@ export function Results() {
       })
       return () => mm.revert()
     },
-    { scope: ref },
+    { scope: ref, near: true },
   )
 
   return (
