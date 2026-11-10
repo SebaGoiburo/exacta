@@ -1,6 +1,6 @@
 import type { TeamMember } from './types'
 
-// Only the people shown on the site; the section's lead says the team is five people.
+// Only the people shown on the site; the team is larger than this list.
 export const team: TeamMember[] = [
   {
     name: 'Sebastián Goiburo',
