@@ -83,13 +83,16 @@ export function Team({ members }: { members: TeamMember[] }) {
               className="group flex items-center gap-5 border-b border-line py-6 md:py-8"
             >
               <Portrait m={m} className="size-14 shrink-0 rounded-full text-lg md:hidden" />
-              <p
-                className={`flex-1 font-display text-[clamp(1.75rem,1rem+3.2vw,4rem)] font-semibold leading-none tracking-[-0.035em] transition-[color,transform] duration-500 ease-[var(--ease-precise)] md:group-hover:translate-x-3 ${
-                  m.placeholder ? 'text-ink-mute' : 'text-ink'
-                } ${hover !== null && hover !== i ? 'md:opacity-40' : ''}`}
-              >
-                {m.name}
-              </p>
+              <div className="min-w-0 flex-1">
+                <p
+                  className={`font-display text-[clamp(1.75rem,1rem+3.2vw,4rem)] font-semibold leading-none tracking-[-0.035em] transition-[color,transform] duration-500 ease-[var(--ease-precise)] md:group-hover:translate-x-3 ${
+                    m.placeholder ? 'text-ink-mute' : 'text-ink'
+                  } ${hover !== null && hover !== i ? 'md:opacity-40' : ''}`}
+                >
+                  {m.name}
+                </p>
+                <p className="mt-2 text-sm text-ink-soft sm:hidden">{m.role[locale]}</p>
+              </div>
               <p className="hidden text-right text-ink-soft sm:block">{m.role[locale]}</p>
             </li>
           ))}
