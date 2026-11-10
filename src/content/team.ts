@@ -1,11 +1,13 @@
 import type { TeamMember } from './types'
 
-const toConfirm = { es: 'Rol a confirmar', en: 'Role to be confirmed' }
-
+// Only the people shown on the site; the section's lead says the team is five people.
 export const team: TeamMember[] = [
-  { name: 'Sebastián Goiburo', role: toConfirm },
-  { name: 'Gabriela Becerra', role: toConfirm },
-  { name: 'Integrante 3', role: toConfirm, placeholder: true },
-  { name: 'Integrante 4', role: toConfirm, placeholder: true },
-  { name: 'Integrante 5', role: toConfirm, placeholder: true },
+  {
+    name: 'Sebastián Goiburo',
+    role: { es: 'Cofounder y Director de Tecnología', en: 'Co-founder and Chief Technology Officer' },
+  },
+  {
+    name: 'Gabriela Becerra',
+    role: { es: 'Directora de Administración y Finanzas', en: 'Director of Administration and Finance' },
+  },
 ]
