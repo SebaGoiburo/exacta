@@ -80,3 +80,51 @@ export async function placeLabel(id: string) {
 export async function placeContact(id: string) {
   return toPlace(await call(`/places/${encodeURIComponent(id)}?languageCode=es`, CONTACT_FIELDS))
 }
+
+/** A search result with what the prospect formula needs. Used in memory only, never stored. */
+export type ScoredPlace = Place & { priceLevel?: string; operational: boolean; type?: string }
+
+const BATCH_FIELDS = [...CONTACT_FIELDS, 'priceLevel', 'businessStatus', 'primaryTypeDisplayName']
+
+/** Same search as `searchPlaces`, plus price level and whether the business is open. */
+export async function searchPlacesForBatch(query: string, pageToken?: string) {
+  const data = await call('/places:searchText', [...BATCH_FIELDS.map((f) => `places.${f}`), 'nextPageToken'], {
+    method: 'POST',
+    body: JSON.stringify({ textQuery: query, languageCode: 'es', regionCode: 'AR', pageSize: 20, pageToken }),
+  })
+  type Raw = RawPlace & { priceLevel?: string; businessStatus?: string; primaryTypeDisplayName?: { text?: string } }
+  const places: ScoredPlace[] = ((data.places ?? []) as Raw[]).map((p) => ({
+    ...toPlace(p),
+    priceLevel: p.priceLevel,
+    operational: !p.businessStatus || p.businessStatus === 'OPERATIONAL',
+    type: p.primaryTypeDisplayName?.text,
+  }))
+  return { places, nextPageToken: data.nextPageToken as string | undefined }
+}
+
+export type PlaceReview = { rating?: number; text: string; when?: string; publishTime?: string }
+export type ResearchPlace = Place & { reviews_: PlaceReview[]; hours: string[]; type?: string }
+
+/** Contact data plus up to five reviews and opening hours, for the AI research of one prospect. */
+export async function placeForResearch(id: string): Promise<ResearchPlace> {
+  type Raw = RawPlace & {
+    reviews?: { rating?: number; text?: { text?: string }; relativePublishTimeDescription?: string; publishTime?: string }[]
+    regularOpeningHours?: { weekdayDescriptions?: string[] }
+    primaryTypeDisplayName?: { text?: string }
+  }
+  const raw = (await call(`/places/${encodeURIComponent(id)}?languageCode=es`, [
+    ...CONTACT_FIELDS,
+    'reviews',
+    'regularOpeningHours',
+    'primaryTypeDisplayName',
+  ])) as Raw
+  return {
+    ...toPlace(raw),
+    // Reviewer names are left out: the analysis needs what they said, not who they are.
+    reviews_: (raw.reviews ?? [])
+      .map((r) => ({ rating: r.rating, text: r.text?.text?.slice(0, 800) ?? '', when: r.relativePublishTimeDescription, publishTime: r.publishTime }))
+      .filter((r) => r.text),
+    hours: raw.regularOpeningHours?.weekdayDescriptions ?? [],
+    type: raw.primaryTypeDisplayName?.text,
+  }
+}

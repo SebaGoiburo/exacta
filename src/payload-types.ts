@@ -80,6 +80,9 @@ export interface Config {
     leads: Lead;
     diagnostics: Diagnostic;
     prospects: Prospect;
+    'offer-profiles': OfferProfile;
+    'prospect-batches': ProspectBatch;
+    'prospect-jobs': ProspectJob;
     conversations: Conversation;
     'conversation-messages': ConversationMessage;
     knowledge: Knowledge;
@@ -111,6 +114,9 @@ export interface Config {
     leads: LeadsSelect<false> | LeadsSelect<true>;
     diagnostics: DiagnosticsSelect<false> | DiagnosticsSelect<true>;
     prospects: ProspectsSelect<false> | ProspectsSelect<true>;
+    'offer-profiles': OfferProfilesSelect<false> | OfferProfilesSelect<true>;
+    'prospect-batches': ProspectBatchesSelect<false> | ProspectBatchesSelect<true>;
+    'prospect-jobs': ProspectJobsSelect<false> | ProspectJobsSelect<true>;
     conversations: ConversationsSelect<false> | ConversationsSelect<true>;
     'conversation-messages': ConversationMessagesSelect<false> | ConversationMessagesSelect<true>;
     knowledge: KnowledgeSelect<false> | KnowledgeSelect<true>;
@@ -424,6 +430,10 @@ export interface Contact {
   companySize?: string | null;
   source?: ('web-contacto' | 'diagnostico' | 'prospeccion' | 'whatsapp' | 'referido' | 'manual' | 'n8n') | null;
   notes?: string | null;
+  /**
+   * Si llegó por prospección. Sirve para no volver a prospectar a un cliente.
+   */
+  placeId?: string | null;
   leads?: {
     docs?: (number | Lead)[];
     hasNextPage?: boolean;
@@ -446,6 +456,12 @@ export interface Lead {
   interest?: string | null;
   message?: string | null;
   expectedRevenue?: number | null;
+  nextStep?: string | null;
+  nextStepAt?: string | null;
+  /**
+   * Quién nos presentó, para agradecerle y saber de dónde vienen los clientes.
+   */
+  referredBy?: (number | null) | Contact;
   lostReason?: string | null;
   activity?:
     | {
@@ -520,9 +536,185 @@ export interface Prospect {
   placeId: string;
   niche?: string | null;
   zone?: string | null;
-  status: 'pendiente' | 'contactado' | 'interesado' | 'descartado';
+  status: 'pendiente' | 'elegido' | 'informe' | 'contactado' | 'interesado' | 'descartado';
   notes?: string | null;
   lead?: (number | null) | Lead;
+  diagnostic?: (number | null) | Diagnostic;
+  batch?: (number | null) | ProspectBatch;
+  profile?: (number | null) | OfferProfile;
+  score?: number | null;
+  tier?: ('A' | 'B' | 'C') | null;
+  pass?: number | null;
+  missing?: number | null;
+  shortlisted?: boolean | null;
+  scores?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  knockouts?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  facts?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  research?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  hook?: string | null;
+  report?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  reportToken?: string | null;
+  reportReviewedAt?: string | null;
+  reportExpiresAt?: string | null;
+  reportSentAt?: string | null;
+  reportOpenedAt?: string | null;
+  reportLastOpenedAt?: string | null;
+  reportOpens?: number | null;
+  attempts?:
+    | {
+        date: string;
+        channel: 'llamada' | 'whatsapp' | 'email' | 'instagram' | 'visita';
+        result: 'enviado' | 'no_atendio' | 'hablo' | 'rechazo';
+        note?: string | null;
+        by?: (number | null) | User;
+        id?: string | null;
+      }[]
+    | null;
+  nextAttemptAt?: string | null;
+  blockedUntil?: string | null;
+  outcome?: ('reunion' | 'ganado' | 'perdido' | 'sin_respuesta' | 'rechazo') | null;
+  outcomeAt?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "prospect-batches".
+ */
+export interface ProspectBatch {
+  id: number;
+  title: string;
+  profile: number | OfferProfile;
+  niche: string;
+  zone: string;
+  status: 'buscando' | 'puntuada' | 'investigando' | 'lista' | 'fallo';
+  progress?: string | null;
+  found?: number | null;
+  knockedOut?: number | null;
+  kept?: number | null;
+  placesCalls?: number | null;
+  aiCostUsd?: number | null;
+  error?: string | null;
+  startedBy?: (number | null) | User;
+  finishedAt?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * Qué señales prueban la necesidad de cada oferta y cuánto pesa cada criterio. Los pesos suman 100.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "offer-profiles".
+ */
+export interface OfferProfile {
+  id: number;
+  name: string;
+  key: string;
+  description: string;
+  status: 'borrador' | 'aprobado';
+  origin?: ('inicial' | 'texto_libre') | null;
+  parent?: (number | null) | OfferProfile;
+  weights: {
+    capacity: number;
+    need: number;
+    gap: number;
+    demand: number;
+    access: number;
+    timing: number;
+  };
+  minCapacity: number;
+  /**
+   * Las claves automáticas se detectan sin IA (no_website, no_booking, slow_mobile…). Las que empiezan con "ia:" las evalúa la IA con reseñas y búsquedas.
+   */
+  signals?:
+    | {
+        key: string;
+        label: string;
+        weight: number;
+        area: 'processes' | 'systems' | 'data' | 'customers' | 'ai';
+        id?: string | null;
+      }[]
+    | null;
+  proof?: string | null;
+  costFormula?: string | null;
+  approvedBy?: (number | null) | User;
+  approvedAt?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "prospect-jobs".
+ */
+export interface ProspectJob {
+  id: number;
+  kind: 'research' | 'profile';
+  status: 'queued' | 'running' | 'done' | 'failed';
+  prospect?: (number | null) | Prospect;
+  batch?: (number | null) | ProspectBatch;
+  offerText?: string | null;
+  request?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  sourcesSeen?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  continuations?: number | null;
+  startedAt?: string | null;
+  costUsd?: number | null;
+  error?: string | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -764,6 +956,18 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'prospects';
         value: number | Prospect;
+      } | null)
+    | ({
+        relationTo: 'offer-profiles';
+        value: number | OfferProfile;
+      } | null)
+    | ({
+        relationTo: 'prospect-batches';
+        value: number | ProspectBatch;
+      } | null)
+    | ({
+        relationTo: 'prospect-jobs';
+        value: number | ProspectJob;
       } | null)
     | ({
         relationTo: 'conversations';
@@ -1038,6 +1242,7 @@ export interface ContactsSelect<T extends boolean = true> {
   companySize?: T;
   source?: T;
   notes?: T;
+  placeId?: T;
   leads?: T;
   odooPartnerId?: T;
   updatedAt?: T;
@@ -1055,6 +1260,9 @@ export interface LeadsSelect<T extends boolean = true> {
   interest?: T;
   message?: T;
   expectedRevenue?: T;
+  nextStep?: T;
+  nextStepAt?: T;
+  referredBy?: T;
   lostReason?: T;
   activity?:
     | T
@@ -1104,6 +1312,120 @@ export interface ProspectsSelect<T extends boolean = true> {
   status?: T;
   notes?: T;
   lead?: T;
+  diagnostic?: T;
+  batch?: T;
+  profile?: T;
+  score?: T;
+  tier?: T;
+  pass?: T;
+  missing?: T;
+  shortlisted?: T;
+  scores?: T;
+  knockouts?: T;
+  facts?: T;
+  research?: T;
+  hook?: T;
+  report?: T;
+  reportToken?: T;
+  reportReviewedAt?: T;
+  reportExpiresAt?: T;
+  reportSentAt?: T;
+  reportOpenedAt?: T;
+  reportLastOpenedAt?: T;
+  reportOpens?: T;
+  attempts?:
+    | T
+    | {
+        date?: T;
+        channel?: T;
+        result?: T;
+        note?: T;
+        by?: T;
+        id?: T;
+      };
+  nextAttemptAt?: T;
+  blockedUntil?: T;
+  outcome?: T;
+  outcomeAt?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "offer-profiles_select".
+ */
+export interface OfferProfilesSelect<T extends boolean = true> {
+  name?: T;
+  key?: T;
+  description?: T;
+  status?: T;
+  origin?: T;
+  parent?: T;
+  weights?:
+    | T
+    | {
+        capacity?: T;
+        need?: T;
+        gap?: T;
+        demand?: T;
+        access?: T;
+        timing?: T;
+      };
+  minCapacity?: T;
+  signals?:
+    | T
+    | {
+        key?: T;
+        label?: T;
+        weight?: T;
+        area?: T;
+        id?: T;
+      };
+  proof?: T;
+  costFormula?: T;
+  approvedBy?: T;
+  approvedAt?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "prospect-batches_select".
+ */
+export interface ProspectBatchesSelect<T extends boolean = true> {
+  title?: T;
+  profile?: T;
+  niche?: T;
+  zone?: T;
+  status?: T;
+  progress?: T;
+  found?: T;
+  knockedOut?: T;
+  kept?: T;
+  placesCalls?: T;
+  aiCostUsd?: T;
+  error?: T;
+  startedBy?: T;
+  finishedAt?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "prospect-jobs_select".
+ */
+export interface ProspectJobsSelect<T extends boolean = true> {
+  kind?: T;
+  status?: T;
+  prospect?: T;
+  batch?: T;
+  offerText?: T;
+  request?: T;
+  sourcesSeen?: T;
+  continuations?: T;
+  startedAt?: T;
+  costUsd?: T;
+  error?: T;
   updatedAt?: T;
   createdAt?: T;
 }

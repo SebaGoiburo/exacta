@@ -1,6 +1,7 @@
 import type { CollectionConfig } from 'payload'
 import { isAuthenticated } from '../../access'
 import { n8nEvents } from '../../hooks/n8n-events'
+import { syncProspectOutcome } from '../../hooks/prospect-outcome'
 
 /*
  * Basic CRM. Field names follow Odoo's model (res.partner / crm.lead) so a later
@@ -64,6 +65,17 @@ export const Contacts: CollectionConfig = {
     { name: 'source', type: 'select', label: 'Origen', options: SOURCES, defaultValue: 'manual' },
     { name: 'notes', type: 'textarea', label: 'Notas' },
     {
+      name: 'placeId',
+      type: 'text',
+      label: 'ID de Google',
+      index: true,
+      admin: {
+        position: 'sidebar',
+        readOnly: true,
+        description: 'Si llegó por prospección. Sirve para no volver a prospectar a un cliente.',
+      },
+    },
+    {
       name: 'leads',
       type: 'join',
       label: 'Oportunidades',
@@ -90,7 +102,10 @@ export const Leads: CollectionConfig = {
   },
   access: crmAccess,
   defaultSort: '-createdAt',
-  hooks: n8nEvents('leads', ({ doc, previousDoc }) => (doc.stage !== previousDoc?.stage ? ['stage_changed'] : [])),
+  hooks: (() => {
+    const events = n8nEvents('leads', ({ doc, previousDoc }) => (doc.stage !== previousDoc?.stage ? ['stage_changed'] : []))
+    return { ...events, afterChange: [...events.afterChange, syncProspectOutcome] }
+  })(),
   fields: [
     { name: 'title', type: 'text', label: 'Título', required: true },
     { name: 'contact', type: 'relationship', relationTo: 'contacts', label: 'Contacto', required: true },
@@ -115,6 +130,20 @@ export const Leads: CollectionConfig = {
     { name: 'interest', type: 'text', label: 'Interés' },
     { name: 'message', type: 'textarea', label: 'Mensaje del contacto' },
     { name: 'expectedRevenue', type: 'number', label: 'Ingreso esperado (ARS)' },
+    {
+      type: 'row',
+      fields: [
+        { name: 'nextStep', type: 'text', label: 'Próximo paso' },
+        { name: 'nextStepAt', type: 'date', label: 'Fecha del próximo paso', index: true },
+      ],
+    },
+    {
+      name: 'referredBy',
+      type: 'relationship',
+      relationTo: 'contacts',
+      label: 'Referido por',
+      admin: { description: 'Quién nos presentó, para agradecerle y saber de dónde vienen los clientes.' },
+    },
     {
       name: 'lostReason',
       type: 'textarea',

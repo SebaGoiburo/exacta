@@ -3,6 +3,7 @@ import * as migration_20261029_121545_integrations from './20261029_121545_integ
 import * as migration_20261102_232253_phase1 from './20261102_232253_phase1';
 import * as migration_20261103_145803_whatsapp from './20261103_145803_whatsapp';
 import * as migration_20261104_142821_content_engine from './20261104_142821_content_engine';
+import * as migration_20261112_223043_prospect_generator from './20261112_223043_prospect_generator';
 
 export const migrations = [
   {
@@ -28,6 +29,11 @@ export const migrations = [
   {
     up: migration_20261104_142821_content_engine.up,
     down: migration_20261104_142821_content_engine.down,
-    name: '20261104_142821_content_engine'
+    name: '20261104_142821_content_engine',
+  },
+  {
+    up: migration_20261112_223043_prospect_generator.up,
+    down: migration_20261112_223043_prospect_generator.down,
+    name: '20261112_223043_prospect_generator'
   },
 ];

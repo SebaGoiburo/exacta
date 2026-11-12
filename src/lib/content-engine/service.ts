@@ -34,7 +34,7 @@ type Social = {
   linkedinPosts: { title: string; body: string }[]
 }
 
-function offerText() {
+export function offerText() {
   const pages = landings.map((l) => `- ${l.name.es} (${landingPath(l)}): ${l.lead.es}`).join('\n')
   const owned = products.map((p) => `- ${p.name}: ${p.body.es} Para: ${p.audience.es}.`).join('\n')
   const stories = cases

@@ -1,0 +1,270 @@
+.section {
+  display: grid;
+  gap: 16px;
+  margin-bottom: 32px;
+}
+
+.section h2 {
+  margin: 0;
+  font-size: 18px;
+}
+
+.muted {
+  color: var(--theme-elevation-700);
+  font-size: 13px;
+}
+
+.newBatch {
+  display: grid;
+  grid-template-columns: 2fr 2fr 1.4fr auto;
+  align-items: end;
+  gap: 12px;
+}
+
+.newBatch label,
+.field {
+  display: grid;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.newBatch input,
+.newBatch select,
+.field input,
+.field textarea,
+.field select,
+.inline select,
+.inline input {
+  width: 100%;
+  padding: 9px 12px;
+  border: 1px solid var(--theme-elevation-200);
+  border-radius: 4px;
+  background: var(--theme-input-bg, transparent);
+  color: var(--theme-text);
+  font: inherit;
+  font-weight: 400;
+}
+
+.newBatch option,
+.field option,
+.inline option {
+  background: var(--theme-bg);
+}
+
+.batchList {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.batchList button {
+  display: grid !important;
+  grid-template-columns: 1fr auto;
+  gap: 4px 16px;
+  width: 100%;
+  min-height: 0 !important;
+  padding: 12px 14px !important;
+  text-align: left;
+}
+
+.batchList button[aria-current='true'] {
+  border-color: var(--theme-text) !important;
+}
+
+.badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--theme-elevation-100);
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.badgeA {
+  background: #eeb72b;
+  color: #111;
+}
+
+.badgeHot {
+  background: #1f8a4c;
+  color: #fff;
+}
+
+.badgeWarn {
+  background: var(--theme-error-100, #fde2e2);
+  color: var(--theme-error-700, #8a1f1f);
+}
+
+.summary {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 20px;
+}
+
+.rows {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.row {
+  display: grid;
+  gap: 12px;
+  padding: 14px 16px;
+  border: 1px solid var(--theme-elevation-150);
+  border-radius: 4px;
+}
+
+.rowChosen {
+  border-color: var(--theme-text);
+}
+
+.rowHead {
+  display: grid;
+  grid-template-columns: 56px 1fr auto;
+  align-items: start;
+  gap: 16px;
+}
+
+.score {
+  font-size: 26px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.name {
+  font-weight: 600;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.bars {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.bar {
+  display: grid;
+  gap: 4px;
+  font-size: 11px;
+  color: var(--theme-elevation-700);
+}
+
+.bar span {
+  display: block;
+  height: 6px;
+  border-radius: 3px;
+  background: var(--theme-elevation-100);
+  overflow: hidden;
+}
+
+.bar span::after {
+  content: '';
+  display: block;
+  width: var(--v);
+  height: 100%;
+  background: var(--theme-text);
+}
+
+.barUnknown span::after {
+  background: var(--theme-elevation-400);
+}
+
+.hook {
+  margin: 0;
+  padding-left: 12px;
+  border-left: 3px solid #eeb72b;
+}
+
+.details {
+  display: grid;
+  gap: 16px;
+  padding-top: 8px;
+  border-top: 1px dashed var(--theme-elevation-150);
+}
+
+.details h3 {
+  margin: 0 0 6px;
+  font-size: 14px;
+}
+
+.details ul {
+  margin: 0;
+  padding-left: 18px;
+}
+
+.twoCols {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px 24px;
+}
+
+.editor {
+  display: grid;
+  gap: 12px;
+  padding: 16px;
+  border-radius: 4px;
+  background: var(--theme-elevation-50);
+}
+
+.finding {
+  display: grid;
+  gap: 8px;
+  padding: 12px;
+  border: 1px solid var(--theme-elevation-150);
+  border-radius: 4px;
+}
+
+.inline {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.inline select,
+.inline input {
+  width: auto;
+  min-width: 140px;
+}
+
+.link {
+  word-break: break-all;
+}
+
+.profileCard {
+  display: grid;
+  gap: 8px;
+  padding: 14px 16px;
+  border: 1px solid var(--theme-elevation-150);
+  border-radius: 4px;
+}
+
+.weights {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 14px;
+  font-size: 13px;
+}
+
+@media (max-width: 900px) {
+  .newBatch,
+  .twoCols {
+    grid-template-columns: 1fr;
+  }
+  .bars {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}

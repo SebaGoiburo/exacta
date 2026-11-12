@@ -128,6 +128,8 @@ export function DiagnosticApp({ questions, areas }: { questions: ClientQuestion[
           answers,
           locale,
           page: window.location.pathname,
+          // Arriving from a prospect report links this diagnostic to that company.
+          report: new URLSearchParams(window.location.search).get('informe') ?? undefined,
           attribution: getAttribution(),
         }),
       })

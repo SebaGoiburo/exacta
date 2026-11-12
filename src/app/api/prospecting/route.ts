@@ -3,11 +3,12 @@ import { NextResponse } from 'next/server'
 import { getPayload } from 'payload'
 import config from '@payload-config'
 import { placeContact, placeLabel, placesConfigured, searchPlaces } from '@/lib/places'
+import { convertProspect } from '@/lib/prospecting/service'
 import { rateLimited } from '@/lib/rate-limit'
 
 /** Each call spends paid Google quota, so even signed-in users have a ceiling. */
 const CALLS_PER_WINDOW = 60
-const MAX_LABELS = 25
+const MAX_LABELS = 30
 
 const clean = (v: unknown, max: number) => (typeof v === 'string' ? v.trim().slice(0, max) : '')
 
@@ -60,44 +61,7 @@ export async function POST(req: Request) {
 
     // A person already spoke with this company: from here on, it's our own relationship and CRM data.
     if (body.action === 'convert') {
-      const id = Number(body.prospectId)
-      const prospect = await payload.findByID({ collection: 'prospects', id, depth: 0, overrideAccess: true })
-      if (prospect.lead) return NextResponse.json({ leadId: prospect.lead })
-
-      const place = await placeContact(prospect.placeId)
-      const contact = await payload.create({
-        collection: 'contacts',
-        overrideAccess: true,
-        context: { skipN8n: true },
-        data: {
-          name: place.name,
-          company: place.name,
-          phone: place.phone,
-          website: place.website,
-          source: 'prospeccion',
-          notes: prospect.notes,
-        },
-      })
-      const lead = await payload.create({
-        collection: 'leads',
-        overrideAccess: true,
-        context: { skipN8n: true },
-        data: {
-          title: `Prospección · ${place.name}`,
-          contact: contact.id,
-          stage: 'contactado',
-          source: 'prospeccion',
-          interest: prospect.niche || undefined,
-          assignedTo: user.id,
-        },
-      })
-      await payload.update({
-        collection: 'prospects',
-        id,
-        overrideAccess: true,
-        data: { lead: lead.id, status: 'interesado' },
-      })
-      return NextResponse.json({ leadId: lead.id })
+      return NextResponse.json(await convertProspect(Number(body.prospectId), user.id))
     }
 
     return NextResponse.json({ error: 'unknown_action' }, { status: 400 })

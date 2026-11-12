@@ -6,6 +6,7 @@ import { invalidAnswers, scoreDiagnostic, type Answers } from '@/lib/diagnostic/
 import { diagnosticEmail, teamNotice } from '@/lib/emails'
 import { emitEvent, newEventId, publicUrl, saveLead } from '@/lib/leads'
 import { clientIp, rateLimited } from '@/lib/rate-limit'
+import { linkDiagnostic } from '@/lib/prospecting/service'
 import { getSettings } from '@/lib/settings'
 import { site } from '@/lib/site'
 
@@ -79,7 +80,7 @@ export async function POST(req: Request) {
       priority: PRIORITY[result.tier],
     })
 
-    await payload.create({
+    const diagnostic = await payload.create({
       collection: 'diagnostics',
       overrideAccess: true,
       data: {
@@ -94,6 +95,13 @@ export async function POST(req: Request) {
         answers,
       },
     })
+
+    const report = clean(body.report, 40)
+    if (/^[A-Za-z0-9_-]{10,40}$/.test(report)) {
+      await linkDiagnostic({ token: report, diagnosticId: diagnostic.id, contactId: contact.id, leadId: lead.id }).catch((err) =>
+        console.error('[diagnostic] report link failed', err),
+      )
+    }
 
     const settings = await getSettings()
     const prefix = locale === 'en' ? '/en' : ''
