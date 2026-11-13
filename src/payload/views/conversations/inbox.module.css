@@ -340,6 +340,14 @@ html[data-theme='dark'] .status[data-status='humano'] {
   margin-bottom: 6px;
 }
 
+.metaNote {
+  display: block;
+  margin: -2px 0 4px;
+  color: var(--theme-elevation-600);
+  font-size: 12px;
+  overflow-wrap: anywhere;
+}
+
 .audioLabel,
 .audioGone {
   display: block;

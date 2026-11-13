@@ -103,11 +103,15 @@ export const ConversationMessages: CollectionConfig = {
         { label: 'Audio', value: 'audio' },
         { label: 'Imagen o archivo', value: 'archivo' },
         { label: 'Plantilla', value: 'plantilla' },
+        { label: 'No visible', value: 'otro' },
       ],
     },
     { name: 'audio', type: 'upload', relationTo: 'voice-notes', label: 'Audio' },
     /** For audio: whether `text` is its transcription. */
     { name: 'transcribed', type: 'checkbox', defaultValue: false },
+    // What Meta said about the message, so the team knows what arrived when the content didn't.
+    { name: 'metaType', type: 'text', label: 'Tipo según WhatsApp' },
+    { name: 'metaDetail', type: 'text', label: 'Motivo según WhatsApp' },
     // Meta can deliver the same message twice: its ID keeps it from being answered twice.
     { name: 'waMessageId', type: 'text', unique: true, index: true },
     { name: 'failed', type: 'checkbox', defaultValue: false },

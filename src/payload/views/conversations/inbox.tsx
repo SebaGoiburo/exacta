@@ -32,9 +32,11 @@ type Message = {
   id: number
   sender: 'cliente' | 'agente' | 'asesor' | 'sistema'
   text: string
-  kind?: 'texto' | 'audio' | 'archivo' | 'plantilla' | null
+  kind?: 'texto' | 'audio' | 'archivo' | 'plantilla' | 'otro' | null
   audio?: { url?: string | null } | number | null
   transcribed?: boolean | null
+  metaType?: string | null
+  metaDetail?: string | null
   failed?: boolean | null
   createdAt: string
 }
@@ -315,6 +317,12 @@ export function Inbox() {
                       </>
                     )}
                     <p>{m.text}</p>
+                    {m.kind === 'otro' && m.metaType && (
+                      <span className={styles.metaNote}>
+                        Según WhatsApp: {m.metaType}
+                        {m.metaDetail ? ` · ${m.metaDetail}` : ''}
+                      </span>
+                    )}
                     <small>
                       {SENDER_LABEL[m.sender]} · {time.format(new Date(m.createdAt))}
                       {m.failed && <span className={styles.failed}> · No se pudo enviar</span>}

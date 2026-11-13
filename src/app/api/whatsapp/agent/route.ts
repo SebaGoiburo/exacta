@@ -4,7 +4,7 @@ import { handleAgentResult, handleInbound, handleSendFailure } from '@/lib/whats
 
 const clean = (v: unknown, max: number) => (typeof v === 'string' ? v.trim().slice(0, max) : '')
 
-const KINDS = ['texto', 'audio', 'archivo'] as const
+const KINDS = ['texto', 'audio', 'archivo', 'otro'] as const
 type Kind = (typeof KINDS)[number]
 /** A 3-minute voice note is well under 1 MB; anything far bigger isn't one. */
 const MAX_AUDIO_BYTES = 8 * 1024 * 1024
@@ -39,6 +39,8 @@ export async function POST(req: Request) {
           text,
           kind,
           audio: kind === 'audio' ? readAudio(body.audio) : null,
+          metaType: clean(body.metaType, 40) || undefined,
+          metaDetail: clean(body.metaDetail, 500) || undefined,
           phoneNumberId: clean(body.phoneNumberId, 40),
           profileName: clean(body.profileName, 120) || undefined,
         }),

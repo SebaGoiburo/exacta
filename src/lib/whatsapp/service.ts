@@ -52,9 +52,34 @@ export type InboundMessage = {
   waMessageId: string
   /** The text, or a file's caption. Empty for voice notes. */
   text: string
-  kind: 'texto' | 'audio' | 'archivo'
+  /** 'otro': Meta said something arrived but didn't send anything we can read. */
+  kind: 'texto' | 'audio' | 'archivo' | 'otro'
   /** The voice note as n8n downloaded it from Meta. Null if the download failed. */
   audio?: { data: Buffer; mimeType: string } | null
+  /** The message type as Meta names it, and the reason it gives when it doesn't deliver the content. */
+  metaType?: string
+  metaDetail?: string
+}
+
+/** What the agent and the team read when the content didn't arrive. */
+const UNSEEN_LABEL: Record<string, string> = {
+  unsupported:
+    'un mensaje que WhatsApp no entrega por la API (de ver una sola vez, una encuesta, un mensaje editado u otro similar)',
+  unknown: 'un mensaje de un tipo que WhatsApp no identifica',
+  location: 'una ubicación',
+  contacts: 'un contacto',
+  order: 'un pedido de catálogo',
+  system: 'un aviso del sistema de WhatsApp',
+}
+
+/** Recorded, but nobody needs to answer them. */
+const SILENT_TYPES = ['reaction', 'request_welcome']
+
+function unseenText(input: InboundMessage) {
+  if (input.metaType === 'reaction') return input.text ? `[Reaccionó con ${input.text}]` : '[Quitó una reacción]'
+  if (input.metaType === 'request_welcome') return '[Abrió el chat por primera vez]'
+  const label = UNSEEN_LABEL[input.metaType ?? ''] ?? `un mensaje de tipo "${input.metaType ?? 'desconocido'}"`
+  return `[La persona envió ${label}. No podés verlo: pedile que lo escriba.]`
 }
 
 /** What the site publishes, plus what the team added for the agent. */
@@ -384,6 +409,8 @@ export async function handleInbound(input: InboundMessage) {
   })
   // Discarded conversations are only recorded: no transcription, no model, no notice.
   const discarded = docs[0]?.status === 'descartada'
+  // A reaction or an opened chat is kept in the thread, but doesn't count as a new message.
+  const silent = input.kind === 'otro' && SILENT_TYPES.includes(input.metaType ?? '')
 
   let text = input.text
   let transcribed = false
@@ -408,6 +435,8 @@ export async function handleInbound(input: InboundMessage) {
     }
   } else if (input.kind === 'archivo') {
     text = input.text ? `${input.text}\n[Envió además una imagen o un archivo que no podés ver]` : '[Imagen o archivo]'
+  } else if (input.kind === 'otro') {
+    text = unseenText(input)
   }
 
   const shared = {
@@ -422,12 +451,12 @@ export async function handleInbound(input: InboundMessage) {
         collection: 'conversations',
         id: docs[0].id,
         overrideAccess: true,
-        data: { ...shared, unread: discarded ? 0 : (docs[0].unread ?? 0) + 1 },
+        data: { ...shared, unread: discarded ? 0 : (docs[0].unread ?? 0) + (silent ? 0 : 1) },
       })
     : await payload.create({
         collection: 'conversations',
         overrideAccess: true,
-        data: { ...shared, waId: input.waId, status: 'agente', unread: 1, aiReplies: 0, sessionStart: now },
+        data: { ...shared, waId: input.waId, status: 'agente', unread: silent ? 0 : 1, aiReplies: 0, sessionStart: now },
       })
 
   await payload.create({
@@ -440,10 +469,14 @@ export async function handleInbound(input: InboundMessage) {
       kind: input.kind,
       audio: audioId,
       transcribed,
+      metaType: input.metaType ?? null,
+      metaDetail: input.metaDetail ?? null,
       waMessageId: input.waMessageId,
     },
   })
   cleanupVoiceNotes(payload)
+
+  if (silent) return { action: 'none' as const }
 
   // With a person in charge, the agent stays silent. The advisor's phone gets a notice, at most every 30 minutes.
   if (conversation.status === 'humano' || conversation.status === 'derivada') {

@@ -763,9 +763,11 @@ export interface ConversationMessage {
   conversation: number | Conversation;
   sender: 'cliente' | 'agente' | 'asesor' | 'sistema';
   text: string;
-  kind?: ('texto' | 'audio' | 'archivo' | 'plantilla') | null;
+  kind?: ('texto' | 'audio' | 'archivo' | 'plantilla' | 'otro') | null;
   audio?: (number | null) | VoiceNote;
   transcribed?: boolean | null;
+  metaType?: string | null;
+  metaDetail?: string | null;
   waMessageId?: string | null;
   failed?: boolean | null;
   author?: (number | null) | User;
@@ -1506,6 +1508,8 @@ export interface ConversationMessagesSelect<T extends boolean = true> {
   kind?: T;
   audio?: T;
   transcribed?: T;
+  metaType?: T;
+  metaDetail?: T;
   waMessageId?: T;
   failed?: T;
   author?: T;
