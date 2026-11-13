@@ -1,4 +1,4 @@
-import { createSign } from 'node:crypto'
+import { googleAccountConfigured, googleToken } from '@/lib/google-auth'
 
 /*
  * Reads Search Console and Analytics with a read-only service account. If they aren't connected,
@@ -11,50 +11,9 @@ const WINDOW_DAYS = 28
 /** Search Console's latest days are still incomplete. */
 const LAG_DAYS = 3
 
-type Account = { client_email: string; private_key: string }
-let cached: { token: string; expires: number } | null = null
+export const googleConnected = googleAccountConfigured
 
-function account(): Account | null {
-  const encoded = process.env.GOOGLE_SERVICE_ACCOUNT_B64
-  if (!encoded) return null
-  try {
-    const parsed = JSON.parse(Buffer.from(encoded, 'base64').toString('utf8'))
-    return parsed.client_email && parsed.private_key ? parsed : null
-  } catch {
-    return null
-  }
-}
-
-export const googleConnected = () => account() !== null
-
-async function accessToken() {
-  if (cached && cached.expires > Date.now() + 60_000) return cached.token
-  const acc = account()
-  if (!acc) throw new Error('no_account')
-  const now = Math.floor(Date.now() / 1000)
-  const b64 = (v: object) => Buffer.from(JSON.stringify(v)).toString('base64url')
-  const unsigned = `${b64({ alg: 'RS256', typ: 'JWT' })}.${b64({
-    iss: acc.client_email,
-    scope: SCOPES,
-    aud: 'https://oauth2.googleapis.com/token',
-    iat: now,
-    exp: now + 3600,
-  })}`
-  const signature = createSign('RSA-SHA256').update(unsigned).sign(acc.private_key, 'base64url')
-  const res = await fetch('https://oauth2.googleapis.com/token', {
-    method: 'POST',
-    headers: { 'content-type': 'application/x-www-form-urlencoded' },
-    body: new URLSearchParams({
-      grant_type: 'urn:ietf:params:oauth:grant-type:jwt-bearer',
-      assertion: `${unsigned}.${signature}`,
-    }),
-    signal: AbortSignal.timeout(15000),
-  })
-  if (!res.ok) throw new Error(`token ${res.status}`)
-  const json = (await res.json()) as { access_token: string; expires_in: number }
-  cached = { token: json.access_token, expires: Date.now() + json.expires_in * 1000 }
-  return cached.token
-}
+const accessToken = () => googleToken(SCOPES)
 
 async function postJson<T>(url: string, body: unknown): Promise<T> {
   const res = await fetch(url, {

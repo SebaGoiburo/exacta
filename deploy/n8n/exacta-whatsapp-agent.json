@@ -50,7 +50,7 @@
       "main": [
         [
           {
-            "node": "Firmar entrada",
+            "node": "¿Es un audio?",
             "type": "main",
             "index": 0
           }
@@ -160,6 +160,13 @@
             "type": "main",
             "index": 0
           }
+        ],
+        [
+          {
+            "node": "¿Avisar a un asesor?",
+            "type": "main",
+            "index": 0
+          }
         ]
       ]
     },
@@ -191,6 +198,57 @@
         [
           {
             "node": "Avisar a Gabriela",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "¿Es un audio?": {
+      "main": [
+        [
+          {
+            "node": "Buscar audio en Meta",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Firmar entrada",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Buscar audio en Meta": {
+      "main": [
+        [
+          {
+            "node": "Descargar audio",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Descargar audio": {
+      "main": [
+        [
+          {
+            "node": "Preparar audio",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Preparar audio": {
+      "main": [
+        [
+          {
+            "node": "Firmar entrada",
             "type": "main",
             "index": 0
           }
@@ -314,7 +372,7 @@
       "parameters": {
         "mode": "runOnceForAllItems",
         "language": "javaScript",
-        "jsCode": "// Rejects what Meta didn't sign. Status updates are ignored: only messages from people go on.\nconst crypto = require('crypto');\nconst secret = $env.META_APP_SECRET;\nif (!secret) return [];\nconst item = $input.first();\nconst raw = await this.helpers.getBinaryDataBuffer(0, 'data');\nconst received = Buffer.from(item.json.headers?.['x-hub-signature-256'] ?? '');\nconst expected = Buffer.from('sha256=' + crypto.createHmac('sha256', secret).update(raw).digest('hex'));\nif (received.length !== expected.length || !crypto.timingSafeEqual(received, expected)) return [];\n\nconst LABELS = { audio: 'un audio', image: 'una imagen', video: 'un video', document: 'un documento', sticker: 'un sticker', location: 'una ubicación', contacts: 'un contacto' };\nconst out = [];\nfor (const entry of JSON.parse(raw.toString('utf8')).entry ?? []) {\n  for (const change of entry.changes ?? []) {\n    const value = change.value ?? {};\n    for (const m of value.messages ?? []) {\n      const text = m.text?.body ?? m.button?.text ?? m.interactive?.button_reply?.title ?? m.interactive?.list_reply?.title\n        ?? `[La persona envió ${LABELS[m.type] ?? 'un mensaje'} que no podés ver ni escuchar. Pedile que lo escriba.]`;\n      out.push({ json: {\n        waId: m.from,\n        waMessageId: m.id,\n        text,\n        phoneNumberId: value.metadata?.phone_number_id,\n        profileName: value.contacts?.find((c) => c.wa_id === m.from)?.profile?.name ?? value.contacts?.[0]?.profile?.name,\n      } });\n    }\n  }\n}\nreturn out;"
+        "jsCode": "// Rejects what Meta didn't sign. Status updates are ignored: only messages from people go on.\nconst crypto = require('crypto');\nconst secret = $env.META_APP_SECRET;\nif (!secret) return [];\nconst item = $input.first();\nconst raw = await this.helpers.getBinaryDataBuffer(0, 'data');\nconst received = Buffer.from(item.json.headers?.['x-hub-signature-256'] ?? '');\nconst expected = Buffer.from('sha256=' + crypto.createHmac('sha256', secret).update(raw).digest('hex'));\nif (received.length !== expected.length || !crypto.timingSafeEqual(received, expected)) return [];\n\n// Voice notes are downloaded next; photos and files are marked so the site answers them; the rest is described.\nconst FILES = ['image', 'video', 'document', 'sticker'];\nconst LABELS = { location: 'una ubicación', contacts: 'un contacto' };\nconst out = [];\nfor (const entry of JSON.parse(raw.toString('utf8')).entry ?? []) {\n  for (const change of entry.changes ?? []) {\n    const value = change.value ?? {};\n    for (const m of value.messages ?? []) {\n      const kind = m.type === 'audio' ? 'audio' : FILES.includes(m.type) ? 'archivo' : 'texto';\n      const caption = m.image?.caption ?? m.video?.caption ?? m.document?.caption ?? '';\n      const text = m.text?.body ?? m.button?.text ?? m.interactive?.button_reply?.title ?? m.interactive?.list_reply?.title\n        ?? (kind === 'archivo' ? caption : kind === 'audio' ? '' : `[La persona envió ${LABELS[m.type] ?? 'un mensaje'} que no podés ver. Pedile que lo escriba.]`);\n      out.push({ json: {\n        waId: m.from,\n        waMessageId: m.id,\n        text,\n        kind,\n        mediaId: m.audio?.id ?? null,\n        mimeType: m.audio?.mime_type ?? null,\n        phoneNumberId: value.metadata?.phone_number_id,\n        profileName: value.contacts?.find((c) => c.wa_id === m.from)?.profile?.name ?? value.contacts?.[0]?.profile?.name,\n      } });\n    }\n  }\n}\nreturn out;"
       }
     },
     {
@@ -358,7 +416,7 @@
         "rawContentType": "application/json",
         "body": "={{ $json.body }}",
         "options": {
-          "timeout": 30000
+          "timeout": 120000
         }
       }
     },
@@ -682,6 +740,110 @@
         }
       },
       "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "audio1",
+              "leftValue": "={{ $json.kind }}",
+              "rightValue": "audio",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "101086bc-0e00-4334-9761-1f72299282cd",
+      "name": "¿Es un audio?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        330,
+        220
+      ]
+    },
+    {
+      "parameters": {
+        "url": "=https://graph.facebook.com/v24.0/{{ $json.mediaId }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {
+          "timeout": 20000
+        }
+      },
+      "id": "637b812f-d08a-4367-8271-27ddedeb2fe3",
+      "name": "Buscar audio en Meta",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        550,
+        320
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "exactaWhatsApp01",
+          "name": "WhatsApp Cloud API"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.url }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {
+          "timeout": 30000,
+          "response": {
+            "response": {
+              "responseFormat": "file",
+              "outputPropertyName": "data"
+            }
+          }
+        }
+      },
+      "id": "b24a0d36-f406-451e-bc33-0759e7c07972",
+      "name": "Descargar audio",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        770,
+        320
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "exactaWhatsApp01",
+          "name": "WhatsApp Cloud API"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "language": "javaScript",
+        "jsCode": "// Adds the voice note to the message as base64. If Meta didn't give it, the site hands the chat to a person.\nconst message = $('¿Es un audio?').item.json;\nlet audio = null;\nconst binary = $input.item.binary?.data;\nif (binary) {\n  try {\n    const buffer = await this.helpers.getBinaryDataBuffer($itemIndex, 'data');\n    audio = { data: buffer.toString('base64'), mimeType: binary.mimeType || message.mimeType || 'audio/ogg' };\n  } catch (e) {}\n}\nreturn { json: { ...message, audio } };"
+      },
+      "id": "1c3462fe-f53d-4f03-8158-63264d859fbe",
+      "name": "Preparar audio",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        990,
+        320
+      ]
     }
   ]
 }

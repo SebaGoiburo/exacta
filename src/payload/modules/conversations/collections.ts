@@ -1,3 +1,4 @@
+import path from 'node:path'
 import type { CollectionConfig } from 'payload'
 import { isAdmin, isAuthenticated, isPersonAccess } from '../../access'
 
@@ -23,6 +24,25 @@ export const Conversations: CollectionConfig = {
         { label: 'Atiende el agente', value: 'agente' },
         { label: 'Derivada, espera un asesor', value: 'derivada' },
         { label: 'Atiende un asesor', value: 'humano' },
+        { label: 'Descartada', value: 'descartada' },
+      ],
+    },
+    {
+      type: 'row',
+      fields: [
+        {
+          name: 'discardReason',
+          type: 'select',
+          label: 'Motivo del descarte',
+          options: [
+            { label: 'Quiere vendernos algo', value: 'proveedor' },
+            { label: 'Busca trabajo', value: 'empleo' },
+            { label: 'Spam', value: 'spam' },
+            { label: 'Ráfaga de mensajes (posible bot)', value: 'rafaga' },
+            { label: 'Descartada por una persona', value: 'manual' },
+          ],
+        },
+        { name: 'discardedAt', type: 'date', label: 'Descartada el' },
       ],
     },
     { name: 'assignedTo', type: 'relationship', relationTo: 'users', label: 'Asesor' },
@@ -49,6 +69,8 @@ export const Conversations: CollectionConfig = {
     // Only messages from here on reach the model, so a finished conversation starts clean.
     { name: 'sessionStart', type: 'date', label: 'Inicio de esta atención' },
     { name: 'handoffAt', type: 'date', label: 'Derivada el' },
+    // Last notice to the advisor's phone, so a chatty person doesn't trigger one per message.
+    { name: 'notifiedAt', type: 'date', label: 'Último aviso al asesor' },
   ],
 }
 
@@ -72,6 +94,20 @@ export const ConversationMessages: CollectionConfig = {
       ],
     },
     { name: 'text', type: 'textarea', required: true },
+    {
+      name: 'kind',
+      type: 'select',
+      defaultValue: 'texto',
+      options: [
+        { label: 'Texto', value: 'texto' },
+        { label: 'Audio', value: 'audio' },
+        { label: 'Imagen o archivo', value: 'archivo' },
+        { label: 'Plantilla', value: 'plantilla' },
+      ],
+    },
+    { name: 'audio', type: 'upload', relationTo: 'voice-notes', label: 'Audio' },
+    /** For audio: whether `text` is its transcription. */
+    { name: 'transcribed', type: 'checkbox', defaultValue: false },
     // Meta can deliver the same message twice: its ID keeps it from being answered twice.
     { name: 'waMessageId', type: 'text', unique: true, index: true },
     { name: 'failed', type: 'checkbox', defaultValue: false },
@@ -97,4 +133,17 @@ export const Knowledge: CollectionConfig = {
     { name: 'content', type: 'textarea', label: 'Qué tiene que saber el agente', required: true },
     { name: 'active', type: 'checkbox', label: 'Activo', defaultValue: true },
   ],
+}
+
+/** Voice notes from WhatsApp. Private to the team and deleted after 30 days; the transcription stays. */
+export const VoiceNotes: CollectionConfig = {
+  slug: 'voice-notes',
+  labels: { singular: 'Audio', plural: 'Audios' },
+  admin: { hidden: true },
+  access: { read: isPersonAccess, create: isAdmin, update: isAdmin, delete: isAdmin },
+  upload: {
+    staticDir: path.resolve(process.cwd(), 'media', 'voice-notes'),
+    mimeTypes: ['audio/*'],
+  },
+  fields: [{ name: 'waMessageId', type: 'text', index: true }],
 }

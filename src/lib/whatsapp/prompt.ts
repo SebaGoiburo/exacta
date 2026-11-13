@@ -1,4 +1,7 @@
 import { HOURS_TEXT, type BusinessStatus } from '@/lib/business-hours'
+import { site } from '@/lib/site'
+
+const CONTACT_EMAIL = site.email
 
 /*
  * What the WhatsApp agent knows and how it must behave. n8n runs the agent and sends this
@@ -16,15 +19,19 @@ export type Collected = Partial<Record<CollectedField, string>>
 
 export type HistoryMessage = { sender: 'cliente' | 'agente' | 'asesor' | 'sistema'; text: string }
 
-export type AgentOutput = { reply: string; collected: Collected; handoff: boolean }
+export const INTENTS = ['cliente', 'proveedor', 'empleo', 'spam'] as const
+export type Intent = (typeof INTENTS)[number]
+
+export type AgentOutput = { reply: string; collected: Collected; handoff: boolean; intent: Intent }
 
 const OUTPUT_SCHEMA = {
   type: 'object',
   additionalProperties: false,
-  required: ['reply', 'collected', 'handoff'],
+  required: ['reply', 'collected', 'handoff', 'intent'],
   properties: {
     reply: { type: 'string' },
     handoff: { type: 'boolean' },
+    intent: { type: 'string', enum: [...INTENTS] },
     collected: {
       type: 'object',
       additionalProperties: false,
@@ -58,14 +65,24 @@ Cuándo derivar (handoff = true):
 
 Al derivar, despedite usando la indicación de ESTADO ACTUAL. Nunca prometas otro tiempo de respuesta.
 
+Quién escribe ("intent"):
+- "cliente": una empresa o persona que podría contratar a Exacta, o que ya es cliente. Ante la duda, es "cliente".
+- "proveedor": quiere vendernos u ofrecernos algo: servicios, productos, publicidad, posicionamiento, bases de datos, alianzas para vendernos o inversiones.
+- "empleo": busca trabajo o una pasantía, o quiere mandar su CV.
+- "spam": mensajes automáticos, cadenas, premios, estafas o texto sin sentido.
+Marcá "proveedor", "empleo" o "spam" solo cuando lo que escribió la persona lo deja claro. En esos casos tu "reply" no se envía: lo reemplaza un mensaje fijo.
+
+Fotos y archivos: no los podés ver. Si la persona menciona que mandó una imagen o un archivo, decile que por este canal no recibimos fotos ni archivos, que los puede mandar a ${CONTACT_EMAIL}, y que si quiere te cuente por acá en un mensaje de texto o de audio.
+
 Cómo escribir:
 - Mensajes cortos, como en WhatsApp: dos o tres frases, sin listas largas ni formato.
 - Respondé siempre en el idioma del último mensaje de la persona. En español, usá el rioplatense, de "vos", con trato profesional y cordial.
 
-Tu respuesta tiene tres campos:
+Tu respuesta tiene cuatro campos:
 - reply: el mensaje para la persona.
 - collected: todos los datos que la persona te dio en la conversación. Cadena vacía para lo que no sepas. En "name" va el nombre que te dijo, no uno supuesto.
-- handoff: true solo en los casos de arriba.`
+- handoff: true solo en los casos de arriba.
+- intent: quién escribe, según la lista de arriba.`
 
 export function buildSystem(knowledge: string) {
   return `${RULES}\n\nBASE DE CONOCIMIENTO\n${knowledge}`
@@ -129,14 +146,16 @@ export function parseAgentOutput(response: unknown): AgentOutput | null {
   if (!text) return null
 
   try {
-    const parsed = JSON.parse(text) as { reply?: unknown; collected?: Record<string, unknown>; handoff?: unknown }
+    const parsed = JSON.parse(text) as { reply?: unknown; collected?: Record<string, unknown>; handoff?: unknown; intent?: unknown }
     if (typeof parsed.reply !== 'string' || !parsed.reply.trim()) return null
     const collected: Collected = {}
     for (const field of COLLECTED_FIELDS) {
       const value = parsed.collected?.[field]
       if (typeof value === 'string' && value.trim()) collected[field] = value.trim().slice(0, 300)
     }
-    return { reply: parsed.reply.trim().slice(0, MAX_REPLY_LENGTH), collected, handoff: parsed.handoff === true }
+    // Anything unexpected counts as a possible client: losing one costs more than answering a vendor.
+    const intent = INTENTS.includes(parsed.intent as Intent) ? (parsed.intent as Intent) : 'cliente'
+    return { reply: parsed.reply.trim().slice(0, MAX_REPLY_LENGTH), collected, handoff: parsed.handoff === true, intent }
   } catch {
     return null
   }

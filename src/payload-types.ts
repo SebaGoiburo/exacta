@@ -86,6 +86,7 @@ export interface Config {
     conversations: Conversation;
     'conversation-messages': ConversationMessage;
     knowledge: Knowledge;
+    'voice-notes': VoiceNote;
     'management-tasks': ManagementTask;
     'content-topics': ContentTopic;
     'content-pieces': ContentPiece;
@@ -120,6 +121,7 @@ export interface Config {
     conversations: ConversationsSelect<false> | ConversationsSelect<true>;
     'conversation-messages': ConversationMessagesSelect<false> | ConversationMessagesSelect<true>;
     knowledge: KnowledgeSelect<false> | KnowledgeSelect<true>;
+    'voice-notes': VoiceNotesSelect<false> | VoiceNotesSelect<true>;
     'management-tasks': ManagementTasksSelect<false> | ManagementTasksSelect<true>;
     'content-topics': ContentTopicsSelect<false> | ContentTopicsSelect<true>;
     'content-pieces': ContentPiecesSelect<false> | ContentPiecesSelect<true>;
@@ -727,7 +729,9 @@ export interface Conversation {
   waId: string;
   phoneNumberId?: string | null;
   profileName?: string | null;
-  status: 'agente' | 'derivada' | 'humano';
+  status: 'agente' | 'derivada' | 'humano' | 'descartada';
+  discardReason?: ('proveedor' | 'empleo' | 'spam' | 'rafaga' | 'manual') | null;
+  discardedAt?: string | null;
   assignedTo?: (number | null) | User;
   contact?: (number | null) | Contact;
   lead?: (number | null) | Lead;
@@ -746,6 +750,7 @@ export interface Conversation {
   aiReplies?: number | null;
   sessionStart?: string | null;
   handoffAt?: string | null;
+  notifiedAt?: string | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -758,11 +763,33 @@ export interface ConversationMessage {
   conversation: number | Conversation;
   sender: 'cliente' | 'agente' | 'asesor' | 'sistema';
   text: string;
+  kind?: ('texto' | 'audio' | 'archivo' | 'plantilla') | null;
+  audio?: (number | null) | VoiceNote;
+  transcribed?: boolean | null;
   waMessageId?: string | null;
   failed?: boolean | null;
   author?: (number | null) | User;
   updatedAt: string;
   createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "voice-notes".
+ */
+export interface VoiceNote {
+  id: number;
+  waMessageId?: string | null;
+  updatedAt: string;
+  createdAt: string;
+  url?: string | null;
+  thumbnailURL?: string | null;
+  filename?: string | null;
+  mimeType?: string | null;
+  filesize?: number | null;
+  width?: number | null;
+  height?: number | null;
+  focalX?: number | null;
+  focalY?: number | null;
 }
 /**
  * El agente de WhatsApp ya conoce los servicios, productos y preguntas frecuentes del sitio. Acá sumás lo que no está publicado.
@@ -980,6 +1007,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'knowledge';
         value: number | Knowledge;
+      } | null)
+    | ({
+        relationTo: 'voice-notes';
+        value: number | VoiceNote;
       } | null)
     | ({
         relationTo: 'management-tasks';
@@ -1438,6 +1469,8 @@ export interface ConversationsSelect<T extends boolean = true> {
   phoneNumberId?: T;
   profileName?: T;
   status?: T;
+  discardReason?: T;
+  discardedAt?: T;
   assignedTo?: T;
   contact?: T;
   lead?: T;
@@ -1458,6 +1491,7 @@ export interface ConversationsSelect<T extends boolean = true> {
   aiReplies?: T;
   sessionStart?: T;
   handoffAt?: T;
+  notifiedAt?: T;
   updatedAt?: T;
   createdAt?: T;
 }
@@ -1469,6 +1503,9 @@ export interface ConversationMessagesSelect<T extends boolean = true> {
   conversation?: T;
   sender?: T;
   text?: T;
+  kind?: T;
+  audio?: T;
+  transcribed?: T;
   waMessageId?: T;
   failed?: T;
   author?: T;
@@ -1485,6 +1522,24 @@ export interface KnowledgeSelect<T extends boolean = true> {
   active?: T;
   updatedAt?: T;
   createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "voice-notes_select".
+ */
+export interface VoiceNotesSelect<T extends boolean = true> {
+  waMessageId?: T;
+  updatedAt?: T;
+  createdAt?: T;
+  url?: T;
+  thumbnailURL?: T;
+  filename?: T;
+  mimeType?: T;
+  filesize?: T;
+  width?: T;
+  height?: T;
+  focalX?: T;
+  focalY?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema

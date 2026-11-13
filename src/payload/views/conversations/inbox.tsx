@@ -4,13 +4,15 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import styles from './inbox.module.css'
 
-type Status = 'agente' | 'derivada' | 'humano'
+type Status = 'agente' | 'derivada' | 'humano' | 'descartada'
+type DiscardReason = 'proveedor' | 'empleo' | 'spam' | 'rafaga' | 'manual'
 
 type Conversation = {
   id: number
   waId: string
   profileName?: string | null
   status: Status
+  discardReason?: DiscardReason | null
   lastMessageAt?: string | null
   lastInboundAt?: string | null
   lastPreview?: string | null
@@ -30,6 +32,9 @@ type Message = {
   id: number
   sender: 'cliente' | 'agente' | 'asesor' | 'sistema'
   text: string
+  kind?: 'texto' | 'audio' | 'archivo' | 'plantilla' | null
+  audio?: { url?: string | null } | number | null
+  transcribed?: boolean | null
   failed?: boolean | null
   createdAt: string
 }
@@ -41,6 +46,15 @@ const STATUS_LABEL: Record<Status, string> = {
   agente: 'Atiende el agente',
   derivada: 'Espera un asesor',
   humano: 'Atiende un asesor',
+  descartada: 'Descartada',
+}
+
+const DISCARD_LABEL: Record<DiscardReason, string> = {
+  proveedor: 'Quiere vendernos algo',
+  empleo: 'Busca trabajo',
+  spam: 'Spam',
+  rafaga: 'Muchos mensajes seguidos, posible bot',
+  manual: 'Descartada por una persona',
 }
 
 const FILTERS: { value: Status | 'todas'; label: string }[] = [
@@ -48,6 +62,7 @@ const FILTERS: { value: Status | 'todas'; label: string }[] = [
   { value: 'derivada', label: 'Esperan asesor' },
   { value: 'humano', label: 'Con asesor' },
   { value: 'agente', label: 'Con el agente' },
+  { value: 'descartada', label: 'Descartadas' },
 ]
 
 const SENDER_LABEL: Record<Message['sender'], string> = {
@@ -60,7 +75,8 @@ const SENDER_LABEL: Record<Message['sender'], string> = {
 const ERRORS: Record<string, string> = {
   window_closed: 'Pasaron más de 24 horas desde el último mensaje del cliente. WhatsApp no permite responder hasta que vuelva a escribir.',
   not_configured: 'Falta configurar el envío de WhatsApp en el servidor.',
-  send_failed: 'WhatsApp no aceptó el mensaje. Probá de nuevo.',
+  send_failed: 'WhatsApp no aceptó el mensaje. Si es la plantilla, puede que Meta todavía no la haya aprobado.',
+  window_open: 'La conversación sigue abierta: podés responder normalmente.',
 }
 
 const time = new Intl.DateTimeFormat('es-AR', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })
@@ -96,7 +112,8 @@ export function Inbox() {
   }, [])
 
   const loadThread = useCallback(async (id: number) => {
-    const query = `where[conversation][equals]=${id}&sort=-createdAt&limit=100&depth=0`
+    // depth=1 brings each voice note's address, so it can be played here.
+    const query = `where[conversation][equals]=${id}&sort=-createdAt&limit=100&depth=1`
     const res = await fetch(`/api/conversation-messages?${query}`, { credentials: 'include' })
     if (res.ok) setMessages(((await res.json()) as { docs: Message[] }).docs.reverse())
   }, [])
@@ -136,7 +153,10 @@ export function Inbox() {
   }, [messages])
 
   const current = conversations?.find((c) => c.id === selected) ?? null
-  const visible = (conversations ?? []).filter((c) => filter === 'todas' || c.status === filter)
+  // Discarded conversations only show under their own filter, so they don't crowd the list.
+  const visible = (conversations ?? []).filter((c) =>
+    filter === 'todas' ? c.status !== 'descartada' : c.status === filter,
+  )
   const waiting = (conversations ?? []).filter((c) => c.status === 'derivada').length
   const windowOpen = current?.lastInboundAt ? Date.now() - new Date(current.lastInboundAt).getTime() < WINDOW_MS : false
 
@@ -217,7 +237,12 @@ export function Inbox() {
                 </small>
               </div>
               <div className={styles.actions}>
-                {current.status !== 'humano' && (
+                {current.status === 'descartada' && (
+                  <button type="button" disabled={busy} onClick={() => void run({ action: 'restore', id: current.id })}>
+                    Devolver al agente
+                  </button>
+                )}
+                {current.status !== 'humano' && current.status !== 'descartada' && (
                   <button
                     type="button"
                     disabled={busy}
@@ -227,18 +252,68 @@ export function Inbox() {
                     Tomar el control
                   </button>
                 )}
-                {current.status !== 'agente' && (
+                {(current.status === 'derivada' || current.status === 'humano') && (
                   <button type="button" disabled={busy} onClick={() => void run({ action: 'finish', id: current.id })}>
                     Finalizar y devolver a la IA
+                  </button>
+                )}
+                {current.status !== 'descartada' && !current.lead && (
+                  <button
+                    type="button"
+                    disabled={busy}
+                    onClick={() => {
+                      if (window.confirm('¿Descartar esta conversación? El agente deja de responderle y no se avisa a nadie.')) {
+                        void run({ action: 'discard', id: current.id })
+                      }
+                    }}
+                  >
+                    Descartar
                   </button>
                 )}
               </div>
             </header>
 
+            {current.status === 'descartada' && (
+              <p className={styles.discarded}>
+                {DISCARD_LABEL[current.discardReason ?? 'manual']}. El agente no le responde y no se avisa a nadie. Si fue un error,
+                devolvela al agente.
+              </p>
+            )}
+
+            <details className={styles.mobileDetails}>
+              <summary>Datos de la persona</summary>
+              <dl>
+                {(
+                  [
+                    ['Nombre', current.collected?.name],
+                    ['Email', current.collected?.email],
+                    ['Empresa', current.collected?.company],
+                    ['Necesidad', current.collected?.need],
+                  ] as const
+                ).map(([label, value]) => (
+                  <div key={label}>
+                    <dt>{label}</dt>
+                    <dd>{value || '—'}</dd>
+                  </div>
+                ))}
+              </dl>
+              {current.lead && <Link href={`/admin/collections/leads/${current.lead}`}>Ver oportunidad</Link>}
+            </details>
+
             <div className={styles.body}>
               <div ref={threadRef} className={styles.messages} role="log" aria-live="polite">
                 {messages.map((m) => (
                   <div key={m.id} className={styles.message} data-sender={m.sender}>
+                    {m.kind === 'audio' && (
+                      <>
+                        {typeof m.audio === 'object' && m.audio?.url ? (
+                          <audio className={styles.audio} controls preload="none" src={m.audio.url} />
+                        ) : (
+                          <span className={styles.audioGone}>El audio ya no está disponible: se guarda 30 días.</span>
+                        )}
+                        {m.transcribed && <span className={styles.audioLabel}>Transcripción automática</span>}
+                      </>
+                    )}
                     <p>{m.text}</p>
                     <small>
                       {SENDER_LABEL[m.sender]} · {time.format(new Date(m.createdAt))}
@@ -296,8 +371,24 @@ export function Inbox() {
                   Enviar
                 </button>
               </form>
+            ) : current.status === 'descartada' ? (
+              <p className={styles.closed}>Conversación descartada.</p>
             ) : (
-              <p className={styles.closed}>{ERRORS.window_closed}</p>
+              <div className={styles.closed}>
+                <p>{ERRORS.window_closed}</p>
+                <button
+                  type="button"
+                  disabled={busy}
+                  className={styles.primary}
+                  onClick={() => {
+                    if (window.confirm('Se le envía la plantilla aprobada para retomar la conversación. Meta la cobra como mensaje. ¿Enviar?')) {
+                      void run({ action: 'recontact', id: current.id })
+                    }
+                  }}
+                >
+                  Retomar con la plantilla
+                </button>
+              </div>
             )}
           </>
         )}

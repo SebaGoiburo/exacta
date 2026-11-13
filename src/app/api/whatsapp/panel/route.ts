@@ -1,7 +1,7 @@
 import { headers } from 'next/headers'
 import { NextResponse } from 'next/server'
 import { requestN8n } from '@/lib/n8n'
-import { cms, saveReply, textMessage } from '@/lib/whatsapp/service'
+import { cms, RECONTACT_TEMPLATE, RECONTACT_TEXT, saveReply, textMessage } from '@/lib/whatsapp/service'
 
 const WINDOW_MS = 24 * 60 * 60 * 1000
 const MAX_TEXT = 4000
@@ -41,6 +41,58 @@ export async function POST(req: Request) {
   // Back to the agent, starting clean. It keeps the data it already has about the person.
   if (body.action === 'finish') {
     await update({ status: 'agente', assignedTo: null, unread: 0, aiReplies: 0, sessionStart: new Date().toISOString() })
+    return NextResponse.json({ ok: true })
+  }
+
+  // A person decides it isn't a possible client: the agent stops answering and nobody is notified.
+  if (body.action === 'discard') {
+    await update({ status: 'descartada', discardReason: 'manual', discardedAt: new Date().toISOString(), unread: 0 })
+    return NextResponse.json({ ok: true })
+  }
+
+  // The agent got it wrong: the conversation goes back to it, starting clean.
+  if (body.action === 'restore') {
+    await update({
+      status: 'agente',
+      discardReason: null,
+      discardedAt: null,
+      assignedTo: null,
+      unread: 0,
+      aiReplies: 0,
+      sessionStart: new Date().toISOString(),
+    })
+    return NextResponse.json({ ok: true })
+  }
+
+  // Past the 24-hour window, only an approved template can reopen the conversation.
+  if (body.action === 'recontact') {
+    const last = conversation.lastInboundAt ? new Date(conversation.lastInboundAt).getTime() : 0
+    if (Date.now() - last <= WINDOW_MS) return NextResponse.json({ error: 'window_open' }, { status: 409 })
+    const url = process.env.N8N_WHATSAPP_SEND_URL
+    if (!url) return NextResponse.json({ error: 'not_configured' }, { status: 503 })
+    let result: { messageId?: string; error?: string }
+    try {
+      result = await requestN8n<{ messageId?: string; error?: string }>(url, 'whatsapp.send', {
+        phoneNumberId: conversation.phoneNumberId,
+        body: {
+          messaging_product: 'whatsapp',
+          to: conversation.waId,
+          type: 'template',
+          template: { name: RECONTACT_TEMPLATE, language: { code: 'es_AR' } },
+        },
+      })
+    } catch (err) {
+      console.error('[whatsapp] template failed', err)
+      return NextResponse.json({ error: 'send_failed' }, { status: 502 })
+    }
+    if (!result.messageId) return NextResponse.json({ error: 'send_failed', detail: result.error }, { status: 502 })
+    await saveReply(payload, conversation, RECONTACT_TEXT, 'asesor', {
+      status: 'humano',
+      assignedTo: user.id,
+      unread: 0,
+      discardReason: null,
+      discardedAt: null,
+    })
     return NextResponse.json({ ok: true })
   }
 

@@ -4,6 +4,19 @@ import { handleAgentResult, handleInbound, handleSendFailure } from '@/lib/whats
 
 const clean = (v: unknown, max: number) => (typeof v === 'string' ? v.trim().slice(0, max) : '')
 
+const KINDS = ['texto', 'audio', 'archivo'] as const
+type Kind = (typeof KINDS)[number]
+/** A 3-minute voice note is well under 1 MB; anything far bigger isn't one. */
+const MAX_AUDIO_BYTES = 8 * 1024 * 1024
+
+/** The voice note n8n downloaded from Meta, as base64. Null when it's missing or too big. */
+function readAudio(value: unknown) {
+  const audio = value as { data?: unknown; mimeType?: unknown } | null
+  if (!audio || typeof audio.data !== 'string' || typeof audio.mimeType !== 'string') return null
+  const data = Buffer.from(audio.data, 'base64')
+  return data.length && data.length <= MAX_AUDIO_BYTES ? { data, mimeType: audio.mimeType.slice(0, 100) } : null
+}
+
 /** Only n8n calls this: every request has to carry the signature made with the shared secret. */
 export async function POST(req: Request) {
   const body = await readSignedBody(req)
@@ -14,13 +27,18 @@ export async function POST(req: Request) {
       const waId = clean(body.waId, 30)
       const waMessageId = clean(body.waMessageId, 200)
       const text = clean(body.text, 4000)
-      if (!waId || !waMessageId || !text) return NextResponse.json({ error: 'missing_fields' }, { status: 422 })
+      const kind = KINDS.includes(body.kind as Kind) ? (body.kind as Kind) : 'texto'
+      if (!waId || !waMessageId || (kind === 'texto' && !text)) {
+        return NextResponse.json({ error: 'missing_fields' }, { status: 422 })
+      }
 
       return NextResponse.json(
         await handleInbound({
           waId,
           waMessageId,
           text,
+          kind,
+          audio: kind === 'audio' ? readAudio(body.audio) : null,
           phoneNumberId: clean(body.phoneNumberId, 40),
           profileName: clean(body.profileName, 120) || undefined,
         }),

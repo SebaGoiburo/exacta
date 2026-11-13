@@ -310,6 +310,74 @@ html[data-theme='dark'] .status[data-status='humano'] {
   white-space: nowrap;
 }
 
+.closed {
+  display: grid;
+  gap: 10px;
+  justify-items: start;
+}
+
+.closed p {
+  margin: 0;
+}
+
+.discarded {
+  margin: 0;
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--theme-elevation-150);
+  background: var(--theme-elevation-50);
+  color: var(--theme-elevation-800);
+  font-size: 13px;
+}
+
+.status[data-status='descartada'] {
+  color: var(--theme-elevation-500);
+}
+
+.audio {
+  display: block;
+  width: min(320px, 100%);
+  height: 40px;
+  margin-bottom: 6px;
+}
+
+.audioLabel,
+.audioGone {
+  display: block;
+  margin-bottom: 4px;
+  color: var(--theme-elevation-700);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.mobileDetails {
+  display: none;
+  padding: 8px 16px;
+  border-bottom: 1px solid var(--theme-elevation-150);
+  font-size: 14px;
+}
+
+.mobileDetails summary {
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.mobileDetails dl {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px 16px;
+  margin: 10px 0;
+}
+
+.mobileDetails dt {
+  color: var(--theme-elevation-700);
+  font-size: 12px;
+}
+
+.mobileDetails dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
 @media (max-width: 1100px) {
   .body {
     grid-template-columns: minmax(0, 1fr);
@@ -318,11 +386,62 @@ html[data-theme='dark'] .status[data-status='humano'] {
   .details {
     display: none;
   }
+
+  .mobileDetails {
+    display: block;
+  }
 }
 
 @media (max-width: 760px) {
+  /* On a phone the screen is the list or the chat, and the chat fills the height with the reply box at the bottom. */
   .wrap {
     grid-template-columns: minmax(0, 1fr);
+    height: calc(100dvh - 130px);
+    min-height: 420px;
+    margin-bottom: 12px;
+  }
+
+  .filters {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+
+  .filters button {
+    flex: none;
+  }
+
+  .head {
+    padding: 10px 12px;
+  }
+
+  .actions {
+    width: 100%;
+  }
+
+  .actions button {
+    flex: 1 1 auto;
+    min-height: 40px !important;
+  }
+
+  .messages {
+    padding: 12px;
+  }
+
+  .message {
+    max-width: 90%;
+  }
+
+  .composer {
+    padding: 10px 12px;
+  }
+
+  .composer textarea {
+    font-size: 16px; /* below 16px, phones zoom in when the field gets focus */
+  }
+
+  .composer button {
+    min-height: 44px;
   }
 
   .list {

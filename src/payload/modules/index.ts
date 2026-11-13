@@ -6,7 +6,7 @@ import { Settings } from './core/settings'
 import { Posts } from './content/posts'
 import { CaseStudies, Faqs, Products, TeamMembers } from './content/collections'
 import { Contacts, Leads } from './crm/collections'
-import { ConversationMessages, Conversations, Knowledge } from './conversations/collections'
+import { ConversationMessages, Conversations, Knowledge, VoiceNotes } from './conversations/collections'
 import { Diagnostics } from './marketing/collections'
 import { OfferProfiles, ProspectBatches, ProspectJobs, Prospects } from './prospecting/collections'
 import { ManagementTasks } from './management/collections'
@@ -26,7 +26,7 @@ export const modules: BackendModule[] = [
   { name: 'crm', collections: [Contacts, Leads] },
   { name: 'marketing', collections: [Diagnostics] },
   { name: 'prospecting', collections: [Prospects, OfferProfiles, ProspectBatches, ProspectJobs] },
-  { name: 'conversations', collections: [Conversations, ConversationMessages, Knowledge] },
+  { name: 'conversations', collections: [Conversations, ConversationMessages, Knowledge, VoiceNotes] },
   { name: 'management', collections: [ManagementTasks] },
   { name: 'content-engine', collections: [ContentTopics, ContentPieces, ContentJobs] },
   { name: 'newsletter', collections: [Subscribers] },

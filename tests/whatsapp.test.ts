@@ -62,7 +62,16 @@ test('reads a valid answer and drops empty fields', () => {
   const output = parseAgentOutput(
     reply({ reply: ' Hola ', handoff: true, collected: { name: 'Ana', email: '', company: ' Bodega ' } }),
   )
-  assert.deepEqual(output, { reply: 'Hola', handoff: true, collected: { name: 'Ana', company: 'Bodega' } })
+  assert.deepEqual(output, { reply: 'Hola', handoff: true, collected: { name: 'Ana', company: 'Bodega' }, intent: 'cliente' })
+})
+
+test('reads who is writing, and anything unexpected counts as a client', () => {
+  const intent = (value: unknown) => parseAgentOutput(reply({ reply: 'x', handoff: false, collected: {}, intent: value }))?.intent
+  assert.equal(intent('proveedor'), 'proveedor')
+  assert.equal(intent('empleo'), 'empleo')
+  assert.equal(intent('spam'), 'spam')
+  assert.equal(intent('vendedor'), 'cliente')
+  assert.equal(intent(undefined), 'cliente')
 })
 
 test('anything unusable goes to a person', () => {
@@ -85,4 +94,23 @@ test('merging keeps known data and rejects a bad email', () => {
     company: 'B',
   })
   assert.equal(mergeCollected({}, { email: 'ANA@A.COM' }).email, 'ana@a.com')
+})
+
+test('reads the length of an Ogg Opus voice note from its pages', async () => {
+  const { opusInfo } = await import('../src/lib/whatsapp/transcribe')
+  const page = (granule: bigint, payload: Buffer) => {
+    const header = Buffer.alloc(27)
+    header.write('OggS', 0)
+    header.writeBigUInt64LE(granule, 6)
+    return Buffer.concat([header, payload])
+  }
+  const head = Buffer.alloc(19)
+  head.write('OpusHead', 0)
+  head.writeUInt8(1, 8)
+  head.writeUInt8(1, 9)
+  head.writeUInt16LE(312, 10)
+  head.writeUInt32LE(16000, 12)
+  const file = Buffer.concat([page(0n, head), page(BigInt(48000 * 95 + 312), Buffer.alloc(40))])
+  assert.deepEqual(opusInfo(file), { seconds: 95, rate: 16000 })
+  assert.deepEqual(opusInfo(Buffer.from('no es audio')), { seconds: null, rate: 48000 })
 })
