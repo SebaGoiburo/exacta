@@ -1,7 +1,8 @@
 'use client'
 
-import { useState } from 'react'
-import { dayText, generator, reportLink, type GeneratedProspect, type ReportContent } from './api'
+import { useEffect, useState } from 'react'
+import type { Place } from '@/lib/places'
+import { dayText, generator, loadLabels, reportLink, type GeneratedProspect, type ReportContent } from './api'
 import base from './prospecting.module.css'
 import styles from './generator.module.css'
 
@@ -29,6 +30,16 @@ export function ReportEditor({ prospect, onSaved }: { prospect: GeneratedProspec
   const [busy, setBusy] = useState(false)
   const [message, setMessage] = useState<string | null>(null)
   const approved = Boolean(prospect.reportReviewedAt && prospect.reportToken)
+  const [names, setNames] = useState<Record<string, Place>>({})
+  const competitorIds = (report?.competitors ?? []).map((c) => c.placeId).join(',')
+
+  // Competitor names come live from Google: asked once when the report is drafted or opened.
+  useEffect(() => {
+    if (!competitorIds) return
+    loadLabels(competitorIds.split(','))
+      .then(setNames)
+      .catch(() => undefined)
+  }, [competitorIds])
 
   async function run(work: () => Promise<void>, done?: string) {
     setBusy(true)
@@ -72,7 +83,7 @@ export function ReportEditor({ prospect, onSaved }: { prospect: GeneratedProspec
       <div className={styles.editor}>
         <p style={{ margin: 0 }}>
           {prospect.pass === 2
-            ? 'El borrador sale de la investigación con IA. Lo revisás, le agregás tu observación y lo aprobás.'
+            ? 'El borrador sale de la investigación con IA y suma a los tres primeros de Google Maps en su rubro. El primero de cada rubro tarda hasta un minuto, porque mide los sitios de esos competidores; los siguientes salen al instante.'
             : 'Este prospecto todavía no tiene investigación con IA: el borrador va a salir casi vacío.'}
         </p>
         <button type="button" className={base.primary} disabled={busy} onClick={() => void draft()}>
@@ -130,6 +141,34 @@ export function ReportEditor({ prospect, onSaved }: { prospect: GeneratedProspec
         </div>
       ))}
       {!report.findings.length && <p className={base.error}>No hay hallazgos con fuente. Sin hallazgos no conviene enviarlo.</p>}
+
+      <div className={styles.finding}>
+        <strong>Competidores que se muestran en la tabla</strong>
+        {(report.competitors ?? []).length ? (
+          <ul style={{ margin: 0, paddingLeft: 18 }}>
+            {(report.competitors ?? []).map((c) => (
+              <li key={c.placeId}>
+                {names[c.placeId]?.name ?? 'Cargando…'}{' '}
+                <span className={styles.muted}>
+                  (puesto {c.position} en Google Maps
+                  {c.pageSpeed !== null ? `, velocidad ${c.pageSpeed}/100` : ''}
+                  {c.website === 'own' && c.booking !== null ? `, turnos online: ${c.booking ? 'sí' : 'no'}` : ''})
+                </span>{' '}
+                <button
+                  type="button"
+                  disabled={busy}
+                  onClick={() => set('competitors', (report.competitors ?? []).filter((x) => x.placeId !== c.placeId))}
+                >
+                  Quitar
+                </button>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <span className={styles.muted}>No hay competidores para mostrar.</span>
+        )}
+        <span className={styles.muted}>Si quitás uno, guardá los cambios para que no aparezca en el informe.</span>
+      </div>
 
       <label className={styles.field}>
         Frente a los primeros de su zona

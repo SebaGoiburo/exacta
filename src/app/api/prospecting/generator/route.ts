@@ -7,6 +7,7 @@ import {
   approveReport,
   closeStale,
   cms,
+  competitorsFor,
   convertProspect,
   draftReport,
   ensureDefaultProfiles,
@@ -169,8 +170,8 @@ export async function POST(req: Request) {
       }
       case 'report-draft': {
         const prospect = await payload.findByID({ collection: 'prospects', id: prospectId, depth: 1, overrideAccess: true })
-        const label = await placeLabel(prospect.placeId)
-        const report = draftReport(prospect, prospect.profile as OfferProfile, label.name)
+        const [label, competitors] = await Promise.all([placeLabel(prospect.placeId), competitorsFor(prospect, prospect.zone ?? '')])
+        const report = draftReport(prospect, prospect.profile as OfferProfile, label.name, competitors)
         await payload.update({
           collection: 'prospects',
           id: prospectId,
@@ -184,8 +185,11 @@ export async function POST(req: Request) {
         const prospect = await payload.findByID({ collection: 'prospects', id: prospectId, depth: 0, overrideAccess: true })
         const current = (prospect.report ?? {}) as unknown as ReportContent
         const findings = Array.isArray(input.findings) ? input.findings.slice(0, 5) : current.findings
+        // Competitors can be removed from the report, never added or changed by hand.
+        const keep = Array.isArray(input.competitors) ? new Set(input.competitors.map((c) => c?.placeId)) : null
         const report: ReportContent = {
           ...current,
+          competitors: (current.competitors ?? []).filter((c) => !keep || keep.has(c.placeId)),
           company: clean(input.company, 160) || current.company,
           headline: clean(input.headline, 200) || current.headline,
           intro: clean(input.intro, 1500),

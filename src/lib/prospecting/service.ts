@@ -623,8 +623,64 @@ export async function closeStale(payload: Payload) {
 
 /* Reports */
 
+/** A well-placed competitor. Only its Google ID and our own measurements are kept; name and rating are read live. */
+export type Competitor = {
+  placeId: string
+  /** Position in Google Maps for the same search when the report was drafted. */
+  position: number
+  website: Candidate['website']
+  booking: boolean | null
+  pageSpeed: number | null
+}
+
+const LEADERS_TTL_MS = 6 * 60 * 60 * 1000
+const LEADER_SPEED_TIMEOUT_MS = 30000
+const leadersCache = new Map<string, { at: number; leaders: Competitor[] }>()
+
+/**
+ * The first four in Google Maps for a niche and zone, with their sites measured. Asked once per niche for
+ * every report of a batch (one search and up to four PageSpeed runs), then reused for a few hours.
+ */
+async function leadersFor(query: string, zone: string): Promise<Competitor[]> {
+  const key = `${query}|${zone}`.toLowerCase()
+  const cached = leadersCache.get(key)
+  if (cached && Date.now() - cached.at < LEADERS_TTL_MS) return cached.leaders
+  const { places } = await searchPlacesForBatch(`${query} en ${zone}`)
+  const top = places.slice(0, 4)
+  const leaders = await pool(top, 4, async (place): Promise<Competitor> => {
+    const website = websiteKind(place.website)
+    const site = website === 'own' ? await auditSite(place.website!) : null
+    return {
+      placeId: place.id,
+      position: top.indexOf(place) + 1,
+      website,
+      booking: site?.reachable ? site.booking : website === 'own' ? null : false,
+      // Shorter than the batch's: a person is waiting for the draft and the web server cuts requests at 60 s.
+      pageSpeed: site?.reachable ? await pageSpeed(place.website!, LEADER_SPEED_TIMEOUT_MS) : null,
+    }
+  })
+  leadersCache.set(key, { at: Date.now(), leaders })
+  return leaders
+}
+
+/** The three best placed in the prospect's own search, without the prospect. Empty if Google doesn't answer. */
+export async function competitorsFor(prospect: Prospect, zone: string): Promise<Competitor[]> {
+  const facts = prospect.facts as unknown as Facts | null
+  const query = facts?.query || prospect.niche
+  if (!query) return []
+  try {
+    return (await leadersFor(query, zone)).filter((c) => c.placeId !== prospect.placeId).slice(0, 3)
+  } catch (err) {
+    console.error('[prospecting] competitors not found', err)
+    return []
+  }
+}
+
 export type ReportContent = {
   company: string
+  /** The prospect's own row in the comparison, from what we measured. */
+  self?: Omit<Competitor, 'placeId'> & { placeId: string }
+  competitors?: Competitor[]
   headline: string
   intro: string
   findings: { title: string; detail: string; impact: string; source: string }[]
@@ -637,11 +693,19 @@ export type ReportContent = {
   date: string
 }
 
-export function draftReport(prospect: Prospect, profile: OfferProfile, company: string): ReportContent {
+export function draftReport(prospect: Prospect, profile: OfferProfile, company: string, competitors: Competitor[] = []): ReportContent {
   const research = prospect.research as unknown as Research | null
   const facts = prospect.facts as unknown as Facts | null
   return {
     company,
+    self: {
+      placeId: prospect.placeId,
+      position: facts?.rank ?? 0,
+      website: facts?.website ?? 'none',
+      booking: facts?.site?.reachable ? facts.site.booking : facts?.website === 'own' ? null : false,
+      pageSpeed: facts?.pageSpeed ?? null,
+    },
+    competitors,
     headline: `Lo que vimos de ${company} desde afuera`,
     intro: `Revisamos lo que ve cualquier persona antes de elegir a ${company}: su perfil en Google Maps, su sitio web y cómo aparece frente a otros ${facts?.query ?? prospect.niche ?? 'negocios'} de ${prospect.zone ?? 'la zona'}. Encontramos tres puntos que vale la pena mirar.`,
     findings: research?.findings ?? [],

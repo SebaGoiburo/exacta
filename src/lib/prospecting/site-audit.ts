@@ -105,13 +105,13 @@ export async function auditSite(url: string): Promise<SiteFacts | null> {
 let skipKey = false
 
 /** Google's mobile performance score, 0 to 100, or null if PageSpeed didn't answer. */
-export async function pageSpeed(url: string): Promise<number | null> {
+export async function pageSpeed(url: string, timeoutMs = 70000): Promise<number | null> {
   const key = process.env.PAGESPEED_API_KEY || process.env.GOOGLE_MAPS_API_KEY
   const attempt = async (withKey: boolean) => {
     const params = new URLSearchParams({ url, strategy: 'mobile', category: 'performance' })
     if (withKey && key) params.set('key', key)
     const res = await fetch(`https://www.googleapis.com/pagespeedonline/v5/runPagespeed?${params}`, {
-      signal: AbortSignal.timeout(70000),
+      signal: AbortSignal.timeout(timeoutMs),
       cache: 'no-store',
     })
     return res

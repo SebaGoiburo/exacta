@@ -81,6 +81,13 @@ export async function placeContact(id: string) {
   return toPlace(await call(`/places/${encodeURIComponent(id)}?languageCode=es`, CONTACT_FIELDS))
 }
 
+/** Name, rating and reviews for a comparison shown in a report. Requested every time the report is shown. */
+export async function placeSummary(id: string) {
+  return toPlace(
+    await call(`/places/${encodeURIComponent(id)}?languageCode=es`, ['id', 'displayName', 'googleMapsUri', 'rating', 'userRatingCount']),
+  )
+}
+
 /** A search result with what the prospect formula needs. Used in memory only, never stored. */
 export type ScoredPlace = Place & { priceLevel?: string; operational: boolean; type?: string }
 

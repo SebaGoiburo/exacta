@@ -5,7 +5,8 @@ import { Link } from '@/i18n/navigation'
 import type { Locale } from '@/i18n/routing'
 import { AREAS, type Area } from '@/lib/diagnostic/questions'
 import { AREA_NAMES } from '@/lib/diagnostic/recommendations'
-import { cms, type ReportContent } from '@/lib/prospecting/service'
+import { placeSummary, type Place } from '@/lib/places'
+import { cms, type Competitor, type ReportContent } from '@/lib/prospecting/service'
 import { getSettings } from '@/lib/settings'
 import { whatsappLink } from '@/lib/site'
 import { ArrowRight, WhatsApp } from '@/components/ui/icons'
@@ -50,6 +51,22 @@ function sourceText(source: string, date: string) {
   return source ? 'Fuente: ' : ''
 }
 
+type Row = Omit<Competitor, 'placeId'> & { place: Place | null; self: boolean }
+
+/** Google's data for the comparison, asked when the report is shown: names and ratings are never stored. */
+async function comparisonRows(report: ReportContent): Promise<Row[]> {
+  const competitors = report.competitors ?? []
+  if (!competitors.length) return []
+  const entries = [...(report.self ? [{ ...report.self, self: true }] : []), ...competitors.map((c) => ({ ...c, self: false }))]
+  const places = await Promise.all(entries.map((e) => placeSummary(e.placeId).catch(() => null)))
+  const rows = entries.map((e, i) => ({ ...e, place: places[i] }))
+  // Without Google's answer for the competitors there is nothing to compare.
+  return rows.some((r) => !r.self && r.place) ? rows.filter((r) => r.self || r.place) : []
+}
+
+const yesNo = (v: boolean | null) => (v === null ? 'Sin dato' : v ? 'Sí' : 'No')
+const siteText = (w: Competitor['website']) => (w === 'own' ? 'Propio' : w === 'social' ? 'Solo redes' : 'No tiene')
+
 export default async function ProspectReport({ params }: Props) {
   const { locale, token } = (await params) as { locale: Locale; token: string }
   setRequestLocale(locale)
@@ -77,7 +94,7 @@ export default async function ProspectReport({ params }: Props) {
     )
   }
 
-  const settings = await getSettings()
+  const [settings, rows] = await Promise.all([getSettings(), comparisonRows(report)])
   const areas = report.areas as Record<Area, number> | null
 
   return (
@@ -121,12 +138,58 @@ export default async function ProspectReport({ params }: Props) {
         </section>
       )}
 
-      {report.comparison && (
+      {(report.comparison || rows.length > 0) && (
         <section className="mt-20 border-t border-line pt-10 md:mt-28" aria-labelledby="comparison-title">
           <h2 id="comparison-title" className="font-display text-2xl font-semibold tracking-[-0.02em] text-ink">
             Frente a los primeros de tu zona
           </h2>
-          <p className="mt-6 max-w-3xl text-lg leading-relaxed text-ink-soft">{report.comparison}</p>
+          {report.comparison && <p className="mt-6 max-w-3xl text-lg leading-relaxed text-ink-soft">{report.comparison}</p>}
+          {rows.length > 0 && (
+            <>
+              <div className="mt-8 overflow-x-auto">
+                <table className="w-full min-w-[640px] border-collapse text-left">
+                  <thead>
+                    <tr className="border-b border-line text-sm text-ink-soft">
+                      <th className="py-3 pr-4 font-semibold">Negocio</th>
+                      <th className="py-3 pr-4 font-semibold">Puesto en Google Maps</th>
+                      <th className="py-3 pr-4 font-semibold">Calificación</th>
+                      <th className="py-3 pr-4 font-semibold">Reseñas</th>
+                      <th className="py-3 pr-4 font-semibold">Sitio web</th>
+                      <th className="py-3 pr-4 font-semibold">Turnos online</th>
+                      <th className="py-3 font-semibold">Velocidad en celular</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {rows.map((r, i) => (
+                      <tr key={i} className={`border-b border-line ${r.self ? 'font-semibold text-ink' : 'text-ink-soft'}`}>
+                        <td className="py-3 pr-4">
+                          {r.self ? (
+                            report.company
+                          ) : r.place?.mapsUrl ? (
+                            <a href={r.place.mapsUrl} target="_blank" rel="noopener nofollow" className="underline">
+                              {r.place.name}
+                            </a>
+                          ) : (
+                            r.place?.name
+                          )}
+                        </td>
+                        <td className="py-3 pr-4 font-mono">{r.position || '—'}</td>
+                        <td className="py-3 pr-4 font-mono">{r.place?.rating ?? '—'}</td>
+                        <td className="py-3 pr-4 font-mono">{r.place?.reviews ?? '—'}</td>
+                        <td className="py-3 pr-4">{siteText(r.website)}</td>
+                        <td className="py-3 pr-4">{r.website === 'own' ? yesNo(r.booking) : 'No'}</td>
+                        <td className="py-3 font-mono">{r.pageSpeed === null ? '—' : `${r.pageSpeed}/100`}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              <p className="mt-4 text-sm text-ink-soft">
+                Calificación y reseñas: Google Maps, consultado el {dateText(new Date())}. Puesto en la búsqueda de Google Maps, sitio,
+                turnos online y velocidad (Google PageSpeed): revisión de Exacta del {dateText(report.date)}.
+              </p>
+            </>
+          )}
         </section>
       )}
 
