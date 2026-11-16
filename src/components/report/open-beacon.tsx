@@ -2,7 +2,7 @@
 
 import { useEffect } from 'react'
 
-const SECTIONS = ['hallazgos', 'comparacion', 'propuesta', 'final']
+const SECTIONS = ['comparacion', 'hallazgos', 'propuesta', 'final']
 
 /**
  * Tells us how the report was read: the open (only after a few seconds on screen, once per visit),

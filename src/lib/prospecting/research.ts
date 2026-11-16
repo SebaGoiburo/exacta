@@ -70,6 +70,8 @@ Cómo trabajás:
 - Primero leés los datos que te pasamos: Google Maps (calificación, reseñas, horarios, puesto en la búsqueda), nuestra revisión de su sitio y su velocidad en PageSpeed.
 - Después hacés pocas búsquedas web (hasta ${MAX_SEARCHES}) para confirmar señales: redes sociales activas, avisos de empleo, noticias, quién es el dueño o director, si es una cadena.
 - Un hallazgo vale si es concreto, verificable y le cuesta clientes o plata. "Tu web tarda 9 segundos en cargar en el celular" vale. "Podrías mejorar tu presencia digital" no vale.
+- Un hallazgo no puede ser algo que el dueño ya sabe de su propio negocio: que no tiene sitio web, que no tiene turnos online, que no está en redes. Si lo leés y la respuesta es "eso ya lo sé", no sirve. Contá lo que esa carencia le hace perder, con un dato que no tiene a la vista: qué pasa cuando alguien lo busca de noche o un domingo, qué tienen los primeros de la búsqueda, qué cuentan las reseñas. El título nombra la pérdida, no la carencia: "Fuera de horario, el turno se lo lleva otro", no "No tenés sitio web".
+- La gente no lee todo: cada texto, lo más corto posible sin perder el dato.
 
 Límites que nunca se cruzan:
 - Nada inventado: ni cifras, ni nombres, ni reseñas, ni competidores. Si no lo viste, va "sin_dato" o un texto vacío.
@@ -165,9 +167,9 @@ QUÉ DEVOLVER
 - "chainElsewhere": true solo si es una sucursal de una cadena que decide en otra ciudad.
 - "hook": el hallazgo para el primer contacto, en una o dos frases, con un dato concreto y su fuente.
 - "headline": el título del informe, de hasta 70 caracteres. Cuenta la pérdida concreta del hallazgo principal, de vos y sin cifras de competidores. Un ejemplo del tono, no para copiar: "Un domingo a la noche, nadie puede sacar turno con vos".
-- "findings": exactamente 3 hallazgos para el informe, del más al menos importante. "title" corto; "detail" con el dato; "impact" con lo que le cuesta (clientes, horas, plata), sin cifras inventadas.
-- "comparison": dos o tres frases sobre la brecha con los primeros de su zona, con los datos de arriba pero sin escribir los números de los competidores.
-- "openQuestion": una pregunta que solo la empresa puede contestar y que deja ganas de conversar, por ejemplo cuántos turnos se pierden por semana.
+- "findings": exactamente 3 hallazgos para el informe, del más al menos importante. "title" de hasta 8 palabras, que nombre la pérdida; "detail" con el dato, en una o dos frases y hasta 30 palabras; "impact" con lo que le cuesta (clientes, horas, plata), en una frase de hasta 20 palabras y sin cifras inventadas.
+- "comparison": una o dos frases, hasta 35 palabras, sobre la brecha con los primeros de su zona, con los datos de arriba pero sin escribir los números de los competidores.
+- "openQuestion": una pregunta corta que solo la empresa puede contestar y que deja ganas de conversar, por ejemplo cuántos turnos se pierden por semana.
 - "areas": madurez estimada desde afuera, de 0 a 100, en procesos, sistemas, datos, clientes e IA.
 - "summary": por qué conviene o no contactarla, en dos frases.
 - "risks": qué podría hacer que no sea un buen cliente, en una frase.`

@@ -63,10 +63,12 @@ export async function generateMetadata(): Promise<Metadata> {
 const dateText = (iso: string | Date) =>
   new Date(iso).toLocaleDateString('es-AR', { day: 'numeric', month: 'long', year: 'numeric' })
 
+const shortDate = (iso: string) => new Date(iso).toLocaleDateString('es-AR', { day: 'numeric', month: 'short', year: 'numeric' })
+
 function sourceText(source: string, date: string) {
-  if (source === 'google_maps') return `Fuente: Google Maps, consultado el ${dateText(date)}`
-  if (source === 'sitio') return `Fuente: revisión de tu sitio web, ${dateText(date)}`
-  if (source === 'pagespeed') return `Fuente: Google PageSpeed para celulares, ${dateText(date)}`
+  if (source === 'google_maps') return `Fuente: Google Maps · ${shortDate(date)}`
+  if (source === 'sitio') return `Fuente: tu sitio web · ${shortDate(date)}`
+  if (source === 'pagespeed') return `Fuente: Google PageSpeed · ${shortDate(date)}`
   return source ? 'Fuente: ' : ''
 }
 
@@ -210,41 +212,6 @@ export default async function ProspectReport({ params }: Props) {
         {report.intro && <p className="mt-6 max-w-2xl text-lg leading-relaxed text-ink-soft">{report.intro}</p>}
       </header>
 
-      {report.findings.length > 0 && (
-        <section
-          data-report-section="hallazgos"
-          className="mt-20 border-t border-line pt-10 md:mt-28"
-          aria-labelledby="findings-title"
-        >
-          <h2 id="findings-title" className={H2}>
-            Lo que encontramos
-          </h2>
-          <ol className="mt-8 grid gap-10 md:grid-cols-3">
-            {report.findings.map((f, i) => (
-              <li key={i} className="border-t-2 border-gold pt-5">
-                <p className="font-mono text-sm text-gold">0{i + 1}</p>
-                <p className="mt-2 font-semibold text-ink">{f.title}</p>
-                <p className="mt-3 leading-relaxed text-ink-soft">{f.detail}</p>
-                {f.impact && (
-                  <p className="mt-3 leading-relaxed text-ink">
-                    <span className="font-semibold">Por qué importa: </span>
-                    {f.impact}
-                  </p>
-                )}
-                <p className="mt-4 text-sm text-ink-soft">
-                  {sourceText(f.source, report.date)}
-                  {/^https?:\/\//.test(f.source) && (
-                    <a href={f.source} target="_blank" rel="noopener nofollow" className="underline">
-                      {new URL(f.source).hostname}
-                    </a>
-                  )}
-                </p>
-              </li>
-            ))}
-          </ol>
-        </section>
-      )}
-
       {(report.comparison || rows.length > 0) && (
         <section
           data-report-section="comparacion"
@@ -361,6 +328,41 @@ export default async function ProspectReport({ params }: Props) {
         </section>
       )}
 
+      {report.findings.length > 0 && (
+        <section
+          data-report-section="hallazgos"
+          className="mt-20 border-t border-line pt-10 md:mt-28"
+          aria-labelledby="findings-title"
+        >
+          <h2 id="findings-title" className={H2}>
+            Lo que encontramos
+          </h2>
+          <ol className="mt-8 grid gap-10 md:grid-cols-3">
+            {report.findings.map((f, i) => (
+              <li key={i} className="border-t-2 border-gold pt-5">
+                <p className="font-mono text-sm text-gold">0{i + 1}</p>
+                <p className="mt-2 font-semibold text-ink">{f.title}</p>
+                <p className="mt-3 leading-relaxed text-ink-soft">{f.detail}</p>
+                {f.impact && (
+                  <p className="mt-3 leading-relaxed text-ink">
+                    <span className="font-semibold">Por qué importa: </span>
+                    {f.impact}
+                  </p>
+                )}
+                <p className="mt-4 text-sm text-ink-soft">
+                  {sourceText(f.source, report.date)}
+                  {/^https?:\/\//.test(f.source) && (
+                    <a href={f.source} target="_blank" rel="noopener nofollow" className="underline">
+                      {new URL(f.source).hostname}
+                    </a>
+                  )}
+                </p>
+              </li>
+            ))}
+          </ol>
+        </section>
+      )}
+
       {areas && (
         <section className="mt-20 border-t border-line pt-10 md:mt-28" aria-labelledby="areas-title">
           <h2 id="areas-title" className={H2}>
@@ -387,6 +389,9 @@ export default async function ProspectReport({ params }: Props) {
         <section className="mt-20 border-t border-line pt-10 md:mt-28" aria-label="Para pensar">
           {report.costFormula && (
             <div className="max-w-4xl">
+              <p className="mb-4 inline-block bg-accent px-3 py-1.5 font-mono text-xs font-semibold tracking-[0.08em] text-accent-ink uppercase">
+                Calculá vos si conviene invertir en esto
+              </p>
               <h2 className={H2}>Cuánto te cuesta hoy</h2>
               {calculator ? (
                 <>

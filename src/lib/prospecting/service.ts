@@ -839,9 +839,8 @@ const AREAS_OFFERS = ['software-a-medida', 'agentes-ia', 'embudo-automatizado']
 
 /** Where the reader stands: whether they have a site changes what we can say we looked at. */
 function draftIntro(prospect: Prospect, facts: Facts | null) {
-  const what = facts?.website === 'own' ? 'tu perfil en Google, tu sitio web' : 'tu perfil en Google, tus redes'
   const niche = facts?.query ?? prospect.niche ?? 'negocios'
-  return `Miramos lo que ve cualquier persona antes de elegirte: ${what} y cómo aparecés cuando alguien busca ${niche} en ${prospect.zone ?? 'tu zona'}. Encontramos tres puntos que vale la pena mirar.`
+  return `Lo que ve alguien que busca ${niche} en ${prospect.zone ?? 'tu zona'} antes de elegirte, y cómo quedás frente a los primeros.`
 }
 
 export function draftReport(
@@ -1113,7 +1112,7 @@ export async function linkDiagnostic(a: { token: string; diagnosticId: number; c
 }
 
 /** The report's sections in reading order: how far someone got says how interested they are. */
-export const REPORT_SECTIONS = ['hallazgos', 'comparacion', 'propuesta', 'final'] as const
+export const REPORT_SECTIONS = ['comparacion', 'hallazgos', 'propuesta', 'final'] as const
 export type ReportSection = (typeof REPORT_SECTIONS)[number]
 export const REPORT_CTAS = ['whatsapp', 'agenda', 'propuesta', 'diagnostico'] as const
 export type ReportCta = (typeof REPORT_CTAS)[number]
