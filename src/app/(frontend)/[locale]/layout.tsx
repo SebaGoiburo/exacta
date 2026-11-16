@@ -86,7 +86,8 @@ export default async function LocaleLayout({ children, params }: Props) {
             sameAs: Object.values(site.social),
           }}
         />
-        <ThemeProvider attribute="data-theme" defaultTheme="system" enableSystem disableTransitionOnChange>
+        {/* Dark unless the visitor switches to light; the operating system's setting doesn't decide. */}
+        <ThemeProvider attribute="data-theme" defaultTheme="dark" enableSystem={false} disableTransitionOnChange>
           <NextIntlClientProvider>
             <a
               href="#contenido"
