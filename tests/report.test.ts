@@ -62,3 +62,15 @@ test('prices saved in the earlier format read as before', async () => {
   assert.equal(priceText({ amount: 300000, currency: 'ARS', period: 'mes' }), 'Desde $ 300.000 por mes')
   assert.equal(priceText({ amount: 500, currency: 'USD', period: 'unico', from: false }), 'US$ 500, pago único')
 })
+
+test("a competitor's name comes from its own site, skipping generic title parts", async () => {
+  const { siteNameOf } = await import('../src/lib/prospecting/site-audit')
+  assert.equal(siteNameOf('<title>Inicio | Clínica Dental Sur</title>'), 'Clínica Dental Sur')
+  assert.equal(
+    siteNameOf('<meta property="og:site_name" content="Odontología &amp; Estética"><title>Home</title>'),
+    'Odontología & Estética',
+  )
+  assert.equal(siteNameOf('<title>Dra. Pérez - Odontóloga en Mendoza</title>'), 'Dra. Pérez')
+  assert.equal(siteNameOf('<title>Home</title>'), null)
+  assert.equal(siteNameOf('<html></html>'), null)
+})

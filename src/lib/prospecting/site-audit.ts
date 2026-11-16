@@ -30,6 +30,32 @@ export function siteKey(url: string | undefined | null) {
 
 const has = (html: string, re: RegExp) => re.test(html)
 
+const ENTITIES: Record<string, string> = { amp: '&', quot: '"', apos: "'", lt: '<', gt: '>', nbsp: ' ' }
+const decode = (text: string) =>
+  text
+    .replace(/&#(\d+);/g, (_, n) => String.fromCodePoint(Number(n)))
+    .replace(/&#x([0-9a-f]+);/gi, (_, n) => String.fromCodePoint(parseInt(n, 16)))
+    .replace(/&([a-z]+);/gi, (m, name) => ENTITIES[name.toLowerCase()] ?? m)
+
+/** Title parts that say where you are on the site, not whose site it is. */
+const GENERIC = /^(inicio|home|p[aá]gina principal|bienvenid[oa]s?|welcome|principal)$/i
+
+/**
+ * The business's own name, as its site presents it: og:site_name, or the first meaningful part of the title
+ * ("Inicio | Clínica Dental Sur" gives "Clínica Dental Sur"). Null if there's nothing usable.
+ */
+export function siteNameOf(html: string) {
+  const og =
+    html.match(/<meta[^>]+property=["']og:site_name["'][^>]*content=["']([^"']{2,120})["']/i) ??
+    html.match(/<meta[^>]+content=["']([^"']{2,120})["'][^>]*property=["']og:site_name["']/i)
+  const title = html.match(/<title[^>]*>([^<]{2,200})<\/title>/i)
+  const parts = og ? [og[1]] : (title?.[1] ?? '').split(/\s+[|–—·:-]\s+|\s*\|\s*/)
+  const name = parts
+    .map((p) => decode(p).replace(/\s+/g, ' ').trim())
+    .find((p) => p.length >= 2 && !GENERIC.test(p))
+  return name && name.length <= 80 ? name : null
+}
+
 /** Pure: reads the facts out of an HTML page. Exported for tests. */
 export function readHtml(html: string, finalUrl: string): SiteFacts {
   const years = [...html.matchAll(/(?:©|&copy;|&#169;|copyright)\s*(?:\d{4}\s*[-–]\s*)?((?:19|20)\d{2})/gi)].map((m) => Number(m[1]))
@@ -37,6 +63,7 @@ export function readHtml(html: string, finalUrl: string): SiteFacts {
   const valid = years.filter((y) => y <= thisYear)
   return {
     reachable: true,
+    name: siteNameOf(html),
     https: finalUrl.startsWith('https:'),
     viewport: has(html, /<meta[^>]+name=["']?viewport/i),
     copyrightYear: valid.length ? Math.max(...valid) : null,

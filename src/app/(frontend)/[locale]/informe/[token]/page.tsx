@@ -72,7 +72,27 @@ function sourceText(source: string, date: string) {
   return source ? 'Fuente: ' : ''
 }
 
-type Row = Omit<Competitor, 'placeId'> & { place: Place | null; self: boolean }
+type Row = Competitor & { place: Place | null; self: boolean }
+
+/** Google Maps from the place ID alone, which Google allows to keep: the link needs no lookup. */
+const mapsLink = (placeId: string) => `https://www.google.com/maps/place/?q=place_id:${encodeURIComponent(placeId)}`
+
+/** Live Google lookups per report per day. Past this, the table shows without rating and reviews. */
+const GOOGLE_LOADS_PER_DAY = 3
+const googleLoads = new Map<string, { day: string; count: number }>()
+
+/** Counts one lookup for this report today (Argentina's day). False once the day's lookups are used up. */
+function takeGoogleLoad(token: string) {
+  const day = new Date(Date.now() - 3 * 60 * 60 * 1000).toISOString().slice(0, 10)
+  const entry = googleLoads.get(token)
+  if (!entry || entry.day !== day) {
+    googleLoads.set(token, { day, count: 1 })
+    return true
+  }
+  if (entry.count >= GOOGLE_LOADS_PER_DAY) return false
+  entry.count += 1
+  return true
+}
 
 /** By position in Google Maps, so the client sits where it really is and never looks like it leads. Unknown goes last. */
 const byPosition = (a: Row, b: Row) => (a.position || Infinity) - (b.position || Infinity)
@@ -183,8 +203,12 @@ export default async function ProspectReport({ params }: Props) {
     )
   }
 
-  const isBot = BOT.test((await headers()).get('user-agent') ?? '')
-  const [settings, rows] = await Promise.all([getSettings(), comparisonRows(report, !isBot)])
+  const requestHeaders = await headers()
+  const isBot = BOT.test(requestHeaders.get('user-agent') ?? '')
+  // The team looking at a report doesn't use up the reader's lookups.
+  const { user } = await (await cms()).auth({ headers: requestHeaders }).catch(() => ({ user: null }))
+  const askGoogle = !isBot && (user?.collection === 'users' || takeGoogleLoad(token))
+  const [settings, rows] = await Promise.all([getSettings(), comparisonRows(report, askGoogle)])
   const withGoogle = rows.some((r) => r.place)
   const areas = report.showAreas ? (report.areas as Record<Area, number> | null) : null
   const offer = report.offer?.services?.length ? report.offer : null
@@ -200,7 +224,7 @@ export default async function ProspectReport({ params }: Props) {
         `Hola, soy de ${report.company}. Leí el informe y me interesa la propuesta: ${offer.services.map((s) => s.name).join(', ')}.`,
       )
     : whatsapp
-  const nameOf = (r: Row) => (r.self ? report.company : r.place?.name || `Negocio en el puesto ${r.position}`)
+  const nameOf = (r: Row) => (r.self ? report.company : r.name || r.place?.name || `Negocio en el puesto ${r.position}`)
 
   return (
     <div className="container-x pt-36 pb-32 md:pt-44 md:pb-28">
@@ -313,12 +337,10 @@ export default async function ProspectReport({ params }: Props) {
                               <>
                                 {report.company} <span className="text-sm font-normal text-ink-soft">(tu negocio)</span>
                               </>
-                            ) : r.place?.mapsUrl ? (
-                              <a href={r.place.mapsUrl} target="_blank" rel="noopener nofollow" className="underline">
-                                {r.place.name}
-                              </a>
                             ) : (
-                              nameOf(r)
+                              <a href={mapsLink(r.placeId)} target="_blank" rel="noopener nofollow" className="underline">
+                                {nameOf(r)}
+                              </a>
                             )}
                           </td>
                           <td className="py-3 pr-4 font-mono">{r.position || '—'}</td>

@@ -19,6 +19,8 @@ import {
 /** What we read from the company's own website. Null fields mean we couldn't tell. */
 export type SiteFacts = {
   reachable: boolean
+  /** The business's name as its own site gives it. Ours to keep: it doesn't come from Google. */
+  name?: string | null
   https: boolean
   viewport: boolean
   copyrightYear: number | null

@@ -326,3 +326,17 @@
 .check input {
   width: auto;
 }
+
+.competitor {
+  margin-bottom: 8px;
+}
+
+.competitor input {
+  width: min(320px, 100%);
+  padding: 6px 10px;
+  border: 1px solid var(--theme-elevation-200);
+  border-radius: 4px;
+  background: var(--theme-input-bg, var(--theme-bg));
+  color: inherit;
+  font: inherit;
+}

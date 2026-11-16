@@ -285,8 +285,8 @@ export async function POST(req: Request) {
         const prospect = await payload.findByID({ collection: 'prospects', id: prospectId, depth: 0, overrideAccess: true })
         const current = (prospect.report ?? {}) as unknown as ReportContent
         const findings = Array.isArray(input.findings) ? input.findings.slice(0, 5) : current.findings
-        // Competitors can be removed from the report, never added or changed by hand.
-        const keep = Array.isArray(input.competitors) ? new Set(input.competitors.map((c) => c?.placeId)) : null
+        // Competitors can be removed and renamed by hand, never added: their measurements are ours.
+        const edited = Array.isArray(input.competitors) ? new Map(input.competitors.map((c) => [c?.placeId, c])) : null
         // The logo is looked up again by its ID: null removes it, missing keeps the one it had.
         const logo =
           input.logo === null ? null : input.logo?.id !== undefined ? await reportLogo(payload, input.logo.id) : (current.logo ?? null)
@@ -297,7 +297,12 @@ export async function POST(req: Request) {
           signer: input.signer === null ? null : Number.isInteger(signer) && signer > 0 ? signer : (current.signer ?? null),
           showAreas: typeof input.showAreas === 'boolean' ? input.showAreas : Boolean(current.showAreas),
           offer: input.offer === null ? null : input.offer ? cleanOffer(input.offer) : (current.offer ?? null),
-          competitors: (current.competitors ?? []).filter((c) => !keep || keep.has(c.placeId)),
+          competitors: (current.competitors ?? [])
+            .filter((c) => !edited || edited.has(c.placeId))
+            .map((c) => {
+              const name = edited?.get(c.placeId)?.name
+              return typeof name === 'string' ? { ...c, name: clean(name, 120) || null } : c
+            }),
           company: clean(input.company, 160) || current.company,
           headline: clean(input.headline, 200) || current.headline,
           intro: clean(input.intro, 1500),

@@ -453,8 +453,23 @@ export function ReportEditor({ prospect, profiles, profileId, team, terms, onSav
         {(report.competitors ?? []).length ? (
           <ul style={{ margin: 0, paddingLeft: 18 }}>
             {(report.competitors ?? []).map((c) => (
-              <li key={c.placeId}>
-                {names[c.placeId]?.name ?? 'Cargando…'}{' '}
+              <li key={c.placeId} className={styles.competitor}>
+                <input
+                  aria-label="Nombre del competidor en el informe"
+                  placeholder="Escribí el nombre del competidor"
+                  maxLength={120}
+                  value={c.name ?? ''}
+                  disabled={busy}
+                  onChange={(e) =>
+                    set(
+                      'competitors',
+                      (report.competitors ?? []).map((x) => (x.placeId === c.placeId ? { ...x, name: e.target.value } : x)),
+                    )
+                  }
+                />{' '}
+                {names[c.placeId]?.name && names[c.placeId].name !== c.name && (
+                  <span className={styles.muted}>En Google figura como «{names[c.placeId].name}». </span>
+                )}
                 <span className={styles.muted}>
                   (puesto {c.position} en Google Maps
                   {c.pageSpeed !== null ? `, velocidad ${c.pageSpeed}/100` : ''}
@@ -478,7 +493,10 @@ export function ReportEditor({ prospect, profiles, profileId, team, terms, onSav
         ) : (
           <span className={styles.muted}>No hay competidores para mostrar.</span>
         )}
-        <span className={styles.muted}>Si quitás uno, guardá los cambios para que no aparezca en el informe.</span>
+        <span className={styles.muted}>
+          El nombre sale del sitio de cada competidor y lo podés corregir: así el informe lo muestra sin depender de Google. Si
+          quitás uno o cambiás un nombre, guardá los cambios.
+        </span>
         <div>
           <button type="button" disabled={busy} onClick={() => void findCompetitors()}>
             {(report.competitors ?? []).length ? 'Volver a buscar competidores' : 'Buscar competidores en Google'}

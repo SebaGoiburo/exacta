@@ -703,9 +703,13 @@ export async function closeStale(payload: Payload) {
 
 /* Reports */
 
-/** A well-placed competitor. Only its Google ID and our own measurements are kept; name and rating are read live. */
+/**
+ * A well-placed competitor. From Google only its ID is kept; the name comes from its own website or from the
+ * team, so the report can show it without asking Google. Rating and reviews are read live.
+ */
 export type Competitor = {
   placeId: string
+  name?: string | null
   /** Position in Google Maps for the same search when the report was drafted. */
   position: number
   website: Candidate['website']
@@ -732,6 +736,7 @@ async function leadersFor(query: string, zone: string): Promise<Competitor[]> {
     const site = website === 'own' ? await auditSite(place.website!) : null
     return {
       placeId: place.id,
+      name: site?.reachable ? (site.name ?? null) : null,
       position: top.indexOf(place) + 1,
       website,
       booking: site?.reachable ? site.booking : website === 'own' ? null : false,
