@@ -109,6 +109,7 @@ export default async function ProspectReport({ params }: Props) {
 
   const [settings, rows] = await Promise.all([getSettings(), comparisonRows(report)])
   const areas = report.areas as Record<Area, number> | null
+  const offer = report.offer?.services?.length ? report.offer : null
 
   return (
     <div className="container-x pt-36 pb-28 md:pt-44">
@@ -281,6 +282,48 @@ export default async function ProspectReport({ params }: Props) {
             Una observación nuestra
           </h2>
           <p className="mt-6 max-w-3xl whitespace-pre-line text-lg leading-relaxed text-ink-soft">{report.note}</p>
+        </section>
+      )}
+
+      {offer && (
+        // The one block in the brand color: what we'd do for them, right after what we saw.
+        <section
+          className="mt-20 border-2 border-accent bg-accent-soft px-6 py-12 sm:px-10 md:mt-28 md:py-16"
+          aria-labelledby="offer-title"
+        >
+          <p className="font-mono text-xs tracking-[0.08em] text-accent uppercase">Nuestra propuesta para {report.company}</p>
+          <h2 id="offer-title" className="h-section mt-4 max-w-3xl text-ink">
+            {offer.title}
+          </h2>
+          {offer.intro && <p className="mt-5 max-w-2xl text-lg leading-relaxed text-ink-soft">{offer.intro}</p>}
+          <ol
+            className={`mt-10 grid gap-5 ${
+              offer.services.length === 1
+                ? 'max-w-2xl'
+                : offer.services.length === 2
+                  ? 'md:grid-cols-2'
+                  : 'md:grid-cols-2 lg:grid-cols-3'
+            }`}
+          >
+            {offer.services.map((s, i) => (
+              <li key={i} className="border border-line bg-bg-elev p-6 md:p-8">
+                <p className="font-mono text-sm text-accent">0{i + 1}</p>
+                <h3 className="mt-3 font-display text-xl font-semibold tracking-[-0.02em] text-ink md:text-2xl">{s.name}</h3>
+                {s.description && <p className="mt-3 leading-relaxed text-ink-soft">{s.description}</p>}
+              </li>
+            ))}
+          </ol>
+          <a
+            href={whatsappLink(
+              `Hola, soy de ${report.company}. Leí el informe y me interesa la propuesta: ${offer.services.map((s) => s.name).join(', ')}.`,
+            )}
+            target="_blank"
+            rel="noopener"
+            className="btn btn-primary mt-10"
+          >
+            <WhatsApp className="size-4" />
+            Quiero conversar esta propuesta
+          </a>
         </section>
       )}
 

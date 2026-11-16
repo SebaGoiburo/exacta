@@ -122,14 +122,14 @@ export function Batches({ configured, profiles, batches, reload }: Props) {
         </section>
       )}
 
-      {selected !== null && <BatchDetail key={selected} batchId={selected} onChange={reload} />}
+      {selected !== null && <BatchDetail key={selected} batchId={selected} profiles={approved} onChange={reload} />}
     </div>
   )
 }
 
 type Job = { prospect?: number | { id: number } | null; status: string; error?: string | null }
 
-function BatchDetail({ batchId, onChange }: { batchId: number; onChange: () => Promise<void> }) {
+function BatchDetail({ batchId, profiles, onChange }: { batchId: number; profiles: Profile[]; onChange: () => Promise<void> }) {
   const [batch, setBatch] = useState<Batch | null>(null)
   const [prospects, setProspects] = useState<GeneratedProspect[]>([])
   const [jobs, setJobs] = useState<Job[]>([])
@@ -345,7 +345,14 @@ function BatchDetail({ batchId, onChange }: { batchId: number; onChange: () => P
                       </div>
                     </div>
                   )}
-                  {isChosen && <ReportEditor prospect={p} onSaved={() => void load()} />}
+                  {isChosen && (
+                    <ReportEditor
+                      prospect={p}
+                      profiles={profiles}
+                      profileId={batch ? (typeof batch.profile === 'object' ? batch.profile.id : batch.profile) : null}
+                      onSaved={() => void load()}
+                    />
+                  )}
                   {!isChosen && p.status !== 'descartado' && <p className={styles.muted}>Elegilo para armarle el informe.</p>}
                 </div>
               )}

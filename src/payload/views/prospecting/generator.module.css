@@ -292,3 +292,20 @@
   background: #fff;
   object-fit: contain;
 }
+
+/* The proposal block stands out in the editor too, as it does in the report. */
+.offer {
+  display: grid;
+  gap: 12px;
+  padding: 16px;
+  border: 2px solid #cc57c7;
+  border-radius: 6px;
+  font-size: 13px;
+}
+
+.offerService {
+  display: grid;
+  gap: 8px;
+  padding-top: 12px;
+  border-top: 1px solid var(--theme-elevation-150);
+}

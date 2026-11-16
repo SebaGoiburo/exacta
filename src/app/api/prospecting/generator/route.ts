@@ -16,6 +16,8 @@ import {
   reportLogo,
   runBatch,
   selfRow,
+  OFFER_LIMITS,
+  type ReportOffer,
   startBatch,
   startResearch,
   type ReportContent,
@@ -27,6 +29,20 @@ const clean = (v: unknown, max: number) => (typeof v === 'string' ? v.trim().sli
 const CHANNELS = ['llamada', 'whatsapp', 'email', 'instagram', 'visita'] as const
 const RESULTS = ['enviado', 'no_atendio', 'hablo', 'rechazo'] as const
 const oneOf = <T extends string>(list: readonly T[], v: unknown): T | null => (list.includes(v as T) ? (v as T) : null)
+
+/** The offer as the team edited it. Services without a name are dropped; with none left, there's no section. */
+function cleanOffer(input: Partial<ReportOffer>): ReportOffer | null {
+  const services = (Array.isArray(input.services) ? input.services : [])
+    .map((s) => ({ name: clean(s?.name, OFFER_LIMITS.name), description: clean(s?.description, OFFER_LIMITS.description) }))
+    .filter((s) => s.name)
+    .slice(0, OFFER_LIMITS.services)
+  if (!services.length) return null
+  return {
+    title: clean(input.title, OFFER_LIMITS.title) || 'Lo que te proponemos',
+    intro: clean(input.intro, OFFER_LIMITS.intro),
+    services,
+  }
+}
 
 async function signedIn() {
   const payload = await cms()
@@ -211,6 +227,7 @@ export async function POST(req: Request) {
         const report: ReportContent = {
           ...current,
           logo,
+          offer: input.offer === null ? null : input.offer ? cleanOffer(input.offer) : (current.offer ?? null),
           competitors: (current.competitors ?? []).filter((c) => !keep || keep.has(c.placeId)),
           company: clean(input.company, 160) || current.company,
           headline: clean(input.headline, 200) || current.headline,

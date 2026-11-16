@@ -694,9 +694,28 @@ export async function reportLogo(payload: Payload, id: unknown): Promise<ReportL
     : { id: media.id, url: media.url, width: media.width, height: media.height }
 }
 
+/** What we offer the client. Starts with the batch's offer; the team can add services, like advertising. */
+export type ReportOffer = {
+  title: string
+  intro: string
+  services: { name: string; description: string }[]
+}
+
+export const OFFER_LIMITS = { title: 120, intro: 1000, name: 120, description: 600, services: 5 }
+
+/** The offer as the draft proposes it, from the batch's offer profile. */
+export function defaultOffer(company: string, profile: Pick<OfferProfile, 'name' | 'description'>): ReportOffer {
+  return {
+    title: 'Lo que te proponemos',
+    intro: `Con lo que vimos, esto es lo que haríamos para ${company}:`,
+    services: [{ name: profile.name, description: profile.description ?? '' }],
+  }
+}
+
 export type ReportContent = {
   company: string
   logo?: ReportLogo | null
+  offer?: ReportOffer | null
   /** The prospect's own row in the comparison, from what we measured. */
   self?: Omit<Competitor, 'placeId'> & { placeId: string }
   competitors?: Competitor[]
@@ -731,6 +750,7 @@ export function draftReport(prospect: Prospect, profile: OfferProfile, company: 
     company,
     self: selfRow(prospect),
     competitors,
+    offer: defaultOffer(company, profile),
     headline: `Lo que vimos de ${company} desde afuera`,
     intro: `Revisamos lo que ve cualquier persona antes de elegir a ${company}: su perfil en Google Maps, su sitio web y cómo aparece frente a otros ${facts?.query ?? prospect.niche ?? 'negocios'} de ${prospect.zone ?? 'la zona'}. Encontramos tres puntos que vale la pena mirar.`,
     findings: research?.findings ?? [],

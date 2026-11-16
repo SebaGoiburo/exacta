@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import type { Place } from '@/lib/places'
-import { dayText, generator, loadLabels, reportLink, type GeneratedProspect, type ReportContent } from './api'
+import { dayText, generator, loadLabels, reportLink, type GeneratedProspect, type Profile, type ReportContent } from './api'
 import base from './prospecting.module.css'
 import styles from './generator.module.css'
 
@@ -32,7 +32,16 @@ function firstMessage(p: GeneratedProspect, report: ReportContent, link: string)
 const LOGO_TYPES = ['image/png', 'image/jpeg', 'image/webp']
 const LOGO_MAX_BYTES = 2 * 1024 * 1024
 
-export function ReportEditor({ prospect, onSaved }: { prospect: GeneratedProspect; onSaved: () => void }) {
+type EditorProps = {
+  prospect: GeneratedProspect
+  /** Approved offers, to add to the proposal. */
+  profiles: Profile[]
+  /** The batch's offer: what the proposal starts with. */
+  profileId: number | null
+  onSaved: () => void
+}
+
+export function ReportEditor({ prospect, profiles, profileId, onSaved }: EditorProps) {
   const [report, setReport] = useState<ReportContent | null>(prospect.report ?? null)
   const [channel, setChannel] = useState('whatsapp')
   const [busy, setBusy] = useState(false)
@@ -159,6 +168,25 @@ export function ReportEditor({ prospect, onSaved }: { prospect: GeneratedProspec
 
   const set = <K extends keyof ReportContent>(key: K, value: ReportContent[K]) =>
     setReport((r) => (r ? { ...r, [key]: value } : r))
+
+  type Offer = NonNullable<ReportContent['offer']>
+  type Service = Offer['services'][number]
+  const setOffer = (offer: Offer | null) => set('offer', offer)
+  const updateServices = (change: (services: Service[]) => Service[]) =>
+    setReport((r) => (r?.offer ? { ...r, offer: { ...r.offer, services: change(r.offer.services) } } : r))
+  const setService = (i: number, key: keyof Service, value: string) =>
+    updateServices((list) => list.map((s, k) => (k === i ? { ...s, [key]: value } : s)))
+  const addService = (s: Service) => updateServices((list) => [...list, s])
+  const removeService = (i: number) => updateServices((list) => list.filter((_, k) => k !== i))
+  /** For reports drafted before this section existed: starts from the batch's own offer. */
+  const startingOffer = (company: string): Offer => {
+    const own = profiles.find((p) => p.id === profileId)
+    return {
+      title: 'Lo que te proponemos',
+      intro: `Con lo que vimos, esto es lo que haríamos para ${company}:`,
+      services: own ? [{ name: own.name, description: own.description }] : [{ name: '', description: '' }],
+    }
+  }
   const setFinding = (i: number, key: keyof Finding, value: string) =>
     setReport((r) =>
       r
@@ -316,6 +344,91 @@ export function ReportEditor({ prospect, onSaved }: { prospect: GeneratedProspec
         Tu observación propia (lo que viste vos en 10 minutos)
         <textarea rows={3} value={report.note} onChange={(e) => set('note', e.target.value)} />
       </label>
+
+      <div className={styles.offer}>
+        <strong>Nuestra propuesta (sección destacada del informe)</strong>
+        {report.offer ? (
+          <>
+            <div className={styles.twoCols}>
+              <label className={styles.field}>
+                Título de la sección
+                <input
+                  value={report.offer.title}
+                  maxLength={120}
+                  onChange={(e) => setOffer({ ...report.offer!, title: e.target.value })}
+                />
+              </label>
+              <label className={styles.field}>
+                Introducción
+                <input
+                  value={report.offer.intro}
+                  maxLength={1000}
+                  onChange={(e) => setOffer({ ...report.offer!, intro: e.target.value })}
+                />
+              </label>
+            </div>
+            {report.offer.services.map((s, i) => (
+              <div key={i} className={styles.offerService}>
+                <label className={styles.field}>
+                  Servicio {i + 1}
+                  <input value={s.name} maxLength={120} onChange={(e) => setService(i, 'name', e.target.value)} />
+                </label>
+                <label className={styles.field}>
+                  Qué incluye o qué resuelve
+                  <textarea
+                    rows={2}
+                    value={s.description}
+                    maxLength={600}
+                    onChange={(e) => setService(i, 'description', e.target.value)}
+                  />
+                </label>
+                <div>
+                  <button type="button" disabled={busy} onClick={() => removeService(i)}>
+                    Quitar este servicio
+                  </button>
+                </div>
+              </div>
+            ))}
+            <div className={styles.logoRow}>
+              {report.offer.services.length < 5 && (
+                <select
+                  aria-label="Agregar un servicio"
+                  value=""
+                  disabled={busy}
+                  onChange={(e) => {
+                    const choice = e.target.value
+                    if (!choice) return
+                    const p = profiles.find((x) => String(x.id) === choice)
+                    addService(p ? { name: p.name, description: p.description } : { name: '', description: '' })
+                  }}
+                >
+                  <option value="">Agregar un servicio…</option>
+                  {profiles
+                    .filter((p) => !report.offer!.services.some((s) => s.name === p.name))
+                    .map((p) => (
+                      <option key={p.id} value={p.id}>
+                        {p.name}
+                      </option>
+                    ))}
+                  <option value="otro">Otro (lo escribo yo)</option>
+                </select>
+              )}
+              <button type="button" disabled={busy} onClick={() => setOffer(null)}>
+                Quitar la sección del informe
+              </button>
+            </div>
+            <span className={styles.muted}>Los cambios se publican al tocar "Guardar cambios".</span>
+          </>
+        ) : (
+          <div className={styles.logoRow}>
+            <span className={styles.muted}>Este informe no muestra qué le ofrecemos.</span>
+            <button type="button" disabled={busy} onClick={() => setOffer(startingOffer(report.company))}>
+              Agregar la sección de propuesta
+            </button>
+          </div>
+        )}
+      </div>
+
       <label className={styles.field}>
         Lo que ya hicimos (caso o producto)
         <textarea rows={3} value={report.proof} onChange={(e) => set('proof', e.target.value)} />
