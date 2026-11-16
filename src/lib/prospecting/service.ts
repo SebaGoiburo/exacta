@@ -693,18 +693,24 @@ export type ReportContent = {
   date: string
 }
 
+/** The prospect's own row in the comparison table, from what the batch measured. */
+export function selfRow(prospect: Prospect): NonNullable<ReportContent['self']> {
+  const facts = prospect.facts as unknown as Facts | null
+  return {
+    placeId: prospect.placeId,
+    position: facts?.rank ?? 0,
+    website: facts?.website ?? 'none',
+    booking: facts?.site?.reachable ? facts.site.booking : facts?.website === 'own' ? null : false,
+    pageSpeed: facts?.pageSpeed ?? null,
+  }
+}
+
 export function draftReport(prospect: Prospect, profile: OfferProfile, company: string, competitors: Competitor[] = []): ReportContent {
   const research = prospect.research as unknown as Research | null
   const facts = prospect.facts as unknown as Facts | null
   return {
     company,
-    self: {
-      placeId: prospect.placeId,
-      position: facts?.rank ?? 0,
-      website: facts?.website ?? 'none',
-      booking: facts?.site?.reachable ? facts.site.booking : facts?.website === 'own' ? null : false,
-      pageSpeed: facts?.pageSpeed ?? null,
-    },
+    self: selfRow(prospect),
     competitors,
     headline: `Lo que vimos de ${company} desde afuera`,
     intro: `Revisamos lo que ve cualquier persona antes de elegir a ${company}: su perfil en Google Maps, su sitio web y cómo aparece frente a otros ${facts?.query ?? prospect.niche ?? 'negocios'} de ${prospect.zone ?? 'la zona'}. Encontramos tres puntos que vale la pena mirar.`,

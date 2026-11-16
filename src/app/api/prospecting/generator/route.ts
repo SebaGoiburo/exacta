@@ -14,6 +14,7 @@ import {
   proposeProfile,
   recordAttempt,
   runBatch,
+  selfRow,
   startBatch,
   startResearch,
   type ReportContent,
@@ -172,6 +173,22 @@ export async function POST(req: Request) {
         const prospect = await payload.findByID({ collection: 'prospects', id: prospectId, depth: 1, overrideAccess: true })
         const [label, competitors] = await Promise.all([placeLabel(prospect.placeId), competitorsFor(prospect, prospect.zone ?? '')])
         const report = draftReport(prospect, prospect.profile as OfferProfile, label.name, competitors)
+        await payload.update({
+          collection: 'prospects',
+          id: prospectId,
+          overrideAccess: true,
+          data: { report: report as unknown as Record<string, unknown> },
+        })
+        return NextResponse.json({ report })
+      }
+      // Searches the competitors again for a report already drafted, without touching anything written in it.
+      case 'report-competitors': {
+        const prospect = await payload.findByID({ collection: 'prospects', id: prospectId, depth: 0, overrideAccess: true })
+        if (!prospect.report) return NextResponse.json({ error: 'no_report' }, { status: 422 })
+        const competitors = await competitorsFor(prospect, prospect.zone ?? '')
+        if (!competitors.length) return NextResponse.json({ error: 'places_failed' }, { status: 502 })
+        const current = prospect.report as unknown as ReportContent
+        const report: ReportContent = { ...current, self: current.self ?? selfRow(prospect), competitors }
         await payload.update({
           collection: 'prospects',
           id: prospectId,

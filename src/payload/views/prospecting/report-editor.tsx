@@ -61,6 +61,13 @@ export function ReportEditor({ prospect, onSaved }: { prospect: GeneratedProspec
       setReport(data.report)
     })
 
+  // Only the comparison table changes: whatever was written in the report stays as it is on screen.
+  const findCompetitors = () =>
+    run(async () => {
+      const data = await generator<{ report: ReportContent }>({ action: 'report-competitors', prospectId: prospect.id })
+      setReport((r) => (r ? { ...r, self: data.report.self, competitors: data.report.competitors } : data.report))
+    }, 'Competidores agregados. Ya se ven en el informe.')
+
   const save = () => run(async () => void (await generator({ action: 'report-save', prospectId: prospect.id, report })), 'Cambios guardados.')
 
   const approve = () => {
@@ -168,6 +175,12 @@ export function ReportEditor({ prospect, onSaved }: { prospect: GeneratedProspec
           <span className={styles.muted}>No hay competidores para mostrar.</span>
         )}
         <span className={styles.muted}>Si quitás uno, guardá los cambios para que no aparezca en el informe.</span>
+        <div>
+          <button type="button" disabled={busy} onClick={() => void findCompetitors()}>
+            {(report.competitors ?? []).length ? 'Volver a buscar competidores' : 'Buscar competidores en Google'}
+          </button>{' '}
+          <span className={styles.muted}>Puede tardar hasta un minuto. No cambia lo que escribiste.</span>
+        </div>
       </div>
 
       <label className={styles.field}>

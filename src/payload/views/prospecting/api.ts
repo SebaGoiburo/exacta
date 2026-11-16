@@ -74,6 +74,7 @@ const ERRORS: Record<string, string> = {
   busy: 'Ya hay una tanda buscando. Esperá a que termine.',
   profile_not_approved: 'Ese perfil todavía no está aprobado.',
   missing_fields: 'Completá todos los campos.',
+  no_report: 'Primero armá el borrador del informe.',
 }
 
 export async function generator<T>(body: Record<string, unknown>): Promise<T> {
