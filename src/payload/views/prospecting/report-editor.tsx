@@ -2,7 +2,16 @@
 
 import { useEffect, useState } from 'react'
 import type { Place } from '@/lib/places'
-import { dayText, generator, loadLabels, reportLink, type GeneratedProspect, type Profile, type ReportContent } from './api'
+import {
+  dayText,
+  generator,
+  loadLabels,
+  reportLink,
+  type GeneratedProspect,
+  type Profile,
+  type ReportContent,
+  type TeamMember,
+} from './api'
 import base from './prospecting.module.css'
 import styles from './generator.module.css'
 
@@ -38,10 +47,12 @@ type EditorProps = {
   profiles: Profile[]
   /** The batch's offer: what the proposal starts with. */
   profileId: number | null
+  /** Who can sign the report. */
+  team: TeamMember[]
   onSaved: () => void
 }
 
-export function ReportEditor({ prospect, profiles, profileId, onSaved }: EditorProps) {
+export function ReportEditor({ prospect, profiles, profileId, team, onSaved }: EditorProps) {
   const [report, setReport] = useState<ReportContent | null>(prospect.report ?? null)
   const [channel, setChannel] = useState('whatsapp')
   const [busy, setBusy] = useState(false)
@@ -174,8 +185,21 @@ export function ReportEditor({ prospect, profiles, profileId, onSaved }: EditorP
   const setOffer = (offer: Offer | null) => set('offer', offer)
   const updateServices = (change: (services: Service[]) => Service[]) =>
     setReport((r) => (r?.offer ? { ...r, offer: { ...r.offer, services: change(r.offer.services) } } : r))
-  const setService = (i: number, key: keyof Service, value: string) =>
+  const setService = (i: number, key: 'name' | 'description' | 'when', value: string) =>
     updateServices((list) => list.map((s, k) => (k === i ? { ...s, [key]: value } : s)))
+  type Price = NonNullable<Service['price']>
+  /** An empty amount removes the price: the report then shows the service without one. */
+  const setPrice = (i: number, change: Partial<Price> & { text?: string }) =>
+    updateServices((list) =>
+      list.map((s, k) => {
+        if (k !== i) return s
+        const current: Price = s.price ?? { amount: 0, currency: 'ARS', period: 'mes' }
+        const amount = change.text !== undefined ? Number(change.text.replace(/\D/g, '')) || 0 : current.amount
+        const next = { ...current, ...change, amount }
+        delete (next as { text?: string }).text
+        return { ...s, price: amount > 0 ? next : null }
+      }),
+    )
   const addService = (s: Service) => updateServices((list) => [...list, s])
   const removeService = (i: number) => updateServices((list) => list.filter((_, k) => k !== i))
   /** For reports drafted before this section existed: starts from the batch's own offer. */
@@ -382,6 +406,48 @@ export function ReportEditor({ prospect, profiles, profileId, onSaved }: EditorP
                     onChange={(e) => setService(i, 'description', e.target.value)}
                   />
                 </label>
+                <div className={styles.twoCols}>
+                  <label className={styles.field}>
+                    Plazo (opcional)
+                    <input
+                      value={s.when ?? ''}
+                      maxLength={80}
+                      placeholder="Ej: en 3 semanas"
+                      onChange={(e) => setService(i, 'when', e.target.value)}
+                    />
+                  </label>
+                  <div className={styles.field}>
+                    Precio de referencia, "desde" (opcional)
+                    <div className={styles.logoRow}>
+                      <select
+                        aria-label="Moneda"
+                        value={s.price?.currency ?? 'ARS'}
+                        onChange={(e) => setPrice(i, { currency: e.target.value as Price['currency'] })}
+                        style={{ width: 'auto' }}
+                      >
+                        <option value="ARS">$</option>
+                        <option value="USD">US$</option>
+                      </select>
+                      <input
+                        inputMode="numeric"
+                        aria-label="Monto"
+                        placeholder="Sin precio"
+                        value={s.price?.amount ? s.price.amount.toLocaleString('es-AR') : ''}
+                        onChange={(e) => setPrice(i, { text: e.target.value })}
+                        style={{ width: 140 }}
+                      />
+                      <select
+                        aria-label="Modalidad"
+                        value={s.price?.period ?? 'mes'}
+                        onChange={(e) => setPrice(i, { period: e.target.value as Price['period'] })}
+                        style={{ width: 'auto' }}
+                      >
+                        <option value="mes">por mes</option>
+                        <option value="unico">pago único</option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
                 <div>
                   <button type="button" disabled={busy} onClick={() => removeService(i)}>
                     Quitar este servicio
@@ -433,6 +499,30 @@ export function ReportEditor({ prospect, profiles, profileId, onSaved }: EditorP
         Lo que ya hicimos (caso o producto)
         <textarea rows={3} value={report.proof} onChange={(e) => set('proof', e.target.value)} />
       </label>
+
+      <div className={styles.twoCols}>
+        <label className={styles.field}>
+          Firma del informe
+          <select value={report.signer ?? ''} onChange={(e) => set('signer', e.target.value ? Number(e.target.value) : null)}>
+            <option value="">Sin firma</option>
+            {team.map((t) => (
+              <option key={t.id} value={t.id}>
+                {t.name}
+                {t.role ? ` (${t.role})` : ''}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label className={styles.inline} style={{ alignSelf: 'end', gap: 8, display: 'flex', alignItems: 'center' }}>
+          <input
+            type="checkbox"
+            checked={Boolean(report.showAreas)}
+            onChange={(e) => set('showAreas', e.target.checked)}
+            style={{ width: 'auto' }}
+          />
+          Mostrar "Madurez digital" (conviene en ofertas de software o IA)
+        </label>
+      </div>
 
       <div className={styles.actions}>
         <button type="button" disabled={busy} onClick={() => void save()}>

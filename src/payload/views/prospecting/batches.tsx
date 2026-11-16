@@ -13,6 +13,7 @@ import {
   type Batch,
   type GeneratedProspect,
   type Profile,
+  type TeamMember,
 } from './api'
 import { ReportEditor } from './report-editor'
 import base from './prospecting.module.css'
@@ -32,11 +33,12 @@ const STATUS_TEXT: Record<Batch['status'], string> = {
 type Props = {
   configured: boolean
   profiles: Profile[]
+  team: TeamMember[]
   batches: Batch[]
   reload: () => Promise<void>
 }
 
-export function Batches({ configured, profiles, batches, reload }: Props) {
+export function Batches({ configured, profiles, team, batches, reload }: Props) {
   const approved = profiles.filter((p) => p.status === 'aprobado')
   const [profileId, setProfileId] = useState<number | ''>('')
   const [niche, setNiche] = useState('')
@@ -122,14 +124,24 @@ export function Batches({ configured, profiles, batches, reload }: Props) {
         </section>
       )}
 
-      {selected !== null && <BatchDetail key={selected} batchId={selected} profiles={approved} onChange={reload} />}
+      {selected !== null && <BatchDetail key={selected} batchId={selected} profiles={approved} team={team} onChange={reload} />}
     </div>
   )
 }
 
 type Job = { prospect?: number | { id: number } | null; status: string; error?: string | null }
 
-function BatchDetail({ batchId, profiles, onChange }: { batchId: number; profiles: Profile[]; onChange: () => Promise<void> }) {
+function BatchDetail({
+  batchId,
+  profiles,
+  team,
+  onChange,
+}: {
+  batchId: number
+  profiles: Profile[]
+  team: TeamMember[]
+  onChange: () => Promise<void>
+}) {
   const [batch, setBatch] = useState<Batch | null>(null)
   const [prospects, setProspects] = useState<GeneratedProspect[]>([])
   const [jobs, setJobs] = useState<Job[]>([])
@@ -349,6 +361,7 @@ function BatchDetail({ batchId, profiles, onChange }: { batchId: number; profile
                     <ReportEditor
                       prospect={p}
                       profiles={profiles}
+                      team={team}
                       profileId={batch ? (typeof batch.profile === 'object' ? batch.profile.id : batch.profile) : null}
                       onSaved={() => void load()}
                     />

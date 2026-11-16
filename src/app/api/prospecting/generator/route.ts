@@ -17,6 +17,7 @@ import {
   runBatch,
   selfRow,
   OFFER_LIMITS,
+  type OfferPrice,
   type ReportOffer,
   startBatch,
   startResearch,
@@ -30,10 +31,23 @@ const CHANNELS = ['llamada', 'whatsapp', 'email', 'instagram', 'visita'] as cons
 const RESULTS = ['enviado', 'no_atendio', 'hablo', 'rechazo'] as const
 const oneOf = <T extends string>(list: readonly T[], v: unknown): T | null => (list.includes(v as T) ? (v as T) : null)
 
+/** A reference price only if it's a real positive amount; anything else means no price. */
+function cleanPrice(input: unknown): OfferPrice | null {
+  const p = input as Partial<OfferPrice> | null
+  const amount = Math.round(Number(p?.amount))
+  if (!p || !Number.isFinite(amount) || amount <= 0 || amount > 1e10) return null
+  return { amount, currency: p.currency === 'USD' ? 'USD' : 'ARS', period: p.period === 'unico' ? 'unico' : 'mes' }
+}
+
 /** The offer as the team edited it. Services without a name are dropped; with none left, there's no section. */
 function cleanOffer(input: Partial<ReportOffer>): ReportOffer | null {
   const services = (Array.isArray(input.services) ? input.services : [])
-    .map((s) => ({ name: clean(s?.name, OFFER_LIMITS.name), description: clean(s?.description, OFFER_LIMITS.description) }))
+    .map((s) => ({
+      name: clean(s?.name, OFFER_LIMITS.name),
+      description: clean(s?.description, OFFER_LIMITS.description),
+      when: clean(s?.when, OFFER_LIMITS.when),
+      price: cleanPrice(s?.price),
+    }))
     .filter((s) => s.name)
     .slice(0, OFFER_LIMITS.services)
   if (!services.length) return null
@@ -42,6 +56,20 @@ function cleanOffer(input: Partial<ReportOffer>): ReportOffer | null {
     intro: clean(input.intro, OFFER_LIMITS.intro),
     services,
   }
+}
+
+const plain = (text: string) =>
+  text
+    .normalize('NFD')
+    .replace(/[̀-ͯ]/g, '')
+    .toLowerCase()
+    .trim()
+
+/** The team member who matches the signed-in user, by name: they sign the reports they draft. */
+async function signerFor(payload: Awaited<ReturnType<typeof cms>>, user: { name?: string | null }) {
+  if (!user.name) return null
+  const { docs } = await payload.find({ collection: 'team', limit: 20, depth: 0, overrideAccess: true })
+  return docs.find((t) => plain(t.name) === plain(user.name!))?.id ?? null
 }
 
 async function signedIn() {
@@ -69,6 +97,9 @@ const BATCH_FIELDS = {
   reportSentAt: true,
   reportOpens: true,
   reportLastOpenedAt: true,
+  reportReach: true,
+  reportClick: true,
+  reportClickedAt: true,
   attempts: true,
   nextAttemptAt: true,
   lead: true,
@@ -117,23 +148,31 @@ export async function GET(req: Request) {
       ],
     }
     const { docs } = await payload.find({ collection: 'prospects', where, limit: 60, depth: 0, overrideAccess: true, select: BATCH_FIELDS })
-    // Whoever opened the report in the last three days goes first; then the best scores.
-    const recent = (p: (typeof docs)[number]) =>
-      p.reportLastOpenedAt && Date.now() - Date.parse(p.reportLastOpenedAt) < 3 * 86400000 ? Date.parse(p.reportLastOpenedAt) : 0
-    docs.sort((a, b) => recent(b) - recent(a) || (b.score ?? 0) - (a.score ?? 0))
+    // Whoever pressed a button in the report in the last three days goes first, then whoever opened it; then the best scores.
+    const within = (date?: string | null) => (date && Date.now() - Date.parse(date) < 3 * 86400000 ? Date.parse(date) : 0)
+    const warmth = (p: (typeof docs)[number]) => (within(p.reportClickedAt) ? 2 : within(p.reportLastOpenedAt) ? 1 : 0)
+    docs.sort(
+      (a, b) =>
+        warmth(b) - warmth(a) ||
+        within(b.reportClickedAt) - within(a.reportClickedAt) ||
+        within(b.reportLastOpenedAt) - within(a.reportLastOpenedAt) ||
+        (b.score ?? 0) - (a.score ?? 0),
+    )
     return NextResponse.json({ prospects: docs })
   }
 
   await ensureDefaultProfiles(payload)
   await closeStale(payload)
-  const [profiles, batches, running] = await Promise.all([
+  const [profiles, batches, running, team] = await Promise.all([
     payload.find({ collection: 'offer-profiles', sort: 'name', limit: 100, depth: 0, overrideAccess: true, pagination: false }),
     payload.find({ collection: 'prospect-batches', sort: '-createdAt', limit: 15, depth: 1, overrideAccess: true }),
     payload.count({ collection: 'prospect-jobs', where: { status: { in: ['queued', 'running'] } }, overrideAccess: true }),
+    payload.find({ collection: 'team', where: { placeholder: { not_equals: true } }, sort: 'order', limit: 20, depth: 0, overrideAccess: true }),
   ])
   return NextResponse.json({
     configured: placesConfigured(),
     profiles: profiles.docs,
+    team: team.docs.map((t) => ({ id: t.id, name: t.name, role: t.role ?? '' })),
     batches: batches.docs.map((b) => ({ ...b, profile: { id: (b.profile as OfferProfile).id, name: (b.profile as OfferProfile).name } })),
     working: running.totalDocs,
   })
@@ -189,7 +228,7 @@ export async function POST(req: Request) {
       case 'report-draft': {
         const prospect = await payload.findByID({ collection: 'prospects', id: prospectId, depth: 1, overrideAccess: true })
         const [label, competitors] = await Promise.all([placeLabel(prospect.placeId), competitorsFor(prospect, prospect.zone ?? '')])
-        const report = draftReport(prospect, prospect.profile as OfferProfile, label.name, competitors)
+        const report = draftReport(prospect, prospect.profile as OfferProfile, label.name, competitors, await signerFor(payload, user))
         await payload.update({
           collection: 'prospects',
           id: prospectId,
@@ -224,9 +263,12 @@ export async function POST(req: Request) {
         // The logo is looked up again by its ID: null removes it, missing keeps the one it had.
         const logo =
           input.logo === null ? null : input.logo?.id !== undefined ? await reportLogo(payload, input.logo.id) : (current.logo ?? null)
+        const signer = Number(input.signer)
         const report: ReportContent = {
           ...current,
           logo,
+          signer: input.signer === null ? null : Number.isInteger(signer) && signer > 0 ? signer : (current.signer ?? null),
+          showAreas: typeof input.showAreas === 'boolean' ? input.showAreas : Boolean(current.showAreas),
           offer: input.offer === null ? null : input.offer ? cleanOffer(input.offer) : (current.offer ?? null),
           competitors: (current.competitors ?? []).filter((c) => !keep || keep.has(c.placeId)),
           company: clean(input.company, 160) || current.company,

@@ -6,6 +6,7 @@ import * as migration_20261104_142821_content_engine from './20261104_142821_con
 import * as migration_20261112_223043_prospect_generator from './20261112_223043_prospect_generator';
 import * as migration_20261113_203040_whatsapp_audio_filters from './20261113_203040_whatsapp_audio_filters';
 import * as migration_20261113_223222_whatsapp_meta_type from './20261113_223222_whatsapp_meta_type';
+import * as migration_20261116_144935_report_reading from './20261116_144935_report_reading';
 
 export const migrations = [
   {
@@ -46,6 +47,11 @@ export const migrations = [
   {
     up: migration_20261113_223222_whatsapp_meta_type.up,
     down: migration_20261113_223222_whatsapp_meta_type.down,
-    name: '20261113_223222_whatsapp_meta_type'
+    name: '20261113_223222_whatsapp_meta_type',
+  },
+  {
+    up: migration_20261116_144935_report_reading.up,
+    down: migration_20261116_144935_report_reading.down,
+    name: '20261116_144935_report_reading'
   },
 ];

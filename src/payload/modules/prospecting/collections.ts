@@ -300,6 +300,34 @@ export const Prospects: CollectionConfig = {
             { name: 'reportOpens', type: 'number', label: 'Aperturas', defaultValue: 0 },
           ],
         },
+        {
+          type: 'row',
+          fields: [
+            {
+              name: 'reportReach',
+              type: 'select',
+              label: 'Leyó hasta',
+              options: [
+                { label: 'Lo que encontramos', value: 'hallazgos' },
+                { label: 'La comparación', value: 'comparacion' },
+                { label: 'La propuesta', value: 'propuesta' },
+                { label: 'El final', value: 'final' },
+              ],
+            },
+            {
+              name: 'reportClick',
+              type: 'select',
+              label: 'Último botón que tocó',
+              options: [
+                { label: 'WhatsApp', value: 'whatsapp' },
+                { label: 'Agendar', value: 'agenda' },
+                { label: 'Propuesta', value: 'propuesta' },
+                { label: 'Diagnóstico', value: 'diagnostico' },
+              ],
+            },
+            { name: 'reportClickedAt', type: 'date', label: 'Cuándo lo tocó' },
+          ],
+        },
       ],
     },
     {

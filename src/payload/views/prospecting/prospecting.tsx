@@ -1,7 +1,7 @@
 'use client'
 
 import { useCallback, useEffect, useState } from 'react'
-import { generatorView, type Batch, type Profile } from './api'
+import { generatorView, type Batch, type Profile, type TeamMember } from './api'
 import { Batches } from './batches'
 import { Calls } from './calls'
 import { ManualSearch } from './manual'
@@ -16,7 +16,7 @@ const TABS = [
 ] as const
 type Tab = (typeof TABS)[number]['id']
 
-type Overview = { configured: boolean; profiles: Profile[]; batches: Batch[]; working: number }
+type Overview = { configured: boolean; profiles: Profile[]; team: TeamMember[]; batches: Batch[]; working: number }
 
 /** The prospect generator: batches by offer and niche, today's calls, and the offer profiles behind the formula. */
 export function Prospecting({ configured }: { configured: boolean }) {
@@ -58,7 +58,13 @@ export function Prospecting({ configured }: { configured: boolean }) {
 
       {tab === 'tandas' &&
         (overview ? (
-          <Batches configured={configured} profiles={overview.profiles} batches={overview.batches} reload={reload} />
+          <Batches
+            configured={configured}
+            profiles={overview.profiles}
+            team={overview.team ?? []}
+            batches={overview.batches}
+            reload={reload}
+          />
         ) : (
           <p>Cargando…</p>
         ))}

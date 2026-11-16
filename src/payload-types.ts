@@ -602,6 +602,9 @@ export interface Prospect {
   reportOpenedAt?: string | null;
   reportLastOpenedAt?: string | null;
   reportOpens?: number | null;
+  reportReach?: ('hallazgos' | 'comparacion' | 'propuesta' | 'final') | null;
+  reportClick?: ('whatsapp' | 'agenda' | 'propuesta' | 'diagnostico') | null;
+  reportClickedAt?: string | null;
   attempts?:
     | {
         date: string;
@@ -1366,6 +1369,9 @@ export interface ProspectsSelect<T extends boolean = true> {
   reportOpenedAt?: T;
   reportLastOpenedAt?: T;
   reportOpens?: T;
+  reportReach?: T;
+  reportClick?: T;
+  reportClickedAt?: T;
   attempts?:
     | T
     | {

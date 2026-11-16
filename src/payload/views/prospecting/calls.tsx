@@ -15,6 +15,21 @@ const RESULT_TEXT: Record<string, string> = {
 }
 
 /** Gabriela's list: who to contact today, with whoever is reading the report right now at the top. */
+/** How far the reader got in the report, so the call starts where they stopped. */
+const REACH_NAMES: Record<NonNullable<GeneratedProspect['reportReach']>, string> = {
+  hallazgos: 'los hallazgos',
+  comparacion: 'la comparación',
+  propuesta: 'la propuesta',
+  final: 'el final',
+}
+
+const CLICK_NAMES: Record<NonNullable<GeneratedProspect['reportClick']>, string> = {
+  whatsapp: 'WhatsApp',
+  agenda: 'Agendar 20 minutos',
+  propuesta: 'Quiero conversar esta propuesta',
+  diagnostico: 'Diagnóstico gratuito',
+}
+
 export function Calls({ configured }: { configured: boolean }) {
   const [prospects, setProspects] = useState<GeneratedProspect[]>([])
   const [places, setPlaces] = useState<Record<string, Place>>({})
@@ -117,6 +132,12 @@ export function Calls({ configured }: { configured: boolean }) {
                   </div>
                   {hot && <span className={`${styles.badge} ${styles.badgeHot}`}>Abrió el informe {ago(p.reportLastOpenedAt!)}</span>}{' '}
                   {!hot && (p.reportOpens ?? 0) > 0 && <span className={styles.badge}>Abrió el informe {p.reportOpens} veces</span>}{' '}
+                  {p.reportClick && p.reportClickedAt && (
+                    <span className={`${styles.badge} ${styles.badgeHot}`}>
+                      Tocó «{CLICK_NAMES[p.reportClick]}» {ago(p.reportClickedAt)}
+                    </span>
+                  )}{' '}
+                  {p.reportReach && <span className={styles.badge}>Leyó hasta {REACH_NAMES[p.reportReach]}</span>}{' '}
                   {p.reportSentAt ? (
                     <span className={styles.muted}>
                       Enviado el {dayText(p.reportSentAt)} · {attempts.length} {attempts.length === 1 ? 'intento' : 'intentos'}

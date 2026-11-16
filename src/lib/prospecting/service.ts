@@ -694,14 +694,20 @@ export async function reportLogo(payload: Payload, id: unknown): Promise<ReportL
     : { id: media.id, url: media.url, width: media.width, height: media.height }
 }
 
+/** A reference price: "desde". Only the team sets it; the report never makes one up. */
+export type OfferPrice = { amount: number; currency: 'ARS' | 'USD'; period: 'mes' | 'unico' }
+
+/** One step of the proposal: what we'd do, when, and from what price. */
+export type OfferService = { name: string; description: string; when?: string; price?: OfferPrice | null }
+
 /** What we offer the client. Starts with the batch's offer; the team can add services, like advertising. */
 export type ReportOffer = {
   title: string
   intro: string
-  services: { name: string; description: string }[]
+  services: OfferService[]
 }
 
-export const OFFER_LIMITS = { title: 120, intro: 1000, name: 120, description: 600, services: 5 }
+export const OFFER_LIMITS = { title: 120, intro: 1000, name: 120, description: 600, when: 80, services: 5 }
 
 /** The offer as the draft proposes it, from the batch's offer profile. */
 export function defaultOffer(company: string, profile: Pick<OfferProfile, 'name' | 'description'>): ReportOffer {
@@ -716,6 +722,10 @@ export type ReportContent = {
   company: string
   logo?: ReportLogo | null
   offer?: ReportOffer | null
+  /** The team member who signs the report (from the Equipo collection). */
+  signer?: number | null
+  /** "Madurez digital": only where it says something to the reader, like software or AI offers. */
+  showAreas?: boolean
   /** The prospect's own row in the comparison, from what we measured. */
   self?: Omit<Competitor, 'placeId'> & { placeId: string }
   competitors?: Competitor[]
@@ -743,7 +753,23 @@ export function selfRow(prospect: Prospect): NonNullable<ReportContent['self']> 
   }
 }
 
-export function draftReport(prospect: Prospect, profile: OfferProfile, company: string, competitors: Competitor[] = []): ReportContent {
+/** Offers where the digital maturity scores tell the reader something; for the rest they're noise. */
+const AREAS_OFFERS = ['software-a-medida', 'agentes-ia', 'embudo-automatizado']
+
+/** Where the reader stands: whether they have a site changes what we can say we looked at. */
+function draftIntro(prospect: Prospect, facts: Facts | null) {
+  const what = facts?.website === 'own' ? 'tu perfil en Google Maps, tu sitio web' : 'tu perfil en Google Maps, tus redes'
+  const niche = facts?.query ?? prospect.niche ?? 'negocios'
+  return `Miramos lo que ve cualquier persona antes de elegirte: ${what} y cómo aparecés cuando alguien busca ${niche} en ${prospect.zone ?? 'tu zona'}. Encontramos tres puntos que vale la pena mirar.`
+}
+
+export function draftReport(
+  prospect: Prospect,
+  profile: OfferProfile,
+  company: string,
+  competitors: Competitor[] = [],
+  signer: number | null = null,
+): ReportContent {
   const research = prospect.research as unknown as Research | null
   const facts = prospect.facts as unknown as Facts | null
   return {
@@ -751,8 +777,10 @@ export function draftReport(prospect: Prospect, profile: OfferProfile, company: 
     self: selfRow(prospect),
     competitors,
     offer: defaultOffer(company, profile),
-    headline: `Lo que vimos de ${company} desde afuera`,
-    intro: `Revisamos lo que ve cualquier persona antes de elegir a ${company}: su perfil en Google Maps, su sitio web y cómo aparece frente a otros ${facts?.query ?? prospect.niche ?? 'negocios'} de ${prospect.zone ?? 'la zona'}. Encontramos tres puntos que vale la pena mirar.`,
+    signer,
+    showAreas: AREAS_OFFERS.includes(profile.key),
+    headline: research?.headline || `Lo que vimos de ${company} desde afuera`,
+    intro: draftIntro(prospect, facts),
     findings: research?.findings ?? [],
     comparison: research?.comparison ?? '',
     costFormula: profile.costFormula ?? '',
@@ -1000,5 +1028,76 @@ export async function linkDiagnostic(a: { token: string; diagnosticId: number; c
     overrideAccess: true,
     context: { skipN8n: true },
     data: { placeId: prospect.placeId },
+  })
+}
+
+/** The report's sections in reading order: how far someone got says how interested they are. */
+export const REPORT_SECTIONS = ['hallazgos', 'comparacion', 'propuesta', 'final'] as const
+export type ReportSection = (typeof REPORT_SECTIONS)[number]
+export const REPORT_CTAS = ['whatsapp', 'agenda', 'propuesta', 'diagnostico'] as const
+export type ReportCta = (typeof REPORT_CTAS)[number]
+
+const CTA_NAMES: Record<ReportCta, string> = {
+  whatsapp: 'Escribinos por WhatsApp',
+  agenda: 'Agendar 20 minutos',
+  propuesta: 'Quiero conversar esta propuesta',
+  diagnostico: 'Hacer el diagnóstico gratuito',
+}
+
+async function liveReport(token: string) {
+  const payload = await cms()
+  const { docs } = await payload.find({
+    collection: 'prospects',
+    where: { reportToken: { equals: token } },
+    limit: 1,
+    depth: 0,
+    overrideAccess: true,
+  })
+  const prospect = docs[0]
+  if (!prospect?.reportExpiresAt || Date.parse(prospect.reportExpiresAt) < Date.now()) return null
+  return { payload, prospect }
+}
+
+/** Keeps only the furthest section read, so the call can start where the reader stopped. */
+export async function registerReach(token: string, section: ReportSection) {
+  const found = await liveReport(token)
+  if (!found) return
+  const { payload, prospect } = found
+  const before = prospect.reportReach ? REPORT_SECTIONS.indexOf(prospect.reportReach as ReportSection) : -1
+  if (REPORT_SECTIONS.indexOf(section) <= before) return
+  await payload.update({ collection: 'prospects', id: prospect.id, overrideAccess: true, data: { reportReach: section } })
+}
+
+/** A button pressed in the report is the warmest signal there is: the team hears about it right away. */
+export async function registerClick(token: string, cta: ReportCta) {
+  const found = await liveReport(token)
+  if (!found) return
+  const { payload, prospect } = found
+  const now = new Date().toISOString()
+  await payload.update({
+    collection: 'prospects',
+    id: prospect.id,
+    overrideAccess: true,
+    data: {
+      reportClick: cta,
+      reportClickedAt: now,
+      ...(prospect.status === 'contactado' || prospect.status === 'informe' ? { nextAttemptAt: now } : {}),
+    },
+  })
+  const settings = await getSettings()
+  const company = (prospect.report as unknown as ReportContent | null)?.company ?? 'Un prospecto'
+  emitEvent('email.send', {
+    email: {
+      to: settings.leadNotifyEmail || site.email,
+      ...teamNotice({
+        title: `Tocó "${CTA_NAMES[cta]}" en el informe: ${company}`,
+        url: `${publicUrl()}/admin/prospeccion?tab=llamadas`,
+        lines: [
+          ['Empresa', company],
+          ['Botón', CTA_NAMES[cta]],
+          ['Sugerencia', cta === 'whatsapp' || cta === 'propuesta' ? 'Fijate en Conversaciones: probablemente escribió.' : 'Llamalo hoy.'],
+        ],
+      }),
+    },
   })
 }

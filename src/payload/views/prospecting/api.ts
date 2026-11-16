@@ -8,6 +8,9 @@ import type { ReportContent } from '@/lib/prospecting/service'
 export { DIMENSION_NAMES, DIMENSIONS, KNOCKOUTS }
 export type { Dimension, DimensionScore, Research, ReportContent }
 
+/** Who can sign a report: the Equipo collection. */
+export type TeamMember = { id: number; name: string; role: string }
+
 export type Profile = {
   id: number
   name: string
@@ -61,6 +64,9 @@ export type GeneratedProspect = {
   reportSentAt?: string | null
   reportOpens?: number | null
   reportLastOpenedAt?: string | null
+  reportReach?: 'hallazgos' | 'comparacion' | 'propuesta' | 'final' | null
+  reportClick?: 'whatsapp' | 'agenda' | 'propuesta' | 'diagnostico' | null
+  reportClickedAt?: string | null
   attempts?: Attempt[] | null
   nextAttemptAt?: string | null
   lead?: number | { id: number } | null
