@@ -31,3 +31,13 @@ test('AI cost uses each model price and halves tokens in a batch, not searches',
   // Without usage there is nothing to charge.
   assert.equal(costOf({ error: { message: 'x' } }), 0)
 })
+
+test('the reference price reads as the team set it', async () => {
+  const { priceText } = await import('../src/lib/prospecting/price')
+  const base = { amount: 300000, currency: 'ARS' as const }
+  assert.equal(priceText({ ...base, period: 'mes' }), 'Desde $ 300.000 por mes')
+  assert.equal(priceText({ ...base, period: 'cuotas3', from: false }), '$ 300.000 en 3 cuotas sin interés')
+  assert.equal(priceText({ ...base, period: 'cuotas6' }, { midSentence: true }), 'desde $ 300.000 en 6 cuotas sin interés')
+  assert.equal(priceText({ ...base, period: 'ninguna', from: false }), '$ 300.000')
+  assert.equal(priceText({ amount: 500, currency: 'USD', period: 'unico' }), 'Desde US$ 500, pago único')
+})

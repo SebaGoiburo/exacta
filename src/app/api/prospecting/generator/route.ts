@@ -2,6 +2,7 @@ import { headers } from 'next/headers'
 import { after, NextResponse } from 'next/server'
 import type { Where } from 'payload'
 import { placeLabel, placesConfigured } from '@/lib/places'
+import { isPricePeriod } from '@/lib/prospecting/price'
 import {
   approveProfile,
   approveReport,
@@ -36,7 +37,12 @@ function cleanPrice(input: unknown): OfferPrice | null {
   const p = input as Partial<OfferPrice> | null
   const amount = Math.round(Number(p?.amount))
   if (!p || !Number.isFinite(amount) || amount <= 0 || amount > 1e10) return null
-  return { amount, currency: p.currency === 'USD' ? 'USD' : 'ARS', period: p.period === 'unico' ? 'unico' : 'mes' }
+  return {
+    amount,
+    currency: p.currency === 'USD' ? 'USD' : 'ARS',
+    period: isPricePeriod(p.period) ? p.period : 'mes',
+    from: p.from !== false,
+  }
 }
 
 /** The offer as the team edited it. Services without a name are dropped; with none left, there's no section. */

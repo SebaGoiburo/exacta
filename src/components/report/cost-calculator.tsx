@@ -16,8 +16,8 @@ export function CostCalculator({
 }: {
   calculator: Calculator
   formula: string
-  /** The proposal's reference price in pesos, to say how many lost units it's worth. */
-  price?: { amount: number; period: 'mes' | 'unico' } | null
+  /** The proposal's reference price in pesos, as the report writes it, to say how many lost units it's worth. */
+  price?: { amount: number; text: string } | null
 }) {
   const [values, setValues] = useState<Record<string, string>>(() =>
     Object.fromEntries(calculator.inputs.map((i) => [i.key, i.example !== undefined ? String(i.example) : ''])),
@@ -55,8 +55,7 @@ export function CostCalculator({
             <p className="mt-1 text-ink-soft">{money(loss * 12)} por año.</p>
             {units > 0 && calculator.unit && (
               <p className="mt-3 text-ink">
-                La propuesta cuesta desde {money(price!.amount)}
-                {price!.period === 'mes' ? ' por mes' : ', una sola vez'}: lo mismo que{' '}
+                La propuesta cuesta {price!.text}: lo mismo que{' '}
                 {units === 1 ? calculator.unit.singular : `${units} ${calculator.unit.plural}`}.
               </p>
             )}

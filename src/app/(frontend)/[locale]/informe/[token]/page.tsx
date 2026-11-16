@@ -9,7 +9,8 @@ import { AREAS, type Area } from '@/lib/diagnostic/questions'
 import { AREA_NAMES } from '@/lib/diagnostic/recommendations'
 import { placeSummary, type Place } from '@/lib/places'
 import { calculatorFor } from '@/lib/prospecting/calculators'
-import { cms, reportLogo, type Competitor, type OfferPrice, type ReportContent } from '@/lib/prospecting/service'
+import { priceText } from '@/lib/prospecting/price'
+import { cms, reportLogo, type Competitor, type ReportContent } from '@/lib/prospecting/service'
 import { getSettings } from '@/lib/settings'
 import { whatsappLink } from '@/lib/site'
 import type { Media, OfferProfile } from '@/payload-types'
@@ -91,9 +92,6 @@ async function comparisonRows(report: ReportContent, askGoogle: boolean): Promis
 const yesNo = (v: boolean | null) => (v === null ? 'Sin dato' : v ? 'Sí' : 'No')
 const siteText = (w: Competitor['website']) => (w === 'own' ? 'Propio' : w === 'social' ? 'Solo redes' : 'No tiene')
 
-const priceText = (p: OfferPrice) =>
-  `Desde ${p.currency === 'USD' ? 'US$' : '$'} ${p.amount.toLocaleString('es-AR')}${p.period === 'mes' ? ' por mes' : ', pago único'}`
-
 /** Pages of ours mentioned in the proof ("Página: /industrias/salud") become links; the text keeps the rest. */
 const OWN_PATH = /(?:https?:\/\/[^\s,;]+[^\s,;.)]|\/[a-z0-9][a-z0-9/-]*[a-z0-9])/gi
 function proofParts(proof: string) {
@@ -174,7 +172,8 @@ export default async function ProspectReport({ params }: Props) {
   const proof = report.proof ? proofParts(report.proof) : null
   const calculator = calculatorFor(profileKey)
   const firstPrice = offer?.services.find((s) => s.price)?.price ?? null
-  const calculatorPrice = firstPrice?.currency === 'ARS' ? { amount: firstPrice.amount, period: firstPrice.period } : null
+  const calculatorPrice =
+    firstPrice?.currency === 'ARS' ? { amount: firstPrice.amount, text: priceText(firstPrice, { midSentence: true }) } : null
   const signerPhoto = signer && typeof signer.photo === 'object' ? (signer.photo as Media | null) : null
   const signerPhotoUrl = signerPhoto?.sizes?.card?.url ?? signerPhoto?.url ?? null
   const offerWhatsapp = offer

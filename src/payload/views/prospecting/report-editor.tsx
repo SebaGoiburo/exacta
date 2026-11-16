@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import type { Place } from '@/lib/places'
+import { PRICE_PERIODS, priceText, type PricePeriod } from '@/lib/prospecting/price'
 import {
   dayText,
   generator,
@@ -188,16 +189,19 @@ export function ReportEditor({ prospect, profiles, profileId, team, onSaved }: E
   const setService = (i: number, key: 'name' | 'description' | 'when', value: string) =>
     updateServices((list) => list.map((s, k) => (k === i ? { ...s, [key]: value } : s)))
   type Price = NonNullable<Service['price']>
-  /** An empty amount removes the price: the report then shows the service without one. */
+  /**
+   * The choices stay while the amount is empty, so they can be set in any order. Saved without an amount,
+   * the service shows no price.
+   */
   const setPrice = (i: number, change: Partial<Price> & { text?: string }) =>
     updateServices((list) =>
       list.map((s, k) => {
         if (k !== i) return s
-        const current: Price = s.price ?? { amount: 0, currency: 'ARS', period: 'mes' }
+        const current: Price = s.price ?? { amount: 0, currency: 'ARS', period: 'mes', from: true }
         const amount = change.text !== undefined ? Number(change.text.replace(/\D/g, '')) || 0 : current.amount
         const next = { ...current, ...change, amount }
         delete (next as { text?: string }).text
-        return { ...s, price: amount > 0 ? next : null }
+        return { ...s, price: next }
       }),
     )
   const addService = (s: Service) => updateServices((list) => [...list, s])
@@ -417,8 +421,17 @@ export function ReportEditor({ prospect, profiles, profileId, team, onSaved }: E
                     />
                   </label>
                   <div className={styles.field}>
-                    Precio de referencia, "desde" (opcional)
+                    Precio de referencia (opcional)
                     <div className={styles.logoRow}>
+                      <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontWeight: 400 }}>
+                        <input
+                          type="checkbox"
+                          checked={s.price?.from !== false}
+                          onChange={(e) => setPrice(i, { from: e.target.checked })}
+                          style={{ width: 'auto' }}
+                        />
+                        Desde
+                      </label>
                       <select
                         aria-label="Moneda"
                         value={s.price?.currency ?? 'ARS'}
@@ -442,10 +455,18 @@ export function ReportEditor({ prospect, profiles, profileId, team, onSaved }: E
                         onChange={(e) => setPrice(i, { period: e.target.value as Price['period'] })}
                         style={{ width: 'auto' }}
                       >
-                        <option value="mes">por mes</option>
-                        <option value="unico">pago único</option>
+                        {(Object.keys(PRICE_PERIODS) as PricePeriod[]).map((p) => (
+                          <option key={p} value={p}>
+                            {PRICE_PERIODS[p]}
+                          </option>
+                        ))}
                       </select>
                     </div>
+                    {s.price?.amount ? (
+                      <span className={styles.muted} style={{ fontWeight: 400 }}>
+                        En el informe: «{priceText(s.price)}»
+                      </span>
+                    ) : null}
                   </div>
                 </div>
                 <div>

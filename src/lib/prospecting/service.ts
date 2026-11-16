@@ -775,7 +775,8 @@ export async function reportLogo(payload: Payload, id: unknown): Promise<ReportL
 }
 
 /** A reference price: "desde". Only the team sets it; the report never makes one up. */
-export type OfferPrice = { amount: number; currency: 'ARS' | 'USD'; period: 'mes' | 'unico' }
+export type { OfferPrice } from './price'
+import type { OfferPrice } from './price'
 
 /** One step of the proposal: what we'd do, when, and from what price. */
 export type OfferService = { name: string; description: string; when?: string; price?: OfferPrice | null }
@@ -838,7 +839,7 @@ const AREAS_OFFERS = ['software-a-medida', 'agentes-ia', 'embudo-automatizado']
 
 /** Where the reader stands: whether they have a site changes what we can say we looked at. */
 function draftIntro(prospect: Prospect, facts: Facts | null) {
-  const what = facts?.website === 'own' ? 'tu perfil en Google Maps, tu sitio web' : 'tu perfil en Google Maps, tus redes'
+  const what = facts?.website === 'own' ? 'tu perfil en Google, tu sitio web' : 'tu perfil en Google, tus redes'
   const niche = facts?.query ?? prospect.niche ?? 'negocios'
   return `Miramos lo que ve cualquier persona antes de elegirte: ${what} y cómo aparecés cuando alguien busca ${niche} en ${prospect.zone ?? 'tu zona'}. Encontramos tres puntos que vale la pena mirar.`
 }
