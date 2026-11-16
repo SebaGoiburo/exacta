@@ -2,7 +2,8 @@ import { headers } from 'next/headers'
 import { after, NextResponse } from 'next/server'
 import type { Where } from 'payload'
 import { placeLabel, placesConfigured } from '@/lib/places'
-import { isPricePeriod } from '@/lib/prospecting/price'
+import { termsFrom, type AnyPrice, type LegacyPrice, type OfferPrice } from '@/lib/prospecting/price'
+import { getSettings } from '@/lib/settings'
 import {
   approveProfile,
   approveReport,
@@ -18,7 +19,6 @@ import {
   runBatch,
   selfRow,
   OFFER_LIMITS,
-  type OfferPrice,
   type ReportOffer,
   startBatch,
   startResearch,
@@ -33,15 +33,35 @@ const RESULTS = ['enviado', 'no_atendio', 'hablo', 'rechazo'] as const
 const oneOf = <T extends string>(list: readonly T[], v: unknown): T | null => (list.includes(v as T) ? (v as T) : null)
 
 /** A reference price only if it's a real positive amount; anything else means no price. */
-function cleanPrice(input: unknown): OfferPrice | null {
-  const p = input as Partial<OfferPrice> | null
-  const amount = Math.round(Number(p?.amount))
-  if (!p || !Number.isFinite(amount) || amount <= 0 || amount > 1e10) return null
+const LEGACY_PERIODS = ['mes', 'unico', 'cuotas3', 'cuotas6', 'ninguna'] as const
+const amountOf = (v: unknown) => {
+  const n = Math.round(Number(v))
+  return Number.isFinite(n) && n > 0 && n <= 1e10 ? n : 0
+}
+
+/**
+ * A reference price only with a real positive amount; anything else means no price. Prices in the format
+ * from before installments are kept as they were.
+ */
+function cleanPrice(input: unknown): AnyPrice | null {
+  const p = input as (Partial<OfferPrice> & Partial<LegacyPrice>) | null
+  if (!p) return null
+  const currency = p.currency === 'USD' ? 'USD' : 'ARS'
+  if (!('list' in p) && 'amount' in p) {
+    const amount = amountOf(p.amount)
+    if (!amount) return null
+    return { amount, currency, period: oneOf(LEGACY_PERIODS, p.period) ?? 'mes', from: p.from !== false }
+  }
+  const list = amountOf(p.list)
+  const monthly = amountOf(p.monthly)
+  if (!list && !monthly) return null
   return {
-    amount,
-    currency: p.currency === 'USD' ? 'USD' : 'ARS',
-    period: isPricePeriod(p.period) ? p.period : 'mes',
+    list,
+    currency,
     from: p.from !== false,
+    show: { cuotas3: p.show?.cuotas3 !== false, transferencia: p.show?.transferencia !== false, cuotas6: p.show?.cuotas6 === true },
+    monthly: monthly || null,
+    monthlyLabel: clean(p.monthlyLabel, 60),
   }
 }
 
@@ -179,6 +199,7 @@ export async function GET(req: Request) {
     configured: placesConfigured(),
     profiles: profiles.docs,
     team: team.docs.map((t) => ({ id: t.id, name: t.name, role: t.role ?? '' })),
+    paymentTerms: termsFrom(await getSettings()),
     batches: batches.docs.map((b) => ({ ...b, profile: { id: (b.profile as OfferProfile).id, name: (b.profile as OfferProfile).name } })),
     working: running.totalDocs,
   })

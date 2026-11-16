@@ -8,6 +8,7 @@ import * as migration_20261113_203040_whatsapp_audio_filters from './20261113_20
 import * as migration_20261113_223222_whatsapp_meta_type from './20261113_223222_whatsapp_meta_type';
 import * as migration_20261116_144935_report_reading from './20261116_144935_report_reading';
 import * as migration_20261116_152621_batch_research_ai_usage from './20261116_152621_batch_research_ai_usage';
+import * as migration_20261116_180317_payment_terms from './20261116_180317_payment_terms';
 
 export const migrations = [
   {
@@ -58,6 +59,11 @@ export const migrations = [
   {
     up: migration_20261116_152621_batch_research_ai_usage.up,
     down: migration_20261116_152621_batch_research_ai_usage.down,
-    name: '20261116_152621_batch_research_ai_usage'
+    name: '20261116_152621_batch_research_ai_usage',
+  },
+  {
+    up: migration_20261116_180317_payment_terms.up,
+    down: migration_20261116_180317_payment_terms.down,
+    name: '20261116_180317_payment_terms'
   },
 ];

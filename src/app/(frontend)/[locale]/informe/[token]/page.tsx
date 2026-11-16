@@ -9,7 +9,7 @@ import { AREAS, type Area } from '@/lib/diagnostic/questions'
 import { AREA_NAMES } from '@/lib/diagnostic/recommendations'
 import { placeSummary, type Place } from '@/lib/places'
 import { calculatorFor } from '@/lib/prospecting/calculators'
-import { priceText } from '@/lib/prospecting/price'
+import { calculatorPrice as calculatorPriceOf, priceLines, termsFrom } from '@/lib/prospecting/price'
 import { cms, reportLogo, type Competitor, type ReportContent } from '@/lib/prospecting/service'
 import { getSettings } from '@/lib/settings'
 import { whatsappLink } from '@/lib/site'
@@ -139,6 +139,23 @@ function ProofLinks({ links }: { links: { href: string; label: string }[] }) {
 
 const H2 = 'font-display text-2xl font-semibold tracking-[-0.02em] text-ink'
 
+/** The price of one step: the main way to pay large, the alternatives and the monthly charge below it. */
+function PriceBlock({ lines }: { lines: ReturnType<typeof priceLines> }) {
+  if (!lines.main) return null
+  return (
+    <div className="mt-auto pt-6">
+      {lines.from && <p className="font-mono text-xs tracking-[0.08em] text-ink-soft uppercase">Desde</p>}
+      <p className="mt-1 font-display text-xl font-semibold tracking-[-0.01em] text-ink">{lines.main}</p>
+      {lines.others.map((line) => (
+        <p key={line} className="mt-1 text-sm text-ink-soft">
+          {line}
+        </p>
+      ))}
+      {lines.monthly && <p className="mt-1 text-sm text-ink-soft">{lines.monthly}</p>}
+    </div>
+  )
+}
+
 export default async function ProspectReport({ params }: Props) {
   const { locale, token } = (await params) as { locale: Locale; token: string }
   setRequestLocale(locale)
@@ -173,9 +190,9 @@ export default async function ProspectReport({ params }: Props) {
   const offer = report.offer?.services?.length ? report.offer : null
   const proof = report.proof ? proofParts(report.proof) : null
   const calculator = calculatorFor(profileKey)
+  const terms = termsFrom(settings)
   const firstPrice = offer?.services.find((s) => s.price)?.price ?? null
-  const calculatorPrice =
-    firstPrice?.currency === 'ARS' ? { amount: firstPrice.amount, text: priceText(firstPrice, { midSentence: true }) } : null
+  const calculatorPrice = firstPrice ? calculatorPriceOf(firstPrice, terms) : null
   const signerPhoto = signer && typeof signer.photo === 'object' ? (signer.photo as Media | null) : null
   const signerPhotoUrl = signerPhoto?.sizes?.card?.url ?? signerPhoto?.url ?? null
   const offerWhatsapp = offer
@@ -457,7 +474,7 @@ export default async function ProspectReport({ params }: Props) {
                 </p>
                 <h3 className="mt-3 font-display text-xl font-semibold tracking-[-0.02em] text-ink md:text-2xl">{s.name}</h3>
                 {s.description && <p className="mt-3 leading-relaxed text-ink-soft">{s.description}</p>}
-                {s.price && <p className="mt-auto pt-5 font-mono text-lg text-ink">{priceText(s.price)}</p>}
+                {s.price && <PriceBlock lines={priceLines(s.price, terms)} />}
               </li>
             ))}
           </ol>

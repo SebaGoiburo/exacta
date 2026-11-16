@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react'
 import type { Place } from '@/lib/places'
+import type { PaymentTerms } from '@/lib/prospecting/price'
 import {
   DIMENSION_NAMES,
   DIMENSIONS,
@@ -38,11 +39,12 @@ type Props = {
   configured: boolean
   profiles: Profile[]
   team: TeamMember[]
+  terms: PaymentTerms
   batches: Batch[]
   reload: () => Promise<void>
 }
 
-export function Batches({ configured, profiles, team, batches, reload }: Props) {
+export function Batches({ configured, profiles, team, terms, batches, reload }: Props) {
   const approved = profiles.filter((p) => p.status === 'aprobado')
   const [profileId, setProfileId] = useState<number | ''>('')
   const [niche, setNiche] = useState('')
@@ -128,7 +130,7 @@ export function Batches({ configured, profiles, team, batches, reload }: Props) 
         </section>
       )}
 
-      {selected !== null && <BatchDetail key={selected} batchId={selected} profiles={approved} team={team} onChange={reload} />}
+      {selected !== null && <BatchDetail key={selected} batchId={selected} profiles={approved} team={team} terms={terms} onChange={reload} />}
     </div>
   )
 }
@@ -139,11 +141,13 @@ function BatchDetail({
   batchId,
   profiles,
   team,
+  terms,
   onChange,
 }: {
   batchId: number
   profiles: Profile[]
   team: TeamMember[]
+  terms: PaymentTerms
   onChange: () => Promise<void>
 }) {
   const [batch, setBatch] = useState<Batch | null>(null)
@@ -407,6 +411,7 @@ function BatchDetail({
                       prospect={p}
                       profiles={profiles}
                       team={team}
+                      terms={terms}
                       profileId={batch ? (typeof batch.profile === 'object' ? batch.profile.id : batch.profile) : null}
                       onSaved={() => void load()}
                     />

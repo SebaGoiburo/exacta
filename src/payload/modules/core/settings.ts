@@ -31,6 +31,72 @@ export const Settings: GlobalConfig = {
     { name: 'leadNotifyEmail', type: 'email', label: 'Email que recibe los avisos de leads' },
     {
       type: 'collapsible',
+      label: 'Formas de pago de las propuestas',
+      admin: {
+        description:
+          'Con esto se calculan la cuota, el precio por transferencia y lo que reciben ustedes en cada informe. El precio de lista de cada servicio es el de 3 cuotas sin interés.',
+      },
+      fields: [
+        {
+          type: 'row',
+          fields: [
+        {
+          name: 'payTransferDiscount',
+          type: 'number',
+          label: 'Descuento por transferencia (%)',
+          defaultValue: 10,
+          min: 0,
+          max: 100,
+          admin: { width: '33%', step: 0.01 },
+        },
+        {
+          name: 'paySixSurcharge',
+          type: 'number',
+          label: 'Recargo de 6 cuotas (%)',
+          defaultValue: 13,
+          min: 0,
+          max: 100,
+          admin: { width: '33%', step: 0.01, description: 'Sobre el precio de lista.' },
+        },
+          ],
+        },
+        {
+          type: 'row',
+          fields: [
+        {
+          name: 'mpFeeCharge',
+          type: 'number',
+          label: 'Mercado Pago: costo por cobro (%)',
+          defaultValue: 1.53,
+          min: 0,
+          max: 100,
+          admin: { width: '33%', step: 0.01, description: 'Sin IVA, como lo muestra Mercado Pago.' },
+        },
+        {
+          name: 'mpFeeThree',
+          type: 'number',
+          label: 'Mercado Pago: costo de 3 cuotas (%)',
+          defaultValue: 10.49,
+          min: 0,
+          max: 100,
+          admin: { width: '33%', step: 0.01 },
+        },
+        {
+          name: 'mpFeeSix',
+          type: 'number',
+          label: 'Mercado Pago: costo de 6 cuotas (%)',
+          defaultValue: 18.69,
+          min: 0,
+          max: 100,
+          admin: { width: '33%', step: 0.01 },
+        },
+          ],
+        },
+        { name: 'mpVat', type: 'number', label: 'IVA sobre las comisiones (%)', defaultValue: 21, min: 0, max: 100, admin: { width: '33%' } },
+      ],
+    },
+    {
+      type: 'collapsible',
       label: 'Agente de WhatsApp',
       fields: [
         {

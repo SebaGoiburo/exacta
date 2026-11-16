@@ -32,12 +32,33 @@ test('AI cost uses each model price and halves tokens in a batch, not searches',
   assert.equal(costOf({ error: { message: 'x' } }), 0)
 })
 
-test('the reference price reads as the team set it', async () => {
+test('the price is typed once and every way to pay comes from it', async () => {
+  const { netAmounts, priceLines, priceText } = await import('../src/lib/prospecting/price')
+  const price = {
+    list: 900000,
+    currency: 'ARS' as const,
+    show: { cuotas3: true, transferencia: true, cuotas6: true },
+    monthly: 25000,
+    monthlyLabel: 'de mantenimiento',
+  }
+  const lines = priceLines(price)
+  assert.equal(lines.main, '3 cuotas sin interés de $ 300.000')
+  assert.deepEqual(lines.others, ['o $ 810.000 por transferencia (10% OFF)', 'o 6 cuotas de $ 170.000 (total $ 1.020.000)'])
+  assert.equal(lines.monthly, '+ $ 25.000 por mes de mantenimiento')
+  // Mercado Pago's simulator showed $ 769.113,90 for $ 900.000 in 3 installments; it rounds VAT its own way.
+  assert.ok(Math.abs(netAmounts(price).three - 769114) < 100)
+  assert.equal(netAmounts(price).transfer, 810000)
+  // Without "Desde" and with only the transfer ticked, that becomes the main line.
+  assert.equal(
+    priceText({ ...price, from: false, monthly: null, show: { cuotas3: false, transferencia: true, cuotas6: false } }),
+    '$ 810.000 por transferencia (10% OFF)',
+  )
+  // Installments round up to the thousand, so their total never falls short.
+  assert.equal(priceLines({ ...price, list: 1000000 }).main, '3 cuotas sin interés de $ 334.000')
+})
+
+test('prices saved in the earlier format read as before', async () => {
   const { priceText } = await import('../src/lib/prospecting/price')
-  const base = { amount: 300000, currency: 'ARS' as const }
-  assert.equal(priceText({ ...base, period: 'mes' }), 'Desde $ 300.000 por mes')
-  assert.equal(priceText({ ...base, period: 'cuotas3', from: false }), '$ 300.000 en 3 cuotas sin interés')
-  assert.equal(priceText({ ...base, period: 'cuotas6' }, { midSentence: true }), 'desde $ 300.000 en 6 cuotas sin interés')
-  assert.equal(priceText({ ...base, period: 'ninguna', from: false }), '$ 300.000')
-  assert.equal(priceText({ amount: 500, currency: 'USD', period: 'unico' }), 'Desde US$ 500, pago único')
+  assert.equal(priceText({ amount: 300000, currency: 'ARS', period: 'mes' }), 'Desde $ 300.000 por mes')
+  assert.equal(priceText({ amount: 500, currency: 'USD', period: 'unico', from: false }), 'US$ 500, pago único')
 })

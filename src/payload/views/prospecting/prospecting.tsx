@@ -1,6 +1,7 @@
 'use client'
 
 import { useCallback, useEffect, useState } from 'react'
+import { DEFAULT_TERMS, type PaymentTerms } from '@/lib/prospecting/price'
 import { generatorView, type Batch, type Profile, type TeamMember } from './api'
 import { Batches } from './batches'
 import { Calls } from './calls'
@@ -16,7 +17,14 @@ const TABS = [
 ] as const
 type Tab = (typeof TABS)[number]['id']
 
-type Overview = { configured: boolean; profiles: Profile[]; team: TeamMember[]; batches: Batch[]; working: number }
+type Overview = {
+  configured: boolean
+  profiles: Profile[]
+  team: TeamMember[]
+  paymentTerms?: PaymentTerms
+  batches: Batch[]
+  working: number
+}
 
 /** The prospect generator: batches by offer and niche, today's calls, and the offer profiles behind the formula. */
 export function Prospecting({ configured }: { configured: boolean }) {
@@ -62,6 +70,7 @@ export function Prospecting({ configured }: { configured: boolean }) {
             configured={configured}
             profiles={overview.profiles}
             team={overview.team ?? []}
+            terms={overview.paymentTerms ?? DEFAULT_TERMS}
             batches={overview.batches}
             reload={reload}
           />

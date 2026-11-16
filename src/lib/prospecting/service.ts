@@ -775,11 +775,11 @@ export async function reportLogo(payload: Payload, id: unknown): Promise<ReportL
 }
 
 /** A reference price: "desde". Only the team sets it; the report never makes one up. */
-export type { OfferPrice } from './price'
-import type { OfferPrice } from './price'
+export type { AnyPrice, OfferPrice } from './price'
+import type { AnyPrice } from './price'
 
 /** One step of the proposal: what we'd do, when, and from what price. */
-export type OfferService = { name: string; description: string; when?: string; price?: OfferPrice | null }
+export type OfferService = { name: string; description: string; when?: string; price?: AnyPrice | null }
 
 /** What we offer the client. Starts with the batch's offer; the team can add services, like advertising. */
 export type ReportOffer = {

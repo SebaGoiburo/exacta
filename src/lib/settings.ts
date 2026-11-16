@@ -12,6 +12,13 @@ export type SiteSettings = {
   googleAdsLeadLabel?: string | null
   handoffPhone?: string | null
   handoffTemplate?: string | null
+  /** Payment terms for the prospect reports' proposals. */
+  payTransferDiscount?: number | null
+  paySixSurcharge?: number | null
+  mpFeeCharge?: number | null
+  mpFeeThree?: number | null
+  mpFeeSix?: number | null
+  mpVat?: number | null
 }
 
 const read = unstable_cache(
@@ -27,6 +34,12 @@ const read = unstable_cache(
       googleAdsLeadLabel: s.googleAdsLeadLabel,
       handoffPhone: s.handoffPhone,
       handoffTemplate: s.handoffTemplate,
+      payTransferDiscount: s.payTransferDiscount,
+      paySixSurcharge: s.paySixSurcharge,
+      mpFeeCharge: s.mpFeeCharge,
+      mpFeeThree: s.mpFeeThree,
+      mpFeeSix: s.mpFeeSix,
+      mpVat: s.mpVat,
     }
   },
   ['cms', 'settings'],

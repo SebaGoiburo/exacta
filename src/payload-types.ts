@@ -1715,6 +1715,18 @@ export interface Setting {
    */
   bookingUrl?: string | null;
   leadNotifyEmail?: string | null;
+  payTransferDiscount?: number | null;
+  /**
+   * Sobre el precio de lista.
+   */
+  paySixSurcharge?: number | null;
+  /**
+   * Sin IVA, como lo muestra Mercado Pago.
+   */
+  mpFeeCharge?: number | null;
+  mpFeeThree?: number | null;
+  mpFeeSix?: number | null;
+  mpVat?: number | null;
   /**
    * Con código de país y sin espacios, por ejemplo 5492610000000.
    */
@@ -1748,6 +1760,12 @@ export interface Setting {
 export interface SettingsSelect<T extends boolean = true> {
   bookingUrl?: T;
   leadNotifyEmail?: T;
+  payTransferDiscount?: T;
+  paySixSurcharge?: T;
+  mpFeeCharge?: T;
+  mpFeeThree?: T;
+  mpFeeSix?: T;
+  mpVat?: T;
   handoffPhone?: T;
   handoffTemplate?: T;
   contentThemes?: T;

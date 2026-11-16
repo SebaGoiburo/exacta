@@ -2,7 +2,16 @@
 
 import { useEffect, useState } from 'react'
 import type { Place } from '@/lib/places'
-import { PRICE_PERIODS, priceText, type PricePeriod } from '@/lib/prospecting/price'
+import {
+  isLegacyPrice,
+  netAmounts,
+  PAYMENT_OPTIONS,
+  priceText,
+  type AnyPrice,
+  type OfferPrice,
+  type PaymentOption,
+  type PaymentTerms,
+} from '@/lib/prospecting/price'
 import {
   dayText,
   generator,
@@ -42,6 +51,138 @@ function firstMessage(p: GeneratedProspect, report: ReportContent, link: string)
 const LOGO_TYPES = ['image/png', 'image/jpeg', 'image/webp']
 const LOGO_MAX_BYTES = 2 * 1024 * 1024
 
+const NO_PRICE: OfferPrice = {
+  list: 0,
+  currency: 'ARS',
+  from: true,
+  show: { cuotas3: true, transferencia: true, cuotas6: false },
+  monthly: null,
+  monthlyLabel: '',
+}
+
+/** The price as the editor works with it. One in the earlier format keeps its amount: monthly or list price. */
+function editablePrice(p: AnyPrice | null | undefined): OfferPrice {
+  if (!p) return NO_PRICE
+  if (!isLegacyPrice(p)) return p
+  return p.period === 'mes'
+    ? { ...NO_PRICE, currency: p.currency, from: p.from !== false, monthly: p.amount }
+    : { ...NO_PRICE, currency: p.currency, from: p.from !== false, list: p.amount }
+}
+
+const amountFrom = (text: string) => Number(text.replace(/\D/g, '')) || 0
+const showAmount = (n?: number | null) => (n ? n.toLocaleString('es-AR') : '')
+const pesos = (n: number) => `$ ${n.toLocaleString('es-AR')}`
+
+/**
+ * One number by hand, the list price (3 interest-free installments); the installment, the transfer price and
+ * 6 installments come from Ajustes. What Exacta keeps after Mercado Pago is shown here only, never in the report.
+ */
+function PriceEditor({
+  price: saved,
+  terms,
+  disabled,
+  onChange,
+}: {
+  price: AnyPrice | null
+  terms: PaymentTerms
+  disabled: boolean
+  onChange: (change: Partial<OfferPrice>) => void
+}) {
+  const price = editablePrice(saved)
+  const legacy = saved && isLegacyPrice(saved) ? saved : null
+  const preview = legacy ?? (price.list || price.monthly ? price : null)
+  const net = netAmounts(price, terms)
+  const optionLabel: Record<PaymentOption, string> = {
+    cuotas3: PAYMENT_OPTIONS.cuotas3,
+    transferencia: `Transferencia (${terms.transferDiscount}% OFF)`,
+    cuotas6: `6 cuotas (+${terms.sixSurcharge}%)`,
+  }
+  const kept = [
+    price.show.cuotas3 && `3 cuotas ${pesos(net.three)}`,
+    price.show.transferencia && `transferencia ${pesos(net.transfer)}`,
+    price.show.cuotas6 && `6 cuotas ${pesos(net.six)}`,
+  ].filter(Boolean)
+
+  return (
+    <div className={styles.priceBox}>
+      <strong>Precio de referencia (opcional)</strong>
+      {legacy && (
+        <span className={styles.muted}>
+          Está en el formato anterior: «{priceText(legacy)}». Al cambiar algo pasa al formato nuevo, con cuotas.
+        </span>
+      )}
+      <div className={styles.logoRow}>
+        <select
+          aria-label="Moneda"
+          value={price.currency}
+          disabled={disabled}
+          onChange={(e) => onChange({ currency: e.target.value as OfferPrice['currency'] })}
+          style={{ width: 'auto' }}
+        >
+          <option value="ARS">$</option>
+          <option value="USD">US$</option>
+        </select>
+        <input
+          inputMode="numeric"
+          aria-label="Precio de lista"
+          placeholder="Precio de lista (3 cuotas sin interés)"
+          value={showAmount(price.list)}
+          disabled={disabled}
+          onChange={(e) => onChange({ list: amountFrom(e.target.value) })}
+          style={{ width: 260 }}
+        />
+        <label className={styles.check}>
+          <input
+            type="checkbox"
+            checked={price.from !== false}
+            disabled={disabled}
+            onChange={(e) => onChange({ from: e.target.checked })}
+          />
+          Desde
+        </label>
+      </div>
+      <div className={styles.logoRow}>
+        <span className={styles.muted}>Formas de pago que se muestran:</span>
+        {(Object.keys(PAYMENT_OPTIONS) as PaymentOption[]).map((option) => (
+          <label key={option} className={styles.check}>
+            <input
+              type="checkbox"
+              checked={price.show[option]}
+              disabled={disabled}
+              onChange={(e) => onChange({ show: { ...price.show, [option]: e.target.checked } })}
+            />
+            {optionLabel[option]}
+          </label>
+        ))}
+      </div>
+      <div className={styles.logoRow}>
+        <input
+          inputMode="numeric"
+          aria-label="Cargo mensual"
+          placeholder="Cargo mensual (opcional)"
+          value={showAmount(price.monthly)}
+          disabled={disabled}
+          onChange={(e) => onChange({ monthly: amountFrom(e.target.value) || null })}
+          style={{ width: 220 }}
+        />
+        <input
+          aria-label="Para qué es el cargo mensual"
+          placeholder="Ej: de mantenimiento"
+          maxLength={60}
+          value={price.monthlyLabel ?? ''}
+          disabled={disabled}
+          onChange={(e) => onChange({ monthlyLabel: e.target.value })}
+          style={{ width: 220 }}
+        />
+      </div>
+      {preview && <span className={styles.muted}>En el informe: «{priceText(preview, terms)}»</span>}
+      {!legacy && price.list > 0 && kept.length > 0 && (
+        <span className={styles.muted}>Reciben aprox., después de Mercado Pago: {kept.join(' · ')}. Solo se ve acá.</span>
+      )}
+    </div>
+  )
+}
+
 type EditorProps = {
   prospect: GeneratedProspect
   /** Approved offers, to add to the proposal. */
@@ -50,10 +191,12 @@ type EditorProps = {
   profileId: number | null
   /** Who can sign the report. */
   team: TeamMember[]
+  /** Payment terms from Ajustes, to show the installment and what Exacta keeps. */
+  terms: PaymentTerms
   onSaved: () => void
 }
 
-export function ReportEditor({ prospect, profiles, profileId, team, onSaved }: EditorProps) {
+export function ReportEditor({ prospect, profiles, profileId, team, terms, onSaved }: EditorProps) {
   const [report, setReport] = useState<ReportContent | null>(prospect.report ?? null)
   const [channel, setChannel] = useState('whatsapp')
   const [busy, setBusy] = useState(false)
@@ -188,22 +331,12 @@ export function ReportEditor({ prospect, profiles, profileId, team, onSaved }: E
     setReport((r) => (r?.offer ? { ...r, offer: { ...r.offer, services: change(r.offer.services) } } : r))
   const setService = (i: number, key: 'name' | 'description' | 'when', value: string) =>
     updateServices((list) => list.map((s, k) => (k === i ? { ...s, [key]: value } : s)))
-  type Price = NonNullable<Service['price']>
   /**
-   * The choices stay while the amount is empty, so they can be set in any order. Saved without an amount,
-   * the service shows no price.
+   * The choices stay while the amounts are empty, so they can be set in any order. Saved without an amount,
+   * the service shows no price. A price in the earlier format turns into the new one on its first change.
    */
-  const setPrice = (i: number, change: Partial<Price> & { text?: string }) =>
-    updateServices((list) =>
-      list.map((s, k) => {
-        if (k !== i) return s
-        const current: Price = s.price ?? { amount: 0, currency: 'ARS', period: 'mes', from: true }
-        const amount = change.text !== undefined ? Number(change.text.replace(/\D/g, '')) || 0 : current.amount
-        const next = { ...current, ...change, amount }
-        delete (next as { text?: string }).text
-        return { ...s, price: next }
-      }),
-    )
+  const setPrice = (i: number, change: Partial<OfferPrice>) =>
+    updateServices((list) => list.map((s, k) => (k === i ? { ...s, price: { ...editablePrice(s.price), ...change } } : s)))
   const addService = (s: Service) => updateServices((list) => [...list, s])
   const removeService = (i: number) => updateServices((list) => list.filter((_, k) => k !== i))
   /** For reports drafted before this section existed: starts from the batch's own offer. */
@@ -420,55 +553,8 @@ export function ReportEditor({ prospect, profiles, profileId, team, onSaved }: E
                       onChange={(e) => setService(i, 'when', e.target.value)}
                     />
                   </label>
-                  <div className={styles.field}>
-                    Precio de referencia (opcional)
-                    <div className={styles.logoRow}>
-                      <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontWeight: 400 }}>
-                        <input
-                          type="checkbox"
-                          checked={s.price?.from !== false}
-                          onChange={(e) => setPrice(i, { from: e.target.checked })}
-                          style={{ width: 'auto' }}
-                        />
-                        Desde
-                      </label>
-                      <select
-                        aria-label="Moneda"
-                        value={s.price?.currency ?? 'ARS'}
-                        onChange={(e) => setPrice(i, { currency: e.target.value as Price['currency'] })}
-                        style={{ width: 'auto' }}
-                      >
-                        <option value="ARS">$</option>
-                        <option value="USD">US$</option>
-                      </select>
-                      <input
-                        inputMode="numeric"
-                        aria-label="Monto"
-                        placeholder="Sin precio"
-                        value={s.price?.amount ? s.price.amount.toLocaleString('es-AR') : ''}
-                        onChange={(e) => setPrice(i, { text: e.target.value })}
-                        style={{ width: 140 }}
-                      />
-                      <select
-                        aria-label="Modalidad"
-                        value={s.price?.period ?? 'mes'}
-                        onChange={(e) => setPrice(i, { period: e.target.value as Price['period'] })}
-                        style={{ width: 'auto' }}
-                      >
-                        {(Object.keys(PRICE_PERIODS) as PricePeriod[]).map((p) => (
-                          <option key={p} value={p}>
-                            {PRICE_PERIODS[p]}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-                    {s.price?.amount ? (
-                      <span className={styles.muted} style={{ fontWeight: 400 }}>
-                        En el informe: «{priceText(s.price)}»
-                      </span>
-                    ) : null}
-                  </div>
                 </div>
+                <PriceEditor price={s.price ?? null} terms={terms} disabled={busy} onChange={(change) => setPrice(i, change)} />
                 <div>
                   <button type="button" disabled={busy} onClick={() => removeService(i)}>
                     Quitar este servicio
