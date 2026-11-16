@@ -114,10 +114,19 @@ export async function placesApi<T>(body: Record<string, unknown>): Promise<T> {
   return data as T
 }
 
+/**
+ * Names already asked in this browser tab, so moving between screens doesn't ask Google again. They live
+ * only in memory and are gone when the page reloads: Google doesn't allow storing them.
+ */
+const labelMemory = new Map<string, Place>()
+
 export async function loadLabels(placeIds: string[]): Promise<Record<string, Place>> {
-  if (!placeIds.length) return {}
-  const { labels } = await placesApi<{ labels: Place[] }>({ action: 'labels', ids: placeIds.slice(0, 30) })
-  return Object.fromEntries(labels.map((l) => [l.id, l]))
+  const missing = [...new Set(placeIds)].filter((id) => !labelMemory.has(id))
+  for (let i = 0; i < missing.length; i += 30) {
+    const { labels } = await placesApi<{ labels: Place[] }>({ action: 'labels', ids: missing.slice(i, i + 30) })
+    for (const l of labels) if (l?.id) labelMemory.set(l.id, l)
+  }
+  return Object.fromEntries(placeIds.filter((id) => labelMemory.has(id)).map((id) => [id, labelMemory.get(id)!]))
 }
 
 export const leadIdOf = (lead: GeneratedProspect['lead']) => (typeof lead === 'object' ? lead?.id : lead) ?? null

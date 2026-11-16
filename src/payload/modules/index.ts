@@ -1,6 +1,7 @@
 import type { CollectionConfig, GlobalConfig } from 'payload'
 import { Media } from './core/media'
 import { Users } from './core/users'
+import { AiUsage } from './core/ai-usage'
 import { Integrations } from './core/integrations'
 import { Settings } from './core/settings'
 import { Posts } from './content/posts'
@@ -21,7 +22,7 @@ import { Subscribers } from './newsletter/collections'
 export type BackendModule = { name: string; collections: CollectionConfig[]; globals?: GlobalConfig[] }
 
 export const modules: BackendModule[] = [
-  { name: 'core', collections: [Users, Integrations, Media], globals: [Settings] },
+  { name: 'core', collections: [Users, Integrations, Media, AiUsage], globals: [Settings] },
   { name: 'content', collections: [Posts, CaseStudies, Products, TeamMembers, Faqs] },
   { name: 'crm', collections: [Contacts, Leads] },
   { name: 'marketing', collections: [Diagnostics] },

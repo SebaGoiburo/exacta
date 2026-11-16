@@ -19,6 +19,7 @@ export default buildConfig({
     meta: { titleSuffix: ' · Exacta' },
     components: {
       beforeNavLinks: ['@/payload/views/nav-links#NavLinks'],
+      beforeDashboard: ['@/payload/views/ai-spend#AiSpend'],
       views: {
         pipeline: { Component: '@/payload/views/pipeline#PipelineView', path: '/pipeline' },
         conversations: { Component: '@/payload/views/conversations#ConversationsView', path: '/conversaciones' },

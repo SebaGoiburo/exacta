@@ -5,6 +5,7 @@ import { getFaqs, getProducts } from '@/lib/content'
 import { publicUrl } from '@/lib/leads'
 import { getSettings } from '@/lib/settings'
 import { site } from '@/lib/site'
+import { recordUsage } from '@/lib/ai-usage'
 import messages from '@/messages/es.json'
 import type { Conversation } from '@/payload-types'
 import { randomBytes } from 'node:crypto'
@@ -23,7 +24,7 @@ const MAX_AI_REPLIES = 25
 const PREVIEW_LENGTH = 120
 const TEMPLATE_LANGUAGE = 'es_AR'
 /** Model replies across all conversations in 24 hours: a ceiling on what a flood of messages can cost. */
-const MAX_AI_PER_DAY = 300
+const MAX_AI_PER_DAY = 150
 /** More messages than this from one number in two minutes is a bot, not a person typing. */
 const BURST_MESSAGES = 10
 const BURST_WINDOW_MS = 2 * 60 * 1000
@@ -535,6 +536,8 @@ export async function handleInbound(input: InboundMessage) {
 /** Applies the model's answer. If it failed or made no sense, a person takes over. */
 export async function handleAgentResult(conversationId: number, response: unknown) {
   const payload = await cms()
+  // The call already happened, so it's counted even if nobody ends up reading the answer.
+  await recordUsage(payload, 'whatsapp', response)
   const conversation = await payload.findByID({
     collection: 'conversations',
     id: conversationId,

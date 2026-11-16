@@ -1,0 +1,600 @@
+{
+  "name": "Exacta · Investigación por lotes",
+  "id": "exactaClaudeBatch1",
+  "nodes": [
+    {
+      "id": "b7a10000-0001-4b01-9b01-batch0000001",
+      "name": "Pedido del sitio",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        300
+      ],
+      "webhookId": "b7a1aaaa-0001-4b01-9b01-batchwebhook1",
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "exacta-claude-batch",
+        "responseMode": "responseNode",
+        "options": {
+          "rawBody": true
+        }
+      }
+    },
+    {
+      "id": "b7a10000-0002-4b01-9b01-batch0000002",
+      "name": "Verificar firma",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        220,
+        300
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "language": "javaScript",
+        "jsCode": "// Only the site can start a run: each one costs money. The signature covers the exact bytes received.\nconst crypto = require('crypto');\nconst item = $input.first();\nconst raw = await this.helpers.getBinaryDataBuffer(0, 'data');\nconst received = Buffer.from(item.json.headers?.['x-exacta-signature'] ?? '');\nconst expected = Buffer.from('sha256=' + crypto.createHmac('sha256', $env.N8N_WEBHOOK_SECRET).update(raw).digest('hex'));\nif (received.length !== expected.length || !crypto.timingSafeEqual(received, expected)) return [{ json: { valid: false } }];\nreturn [{ json: { valid: true, ...JSON.parse(raw.toString('utf8')).data } }];"
+      }
+    },
+    {
+      "id": "b7a10000-0003-4b01-9b01-batch0000003",
+      "name": "¿Firma válida?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        440,
+        300
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "c1",
+              "leftValue": "={{ $json.valid }}",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "b7a10000-0004-4b01-9b01-batch0000004",
+      "name": "Responder 200",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        660,
+        200
+      ],
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { ok: true } }}",
+        "options": {
+          "responseCode": 200
+        }
+      }
+    },
+    {
+      "id": "b7a10000-0005-4b01-9b01-batch0000005",
+      "name": "Responder 401",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        660,
+        420
+      ],
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { error: 'invalid_signature' } }}",
+        "options": {
+          "responseCode": 401
+        }
+      }
+    },
+    {
+      "parameters": {
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "anthropic-version",
+              "value": "2023-06-01"
+            }
+          ]
+        },
+        "method": "POST",
+        "url": "https://api.anthropic.com/v1/messages/batches",
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "={{ JSON.stringify({ requests: $('Verificar firma').first().json.jobs.map((j) => ({ custom_id: j.jobId.replace(':', '-'), params: j.request })) }) }}",
+        "options": {
+          "timeout": 60000
+        }
+      },
+      "id": "b7a10000-0006-4b01-9b01-batch0000006",
+      "name": "Crear lote",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        880,
+        200
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "exactaAnthropic1",
+          "name": "Anthropic API"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "b7a10000-0007-4b01-9b01-batch0000007-c",
+              "leftValue": "={{ $json.id }}",
+              "rightValue": "msgbatch_",
+              "operator": {
+                "type": "string",
+                "operation": "startsWith"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "b7a10000-0007-4b01-9b01-batch0000007",
+      "name": "¿Se creó el lote?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1100,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "amount": 2,
+        "unit": "minutes"
+      },
+      "id": "b7a10000-0008-4b01-9b01-batch0000008",
+      "name": "Esperar 2 minutos",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        1320,
+        120
+      ],
+      "webhookId": "b7a1aaaa-0008-4b01-9b01-batchwaiting1"
+    },
+    {
+      "parameters": {
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "anthropic-version",
+              "value": "2023-06-01"
+            }
+          ]
+        },
+        "method": "GET",
+        "url": "=https://api.anthropic.com/v1/messages/batches/{{ $('Crear lote').first().json.id }}",
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "id": "b7a10000-0009-4b01-9b01-batch0000009",
+      "name": "Ver lote",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1540,
+        120
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "exactaAnthropic1",
+          "name": "Anthropic API"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "b7a10000-0010-4b01-9b01-batch0000010-c",
+              "leftValue": "={{ $json.processing_status }}",
+              "rightValue": "ended",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "b7a10000-0010-4b01-9b01-batch0000010",
+      "name": "¿Terminó?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1760,
+        120
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "b7a10000-0011-4b01-9b01-batch0000011-c",
+              "leftValue": "={{ $runIndex }}",
+              "rightValue": 800,
+              "operator": {
+                "type": "number",
+                "operation": "lt"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "b7a10000-0011-4b01-9b01-batch0000011",
+      "name": "¿Seguir esperando?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1980,
+        260
+      ]
+    },
+    {
+      "parameters": {
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "anthropic-version",
+              "value": "2023-06-01"
+            }
+          ]
+        },
+        "method": "GET",
+        "url": "={{ $json.results_url }}",
+        "options": {
+          "timeout": 120000,
+          "response": {
+            "response": {
+              "responseFormat": "text",
+              "outputPropertyName": "data"
+            }
+          }
+        }
+      },
+      "id": "b7a10000-0012-4b01-9b01-batch0000012",
+      "name": "Descargar resultados",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1980,
+        0
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "exactaAnthropic1",
+          "name": "Anthropic API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "language": "javaScript",
+        "jsCode": "// One answer per job, as the site expects it. A job missing from the results comes back as a failure.\nconst jobs = $('Verificar firma').first().json.jobs;\nconst byId = {};\nfor (const line of String($input.first().json.data ?? '').split('\\n')) {\n  if (!line.trim()) continue;\n  try {\n    const r = JSON.parse(line);\n    byId[r.custom_id] = r.result;\n  } catch (e) {}\n}\nreturn jobs.map((j) => {\n  const result = byId[j.jobId.replace(':', '-')];\n  const response = result?.type === 'succeeded'\n    ? result.message\n    : { error: { message: result?.type === 'errored' ? (result.error?.error?.message || 'El pedido falló.') : 'El lote venció sin respuesta.' } };\n  return { json: { jobId: j.jobId, response } };\n});"
+      },
+      "id": "b7a10000-0013-4b01-9b01-batch0000013",
+      "name": "Separar resultados",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2200,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "language": "javaScript",
+        "jsCode": "// Without a batch there's nothing to wait for: each job is told, so it doesn't look busy.\nconst reason = $input.first().json.error?.message || $input.first().json.error || 'No se pudo usar el envío por lotes.';\nreturn $('Verificar firma').first().json.jobs.map((j) => ({ json: { jobId: j.jobId, response: { error: { message: String(reason).slice(0, 200) } } } }));"
+      },
+      "id": "b7a10000-0014-4b01-9b01-batch0000014",
+      "name": "Avisar que falló",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1320,
+        420
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "language": "javaScript",
+        "jsCode": "// The site only accepts results signed with the shared secret.\nconst crypto = require('crypto');\nconst body = JSON.stringify({ jobId: $json.jobId, response: $json.response });\nconst signature = 'sha256=' + crypto.createHmac('sha256', $env.N8N_WEBHOOK_SECRET).update(body).digest('hex');\nreturn { json: { body, signature } };"
+      },
+      "id": "b7a10000-0015-4b01-9b01-batch0000015",
+      "name": "Firmar resultado",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2420,
+        200
+      ]
+    },
+    {
+      "id": "b7a10000-0016-4b01-9b01-batch0000016",
+      "name": "Devolver al sitio",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2640,
+        200
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "http://web:3000/api/content/result",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-exacta-signature",
+              "value": "={{ $json.signature }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "={{ $json.body }}",
+        "options": {
+          "timeout": 60000
+        }
+      },
+      "onError": "continueRegularOutput"
+    }
+  ],
+  "connections": {
+    "Pedido del sitio": {
+      "main": [
+        [
+          {
+            "node": "Verificar firma",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Verificar firma": {
+      "main": [
+        [
+          {
+            "node": "¿Firma válida?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "¿Firma válida?": {
+      "main": [
+        [
+          {
+            "node": "Responder 200",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Responder 401",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Responder 200": {
+      "main": [
+        [
+          {
+            "node": "Crear lote",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Crear lote": {
+      "main": [
+        [
+          {
+            "node": "¿Se creó el lote?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "¿Se creó el lote?": {
+      "main": [
+        [
+          {
+            "node": "Esperar 2 minutos",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Avisar que falló",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Esperar 2 minutos": {
+      "main": [
+        [
+          {
+            "node": "Ver lote",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ver lote": {
+      "main": [
+        [
+          {
+            "node": "¿Terminó?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "¿Terminó?": {
+      "main": [
+        [
+          {
+            "node": "Descargar resultados",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "¿Seguir esperando?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "¿Seguir esperando?": {
+      "main": [
+        [
+          {
+            "node": "Esperar 2 minutos",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Avisar que falló",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Descargar resultados": {
+      "main": [
+        [
+          {
+            "node": "Separar resultados",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Separar resultados": {
+      "main": [
+        [
+          {
+            "node": "Firmar resultado",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Avisar que falló": {
+      "main": [
+        [
+          {
+            "node": "Firmar resultado",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Firmar resultado": {
+      "main": [
+        [
+          {
+            "node": "Devolver al sitio",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "active": true,
+  "pinData": {}
+}

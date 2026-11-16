@@ -199,6 +199,8 @@ export const ProspectJobs: CollectionConfig = {
     { name: 'request', type: 'json' },
     { name: 'sourcesSeen', type: 'json' },
     { name: 'continuations', type: 'number', defaultValue: 0 },
+    /** Sent with others through the Batch API: half the token price, and the answer can take up to a day. */
+    { name: 'viaBatch', type: 'checkbox', defaultValue: false },
     { name: 'startedAt', type: 'date' },
     { name: 'costUsd', type: 'number', defaultValue: 0 },
     { name: 'error', type: 'text' },

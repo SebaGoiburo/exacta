@@ -71,6 +71,7 @@ export interface Config {
     users: User;
     integrations: Integration;
     media: Media;
+    'ai-usage': AiUsage;
     posts: Post;
     cases: Case;
     products: Product;
@@ -106,6 +107,7 @@ export interface Config {
     users: UsersSelect<false> | UsersSelect<true>;
     integrations: IntegrationsSelect<false> | IntegrationsSelect<true>;
     media: MediaSelect<false> | MediaSelect<true>;
+    'ai-usage': AiUsageSelect<false> | AiUsageSelect<true>;
     posts: PostsSelect<false> | PostsSelect<true>;
     cases: CasesSelect<false> | CasesSelect<true>;
     products: ProductsSelect<false> | ProductsSelect<true>;
@@ -269,6 +271,24 @@ export interface Media {
       filename?: string | null;
     };
   };
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "ai-usage".
+ */
+export interface AiUsage {
+  id: number;
+  feature: 'prospectos' | 'whatsapp' | 'contenido';
+  model?: string | null;
+  inputTokens?: number | null;
+  outputTokens?: number | null;
+  cacheWriteTokens?: number | null;
+  cacheReadTokens?: number | null;
+  searches?: number | null;
+  batch?: boolean | null;
+  costUsd?: number | null;
+  updatedAt: string;
+  createdAt: string;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -717,6 +737,7 @@ export interface ProspectJob {
     | boolean
     | null;
   continuations?: number | null;
+  viaBatch?: boolean | null;
   startedAt?: string | null;
   costUsd?: number | null;
   error?: string | null;
@@ -954,6 +975,10 @@ export interface PayloadLockedDocument {
         value: number | Media;
       } | null)
     | ({
+        relationTo: 'ai-usage';
+        value: number | AiUsage;
+      } | null)
+    | ({
         relationTo: 'posts';
         value: number | Post;
       } | null)
@@ -1168,6 +1193,23 @@ export interface MediaSelect<T extends boolean = true> {
               filename?: T;
             };
       };
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "ai-usage_select".
+ */
+export interface AiUsageSelect<T extends boolean = true> {
+  feature?: T;
+  model?: T;
+  inputTokens?: T;
+  outputTokens?: T;
+  cacheWriteTokens?: T;
+  cacheReadTokens?: T;
+  searches?: T;
+  batch?: T;
+  costUsd?: T;
+  updatedAt?: T;
+  createdAt?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -1462,6 +1504,7 @@ export interface ProspectJobsSelect<T extends boolean = true> {
   request?: T;
   sourcesSeen?: T;
   continuations?: T;
+  viaBatch?: T;
   startedAt?: T;
   costUsd?: T;
   error?: T;

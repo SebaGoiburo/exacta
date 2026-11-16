@@ -3,6 +3,7 @@ import config from '@payload-config'
 import { cases } from '@/content/cases'
 import { landingPath, landings } from '@/content/landings'
 import { products } from '@/content/products'
+import { recordUsage } from '@/lib/ai-usage'
 import { sendToN8n } from '@/lib/n8n'
 import { readSearchData, type SearchData } from './google'
 import {
@@ -164,6 +165,7 @@ export async function handleResult(jobId: number, response: ModelResponse) {
   const payload = await cms()
   const job = await payload.findByID({ collection: 'content-jobs', id: jobId, depth: 0, overrideAccess: true })
   if (job.status !== 'running') return
+  await recordUsage(payload, 'contenido', response)
 
   if (!Array.isArray(response?.content)) {
     return fail(payload, jobId, response?.error?.message || 'El modelo no respondió.')

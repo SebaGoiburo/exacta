@@ -21,6 +21,10 @@ import styles from './generator.module.css'
 
 /** How many reports Sebastián can review properly per batch. */
 const REVIEW_LIMIT = 10
+/** Same as the server's: research goes to the best ones, a dozen at a time. */
+const RESEARCH_LIMIT = 12
+/** Names asked to Google as soon as the batch opens; the rest, on demand. */
+const NAMES_UP_FRONT = 10
 
 const STATUS_TEXT: Record<Batch['status'], string> = {
   buscando: 'Buscando y midiendo',
@@ -151,6 +155,8 @@ function BatchDetail({
   const [open, setOpen] = useState<number | null>(null)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  // Only to redraw after asking for names on demand: the names themselves live in `places`.
+  const [, setNameRequests] = useState(0)
 
   const load = useCallback(async () => {
     const data = await generatorView<{ batch: Batch; prospects: GeneratedProspect[]; jobs: Job[] }>({ view: 'batch', id: String(batchId) })
@@ -167,7 +173,11 @@ function BatchDetail({
       try {
         const data = await load()
         if (stop) return
-        const missing = data.prospects.map((p) => p.placeId).filter((id) => !asked.current.has(id))
+        // Only the best ones and those already chosen: each name is a Google call against the daily quota.
+        const missing = data.prospects
+          .filter((p, i) => i < NAMES_UP_FRONT || !['pendiente', 'descartado'].includes(p.status))
+          .map((p) => p.placeId)
+          .filter((id) => !asked.current.has(id))
         missing.forEach((id) => asked.current.add(id))
         if (missing.length) {
           const labels = await loadLabels(missing).catch(() => ({}))
@@ -185,6 +195,19 @@ function BatchDetail({
       window.clearTimeout(timer)
     }
   }, [load, onChange])
+
+  const showNames = (ids: string[]) => {
+    const missing = ids.filter((id) => !asked.current.has(id))
+    if (!missing.length) return
+    missing.forEach((id) => asked.current.add(id))
+    setNameRequests((n) => n + 1)
+    loadLabels(missing)
+      .then((labels) => setPlaces((all) => ({ ...all, ...labels })))
+      .catch(() => {
+        missing.forEach((id) => asked.current.delete(id))
+        setError('Google Maps no respondió. Probá de nuevo más tarde.')
+      })
+  }
 
   async function act(body: Record<string, unknown>) {
     setBusy(true)
@@ -231,10 +254,12 @@ function BatchDetail({
         <div className={base.notice}>
           <p style={{ margin: '0 0 8px' }}>
             {firstPass} prospectos tienen solo la primera pasada. La investigación con IA lee sus reseñas, busca en la web, encuentra a
-            quien decide y escribe el hallazgo para el primer contacto. Cuesta alrededor de US$ 0,15 por prospecto.
+            quien decide y escribe el hallazgo para el primer contacto. Investiga los {Math.min(firstPass, RESEARCH_LIMIT)} mejores
+            (primero los que ya elegiste) por alrededor de US$ 0,02 cada uno. Va por lotes, a mitad de precio: suele tardar menos de
+            una hora y podés cerrar esta pantalla.
           </p>
           <button type="button" className={base.primary} disabled={busy} onClick={() => void act({ action: 'research', batchId })}>
-            Investigar {firstPass} con IA
+            Investigar {Math.min(firstPass, RESEARCH_LIMIT)} con IA
           </button>
         </div>
       )}
@@ -244,6 +269,18 @@ function BatchDetail({
           {error}
         </p>
       )}
+
+      {(() => {
+        const unnamed = prospects.filter((p) => !asked.current.has(p.placeId)).map((p) => p.placeId)
+        return unnamed.length ? (
+          <p className={styles.muted} style={{ margin: 0 }}>
+            Para cuidar el cupo diario de Google se muestran los nombres de los {NAMES_UP_FRONT} mejores y de los elegidos.{' '}
+            <button type="button" onClick={() => showNames(unnamed)}>
+              Ver los {unnamed.length} nombres que faltan
+            </button>
+          </p>
+        ) : null
+      })()}
 
       <ol className={styles.rows}>
         {prospects.map((p, i) => {
@@ -259,7 +296,15 @@ function BatchDetail({
                 </div>
                 <div>
                   <div className={styles.name}>
-                    {i + 1}. {place?.name ?? 'Cargando…'}
+                    {i + 1}.{' '}
+                    {place?.name ??
+                      (asked.current.has(p.placeId) ? (
+                        'Cargando…'
+                      ) : (
+                        <button type="button" onClick={() => showNames([p.placeId])}>
+                          Ver nombre
+                        </button>
+                      ))}
                   </div>
                   <div className={styles.muted}>
                     {[place?.address, p.facts?.rank ? `puesto ${p.facts.rank} en Maps` : null, p.pass === 2 ? 'investigado con IA' : 'primera pasada']

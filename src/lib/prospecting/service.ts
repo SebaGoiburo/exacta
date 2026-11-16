@@ -12,7 +12,8 @@ import { placeContact, placeForResearch, searchPlacesForBatch, type ScoredPlace 
 import { getSettings } from '@/lib/settings'
 import { site } from '@/lib/site'
 import { BLOCK_DAYS, DEFAULT_PROFILES, type Knockout, type ProfileSignal, type Scores } from './model'
-import { costOf, findingsForScore, parseProfile, parseResearch, profileRequest, researchRequest, type Research } from './research'
+import { findingsForScore, parseProfile, parseResearch, profileRequest, researchRequest, type Research } from './research'
+import { recordUsage } from '../ai-usage'
 import { rescoreWithAi, scoreCandidate, type BatchContext, type Candidate, type Flags, type ProfileForScoring, type SiteFacts } from './scoring'
 import { auditSite, pageSpeed, pool, siteKey, websiteKind } from './site-audit'
 
@@ -27,6 +28,10 @@ const PAGES_PER_TERM = 3
 /** AI runs in flight at once, so a batch doesn't trip the model's rate limit. */
 const MAX_RUNNING = 3
 const JOB_STALE_MS = 15 * 60 * 1000
+/** A batch answers within 24 hours or expires; past this, nobody is coming back for the job. */
+const BATCH_JOB_STALE_MS = 26 * 60 * 60 * 1000
+/** Researched per click: the review limit is 10, so 12 leaves room for a couple that don't pan out. */
+export const RESEARCH_LIMIT = 12
 const BATCH_STALE_MS = 45 * 60 * 1000
 /** Days to wait before each follow-up: contact on day 0, then days 3, 7 and 12. */
 const FOLLOW_UP_DAYS = [3, 4, 5]
@@ -357,15 +362,19 @@ export async function startResearch(batchId: number) {
     overrideAccess: true,
   })
   if (pending.totalDocs) return 0
-  const { docs } = await payload.find({
+  const { docs: candidates } = await payload.find({
     collection: 'prospects',
     where: {
       and: [{ batch: { equals: batchId } }, { shortlisted: { equals: true } }, { pass: { equals: 1 } }, { status: { not_equals: 'descartado' } }],
     },
+    sort: '-score',
     limit: SHORTLIST,
     depth: 0,
     overrideAccess: true,
   })
+  // The ones already chosen for a report go first; then the best scores. The rest can be researched later.
+  const chosen = (p: (typeof candidates)[number]) => (p.status === 'pendiente' ? 0 : 1)
+  const docs = [...candidates].sort((a, b) => chosen(b) - chosen(a) || (b.score ?? 0) - (a.score ?? 0)).slice(0, RESEARCH_LIMIT)
   for (const prospect of docs) {
     await payload.create({
       collection: 'prospect-jobs',
@@ -378,7 +387,12 @@ export async function startResearch(batchId: number) {
       collection: 'prospect-batches',
       id: batchId,
       overrideAccess: true,
-      data: { status: 'investigando', progress: `Investigando ${docs.length} prospectos con IA…` },
+      data: {
+        status: 'investigando',
+        progress: batchUrl()
+          ? `Investigando ${docs.length} prospectos con IA, por lotes: suele tardar menos de una hora.`
+          : `Investigando ${docs.length} prospectos con IA…`,
+      },
     })
   }
   await pump(payload)
@@ -393,8 +407,62 @@ export function pump(payload: Payload) {
   return pumping
 }
 
+/** The n8n flow that sends research through Claude's Batch API. Same host as the content flow. */
+const batchUrl = () =>
+  process.env.N8N_CLAUDE_BATCH_URL || process.env.N8N_CONTENT_URL?.replace(/exacta-content(?=$|[?#])/, 'exacta-claude-batch') || ''
+
+/**
+ * Research doesn't need an answer right away, so it goes as one batch at half the token price. Each answer
+ * comes back through the same route as always. If the batch can't be sent, the jobs stay queued and go one by one.
+ */
+async function startBatchResearch(payload: Payload) {
+  const url = batchUrl()
+  if (!url) return
+  const { docs } = await payload.find({
+    collection: 'prospect-jobs',
+    where: { and: [{ status: { equals: 'queued' } }, { kind: { equals: 'research' } }] },
+    sort: 'createdAt',
+    limit: 50,
+    depth: 0,
+    overrideAccess: true,
+  })
+  const ready: { job: ProspectJob; request: Awaited<ReturnType<typeof researchFor>> }[] = []
+  for (const job of docs) {
+    try {
+      ready.push({ job, request: await researchFor(payload, job) })
+    } catch (err) {
+      console.error('[prospecting] research could not start', err)
+      await failJob(payload, job.id, err instanceof Error && err.message.startsWith('Places') ? 'Google Maps no respondió.' : 'No se pudo iniciar.')
+    }
+  }
+  if (!ready.length) return
+  const startedAt = new Date().toISOString()
+  // Marked as running before sending, so the next pump can't send them twice.
+  for (const { job, request } of ready) {
+    await payload.update({
+      collection: 'prospect-jobs',
+      id: job.id,
+      overrideAccess: true,
+      data: { status: 'running', viaBatch: true, startedAt, request: request as unknown as Record<string, unknown> },
+    })
+  }
+  try {
+    await sendToN8n(url, 'claude.batch', { jobs: ready.map(({ job, request }) => ({ jobId: `prospect:${job.id}`, request })) })
+  } catch (err) {
+    console.error('[prospecting] batch not sent, going one by one', err)
+    for (const { job } of ready) {
+      await payload.update({ collection: 'prospect-jobs', id: job.id, overrideAccess: true, data: { status: 'queued', viaBatch: false } })
+    }
+  }
+}
+
 async function startQueued(payload: Payload) {
-  const running = await payload.count({ collection: 'prospect-jobs', where: { status: { equals: 'running' } }, overrideAccess: true })
+  await startBatchResearch(payload)
+  const running = await payload.count({
+    collection: 'prospect-jobs',
+    where: { and: [{ status: { equals: 'running' } }, { viaBatch: { not_equals: true } }] },
+    overrideAccess: true,
+  })
   const free = MAX_RUNNING - running.totalDocs
   if (free <= 0) return
   const { docs } = await payload.find({
@@ -474,27 +542,29 @@ export async function handleProspectResult(jobId: number, response: ModelRespons
   try {
     const job = await payload.findByID({ collection: 'prospect-jobs', id: jobId, depth: 0, overrideAccess: true })
     if (job.status !== 'running') return
-    const cost = (job.costUsd ?? 0) + costOf(response)
+    const step = await recordUsage(payload, 'prospectos', response, { batch: Boolean(job.viaBatch) })
+    const cost = (job.costUsd ?? 0) + step
 
-    if (!Array.isArray(response?.content)) return failJob(payload, jobId, response?.error?.message || 'El modelo no respondió.', costOf(response))
+    if (!Array.isArray(response?.content)) return failJob(payload, jobId, response?.error?.message || 'El modelo no respondió.', step)
 
     const seen = [...((job.sourcesSeen as string[]) ?? []), ...urlsSeen(response)]
     if (response.stop_reason === 'pause_turn') {
-      if ((job.continuations ?? 0) >= MAX_CONTINUATIONS) return failJob(payload, jobId, 'La búsqueda no terminó a tiempo.', costOf(response))
+      if ((job.continuations ?? 0) >= MAX_CONTINUATIONS) return failJob(payload, jobId, 'La búsqueda no terminó a tiempo.', step)
       const request = job.request as { messages: { role: string; content: unknown }[] }
       const next = { ...request, messages: [request.messages[0], { role: 'assistant', content: response.content }] }
       await payload.update({
         collection: 'prospect-jobs',
         id: jobId,
         overrideAccess: true,
-        data: { request: next, sourcesSeen: seen, continuations: (job.continuations ?? 0) + 1, costUsd: cost },
+        // A paused search goes on as a normal request: the batch it came from has already closed.
+        data: { request: next, sourcesSeen: seen, continuations: (job.continuations ?? 0) + 1, costUsd: cost, viaBatch: false },
       })
       return dispatch(jobId, next)
     }
 
     if (job.kind === 'profile') {
       const draft = parseProfile(response)
-      if (!draft) return failJob(payload, jobId, 'La propuesta de perfil no tenía el formato esperado.', costOf(response))
+      if (!draft) return failJob(payload, jobId, 'La propuesta de perfil no tenía el formato esperado.', step)
       const key = `${draft.name
         .toLowerCase()
         .normalize('NFD')
@@ -523,7 +593,7 @@ export async function handleProspectResult(jobId: number, response: ModelRespons
     }
 
     const research = parseResearch(response, (job.sourcesSeen as string[]) ?? [])
-    if (!research) return failJob(payload, jobId, 'La investigación no tenía el formato esperado.', costOf(response))
+    if (!research) return failJob(payload, jobId, 'La investigación no tenía el formato esperado.', step)
     await applyResearch(payload, idOf(job.prospect)!, research)
     await payload.update({ collection: 'prospect-jobs', id: jobId, overrideAccess: true, data: { status: 'done', request: null, costUsd: cost } })
     const batchId = idOf(job.batch)
@@ -597,7 +667,17 @@ async function finishBatchIfDone(payload: Payload, batchId: number) {
 export async function closeStale(payload: Payload) {
   const { docs: jobs } = await payload.find({
     collection: 'prospect-jobs',
-    where: { and: [{ status: { equals: 'running' } }, { startedAt: { less_than: new Date(Date.now() - JOB_STALE_MS).toISOString() } }] },
+    where: {
+      and: [
+        { status: { equals: 'running' } },
+        {
+          or: [
+            { and: [{ viaBatch: { not_equals: true } }, { startedAt: { less_than: new Date(Date.now() - JOB_STALE_MS).toISOString() } }] },
+            { and: [{ viaBatch: { equals: true } }, { startedAt: { less_than: new Date(Date.now() - BATCH_JOB_STALE_MS).toISOString() } }] },
+          ],
+        },
+      ],
+    },
     limit: 50,
     depth: 0,
     overrideAccess: true,

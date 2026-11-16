@@ -318,21 +318,3 @@ export function parseProfile(response: ModelResponse): (Omit<ProfileDraft, 'key'
     reasoning: raw.reasoning ?? '',
   }
 }
-
-type Usage = {
-  input_tokens?: number
-  output_tokens?: number
-  cache_creation_input_tokens?: number
-  cache_read_input_tokens?: number
-  server_tool_use?: { web_search_requests?: number }
-}
-
-/** Sonnet 5.5 list prices per million tokens: US$2 in, US$2.50 cache write, US$0.10 cache read, US$10 out; US$0.01 per web search. */
-export function costOf(response: ModelResponse & { usage?: Usage }) {
-  const u = response.usage ?? {}
-  const usd =
-    ((u.input_tokens ?? 0) * 2 + (u.cache_creation_input_tokens ?? 0) * 2.5 + (u.cache_read_input_tokens ?? 0) * 0.1 + (u.output_tokens ?? 0) * 10) /
-      1_000_000 +
-    (u.server_tool_use?.web_search_requests ?? 0) * 0.01
-  return Math.round(usd * 10000) / 10000
-}
