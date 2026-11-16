@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import { Fragment } from 'react'
 import { notFound } from 'next/navigation'
 import { setRequestLocale } from 'next-intl/server'
 import { Link } from '@/i18n/navigation'
@@ -6,7 +7,7 @@ import type { Locale } from '@/i18n/routing'
 import { AREAS, type Area } from '@/lib/diagnostic/questions'
 import { AREA_NAMES } from '@/lib/diagnostic/recommendations'
 import { placeSummary, type Place } from '@/lib/places'
-import { cms, type Competitor, type ReportContent } from '@/lib/prospecting/service'
+import { cms, reportLogo, type Competitor, type ReportContent } from '@/lib/prospecting/service'
 import { getSettings } from '@/lib/settings'
 import { whatsappLink } from '@/lib/site'
 import { ArrowRight, WhatsApp } from '@/components/ui/icons'
@@ -23,15 +24,20 @@ async function getReport(token: string) {
   const payload = await cms()
   const { docs } = await payload.find({
     collection: 'prospects',
-    where: { and: [{ reportToken: { equals: token } }, { reportReviewedAt: { exists: true } }] },
+    where: {
+      and: [{ reportToken: { equals: token } }, { reportReviewedAt: { exists: true } }],
+    },
     limit: 1,
     depth: 0,
     overrideAccess: true,
   })
   const prospect = docs[0]
   if (!prospect?.report) return null
+  const report = prospect.report as unknown as ReportContent
   return {
-    report: prospect.report as unknown as ReportContent,
+    report,
+    // Read again from the media library: if the file was deleted, the report just goes without it.
+    logo: report.logo ? await reportLogo(payload, report.logo.id) : null,
     expiresAt: prospect.reportExpiresAt ? new Date(prospect.reportExpiresAt) : null,
   }
 }
@@ -42,7 +48,11 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 const dateText = (iso: string | Date) =>
-  new Date(iso).toLocaleDateString('es-AR', { day: 'numeric', month: 'long', year: 'numeric' })
+  new Date(iso).toLocaleDateString('es-AR', {
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+  })
 
 function sourceText(source: string, date: string) {
   if (source === 'google_maps') return `Fuente: Google Maps, consultado el ${dateText(date)}`
@@ -53,6 +63,9 @@ function sourceText(source: string, date: string) {
 
 type Row = Omit<Competitor, 'placeId'> & { place: Place | null; self: boolean }
 
+/** By position in Google Maps, so the client sits where it really is and never looks like it leads. Unknown goes last. */
+const byPosition = (a: Row, b: Row) => (a.position || Infinity) - (b.position || Infinity)
+
 /** Google's data for the comparison, asked when the report is shown: names and ratings are never stored. */
 async function comparisonRows(report: ReportContent): Promise<Row[]> {
   const competitors = report.competitors ?? []
@@ -61,7 +74,7 @@ async function comparisonRows(report: ReportContent): Promise<Row[]> {
   const places = await Promise.all(entries.map((e) => placeSummary(e.placeId).catch(() => null)))
   const rows = entries.map((e, i) => ({ ...e, place: places[i] }))
   // Without Google's answer for the competitors there is nothing to compare.
-  return rows.some((r) => !r.self && r.place) ? rows.filter((r) => r.self || r.place) : []
+  return rows.some((r) => !r.self && r.place) ? rows.filter((r) => r.self || r.place).sort(byPosition) : []
 }
 
 const yesNo = (v: boolean | null) => (v === null ? 'Sin dato' : v ? 'Sí' : 'No')
@@ -73,7 +86,7 @@ export default async function ProspectReport({ params }: Props) {
 
   const found = await getReport(token)
   if (!found) notFound()
-  const { report, expiresAt } = found
+  const { report, logo, expiresAt } = found
   const expired = !expiresAt || expiresAt.getTime() < Date.now()
   const whatsapp = whatsappLink(`Hola, soy de ${report.company}. Leí el informe que nos mandaron y me gustaría ver el resto.`)
 
@@ -101,9 +114,26 @@ export default async function ProspectReport({ params }: Props) {
     <div className="container-x pt-36 pb-28 md:pt-44">
       <OpenBeacon token={token} />
 
-      <header className="max-w-3xl">
+      <header className={logo ? 'max-w-5xl' : 'max-w-3xl'}>
         <p className="eyebrow">Informe para {report.company}</p>
-        <h1 className="h-display mt-6 text-[clamp(2.25rem,1.5rem+3vw,4.25rem)] text-ink">{report.headline}</h1>
+        {logo ? (
+          <div className="mt-6 flex flex-col gap-6 sm:flex-row sm:items-center sm:gap-10">
+            {/* On white, so any logo reads well in light and dark mode. */}
+            <div className="flex h-24 w-44 shrink-0 items-center justify-center border border-line bg-white p-4 sm:h-32 sm:w-56">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={logo.url}
+                alt={`Logo de ${report.company}`}
+                width={logo.width ?? undefined}
+                height={logo.height ?? undefined}
+                className="max-h-full max-w-full object-contain"
+              />
+            </div>
+            <h1 className="h-display text-[clamp(2.25rem,1.5rem+3vw,4.25rem)] text-ink">{report.headline}</h1>
+          </div>
+        ) : (
+          <h1 className="h-display mt-6 text-[clamp(2.25rem,1.5rem+3vw,4.25rem)] text-ink">{report.headline}</h1>
+        )}
         {report.intro && <p className="mt-6 max-w-2xl text-lg leading-relaxed text-ink-soft">{report.intro}</p>}
       </header>
 
@@ -161,32 +191,44 @@ export default async function ProspectReport({ params }: Props) {
                   </thead>
                   <tbody>
                     {rows.map((r, i) => (
-                      <tr key={i} className={`border-b border-line ${r.self ? 'font-semibold text-ink' : 'text-ink-soft'}`}>
-                        <td className="py-3 pr-4">
-                          {r.self ? (
-                            report.company
-                          ) : r.place?.mapsUrl ? (
-                            <a href={r.place.mapsUrl} target="_blank" rel="noopener nofollow" className="underline">
-                              {r.place.name}
-                            </a>
-                          ) : (
-                            r.place?.name
-                          )}
-                        </td>
-                        <td className="py-3 pr-4 font-mono">{r.position || '—'}</td>
-                        <td className="py-3 pr-4 font-mono">{r.place?.rating ?? '—'}</td>
-                        <td className="py-3 pr-4 font-mono">{r.place?.reviews ?? '—'}</td>
-                        <td className="py-3 pr-4">{siteText(r.website)}</td>
-                        <td className="py-3 pr-4">{r.website === 'own' ? yesNo(r.booking) : 'No'}</td>
-                        <td className="py-3 font-mono">{r.pageSpeed === null ? '—' : `${r.pageSpeed}/100`}</td>
-                      </tr>
+                      <Fragment key={i}>
+                        {/* Positions skipped between the leaders and the client, so the distance shows. */}
+                        {r.self && i > 0 && r.position > rows[i - 1].position + 1 && (
+                          <tr className="border-b border-line text-ink-soft" aria-hidden>
+                            <td colSpan={7} className="py-2 text-center font-mono text-sm tracking-[0.3em]">
+                              ···
+                            </td>
+                          </tr>
+                        )}
+                        <tr className={`border-b border-line ${r.self ? 'bg-bg-elev font-semibold text-ink' : 'text-ink-soft'}`}>
+                          <td className="py-3 pr-4">
+                            {r.self ? (
+                              <>
+                                {report.company} <span className="text-sm font-normal text-ink-soft">(tu negocio)</span>
+                              </>
+                            ) : r.place?.mapsUrl ? (
+                              <a href={r.place.mapsUrl} target="_blank" rel="noopener nofollow" className="underline">
+                                {r.place.name}
+                              </a>
+                            ) : (
+                              r.place?.name
+                            )}
+                          </td>
+                          <td className="py-3 pr-4 font-mono">{r.position || '—'}</td>
+                          <td className="py-3 pr-4 font-mono">{r.place?.rating ?? '—'}</td>
+                          <td className="py-3 pr-4 font-mono">{r.place?.reviews ?? '—'}</td>
+                          <td className="py-3 pr-4">{siteText(r.website)}</td>
+                          <td className="py-3 pr-4">{r.website === 'own' ? yesNo(r.booking) : 'No'}</td>
+                          <td className="py-3 font-mono">{r.pageSpeed === null ? '—' : `${r.pageSpeed}/100`}</td>
+                        </tr>
+                      </Fragment>
                     ))}
                   </tbody>
                 </table>
               </div>
               <p className="mt-4 text-sm text-ink-soft">
-                Calificación y reseñas: Google Maps, consultado el {dateText(new Date())}. Puesto en la búsqueda de Google Maps, sitio,
-                turnos online y velocidad (Google PageSpeed): revisión de Exacta del {dateText(report.date)}.
+                Calificación y reseñas: Google Maps, consultado el {dateText(new Date())}. Puesto en la búsqueda de Google Maps,
+                sitio, turnos online y velocidad (Google PageSpeed): revisión de Exacta del {dateText(report.date)}.
               </p>
             </>
           )}
@@ -219,7 +261,9 @@ export default async function ProspectReport({ params }: Props) {
         {report.costFormula && (
           <div>
             <h2 className="font-display text-2xl font-semibold tracking-[-0.02em] text-ink">Cuánto te cuesta hoy</h2>
-            <p className="mt-4 text-ink-soft">No ponemos una cifra que no conocemos. Esta cuenta la podés hacer con tus números:</p>
+            <p className="mt-4 text-ink-soft">
+              No ponemos una cifra que no conocemos. Esta cuenta la podés hacer con tus números:
+            </p>
             <p className="mt-5 border-l-2 border-gold pl-5 text-lg leading-relaxed text-ink">{report.costFormula}</p>
           </div>
         )}
@@ -249,13 +293,17 @@ export default async function ProspectReport({ params }: Props) {
         </section>
       )}
 
-      <section data-theme="dark" className="mt-20 border border-line bg-bg-elev px-6 py-12 text-ink sm:px-10 md:mt-28 md:py-16" aria-labelledby="cta-title">
+      <section
+        data-theme="dark"
+        className="mt-20 border border-line bg-bg-elev px-6 py-12 text-ink sm:px-10 md:mt-28 md:py-16"
+        aria-labelledby="cta-title"
+      >
         <h2 id="cta-title" className="h-section text-ink">
           Hay más para mostrarte
         </h2>
         <p className="mt-5 max-w-2xl text-lg leading-relaxed text-ink-soft">
-          Esto es lo que se ve desde afuera. En 20 minutos te mostramos el resto de lo que encontramos y qué haríamos primero en tu
-          caso, sin compromiso.
+          Esto es lo que se ve desde afuera. En 20 minutos te mostramos el resto de lo que encontramos y qué haríamos primero en
+          tu caso, sin compromiso.
         </p>
         <div className="mt-9 flex flex-wrap gap-3">
           {settings.bookingUrl && (
@@ -264,7 +312,12 @@ export default async function ProspectReport({ params }: Props) {
               <ArrowRight className="btn-arrow size-4" />
             </a>
           )}
-          <a href={whatsapp} target="_blank" rel="noopener" className={`btn ${settings.bookingUrl ? 'btn-ghost' : 'btn-primary'}`}>
+          <a
+            href={whatsapp}
+            target="_blank"
+            rel="noopener"
+            className={`btn ${settings.bookingUrl ? 'btn-ghost' : 'btn-primary'}`}
+          >
             <WhatsApp className="size-4" />
             Escribinos por WhatsApp
           </a>

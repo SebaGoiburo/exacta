@@ -8,7 +8,11 @@ import styles from './generator.module.css'
 
 type Finding = ReportContent['findings'][number]
 
-const SOURCE_NAMES: Record<string, string> = { google_maps: 'Google Maps', sitio: 'Su sitio web', pagespeed: 'Google PageSpeed' }
+const SOURCE_NAMES: Record<string, string> = {
+  google_maps: 'Google Maps',
+  sitio: 'Su sitio web',
+  pagespeed: 'Google PageSpeed',
+}
 
 /** The first message: one concrete finding and the report as the reason to talk. Always sent by a person. */
 function firstMessage(p: GeneratedProspect, report: ReportContent, link: string) {
@@ -23,6 +27,10 @@ function firstMessage(p: GeneratedProspect, report: ReportContent, link: string)
     .filter(Boolean)
     .join('\n\n')
 }
+
+/** SVG is left out on purpose: served from our own domain it could carry a script. */
+const LOGO_TYPES = ['image/png', 'image/jpeg', 'image/webp']
+const LOGO_MAX_BYTES = 2 * 1024 * 1024
 
 export function ReportEditor({ prospect, onSaved }: { prospect: GeneratedProspect; onSaved: () => void }) {
   const [report, setReport] = useState<ReportContent | null>(prospect.report ?? null)
@@ -57,33 +65,109 @@ export function ReportEditor({ prospect, onSaved }: { prospect: GeneratedProspec
 
   const draft = () =>
     run(async () => {
-      const data = await generator<{ report: ReportContent }>({ action: 'report-draft', prospectId: prospect.id })
+      const data = await generator<{ report: ReportContent }>({
+        action: 'report-draft',
+        prospectId: prospect.id,
+      })
       setReport(data.report)
     })
 
   // Only the comparison table changes: whatever was written in the report stays as it is on screen.
   const findCompetitors = () =>
     run(async () => {
-      const data = await generator<{ report: ReportContent }>({ action: 'report-competitors', prospectId: prospect.id })
-      setReport((r) => (r ? { ...r, self: data.report.self, competitors: data.report.competitors } : data.report))
+      const data = await generator<{ report: ReportContent }>({
+        action: 'report-competitors',
+        prospectId: prospect.id,
+      })
+      setReport((r) =>
+        r
+          ? {
+              ...r,
+              self: data.report.self,
+              competitors: data.report.competitors,
+            }
+          : data.report,
+      )
     }, 'Competidores agregados. Ya se ven en el informe.')
 
-  const save = () => run(async () => void (await generator({ action: 'report-save', prospectId: prospect.id, report })), 'Cambios guardados.')
+  // The logo is saved right away, together with whatever was being edited, so it can't be lost by not saving.
+  const saveWithLogo = async (logo: ReportContent['logo']) => {
+    if (!report) return
+    const data = await generator<{ report: ReportContent }>({
+      action: 'report-save',
+      prospectId: prospect.id,
+      report: { ...report, logo },
+    })
+    setReport((r) => (r ? { ...r, logo: data.report.logo ?? null } : data.report))
+    if (logo && !data.report.logo) throw new Error('El logo no se pudo usar. Subilo en PNG, JPG o WEBP.')
+  }
+
+  const uploadLogo = (file: File) => {
+    if (!LOGO_TYPES.includes(file.type)) return setMessage('Subí el logo en PNG, JPG o WEBP.')
+    if (file.size > LOGO_MAX_BYTES) return setMessage('El logo pesa más de 2 MB. Probá con uno más liviano.')
+    void run(async () => {
+      const form = new FormData()
+      form.append('file', file)
+      form.append('_payload', JSON.stringify({ alt: `Logo de ${report?.company ?? 'la empresa'}` }))
+      const res = await fetch('/api/media', {
+        method: 'POST',
+        credentials: 'include',
+        body: form,
+      })
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok || !data?.doc?.id) throw new Error('No se pudo subir el logo. Probá de nuevo.')
+      await saveWithLogo({ id: data.doc.id, url: data.doc.url })
+    }, 'Logo guardado. Ya se ve en el informe.')
+  }
+
+  const removeLogo = () => run(() => saveWithLogo(null), 'Logo quitado del informe.')
+
+  const save = () =>
+    run(
+      async () =>
+        void (await generator({
+          action: 'report-save',
+          prospectId: prospect.id,
+          report,
+        })),
+      'Cambios guardados.',
+    )
 
   const approve = () => {
     if (!report?.note && !window.confirm('El informe no tiene tu observación propia. ¿Lo aprobás igual?')) return
     void run(async () => {
-      await generator({ action: 'report-save', prospectId: prospect.id, report })
+      await generator({
+        action: 'report-save',
+        prospectId: prospect.id,
+        report,
+      })
       await generator({ action: 'report-approve', prospectId: prospect.id })
     }, 'Informe aprobado. Ya tiene su enlace.')
   }
 
   const sent = () =>
-    run(async () => void (await generator({ action: 'attempt', prospectId: prospect.id, channel, result: 'enviado' })), 'Envío registrado. Aparece en Llamadas de hoy cuando toque el seguimiento.')
+    run(
+      async () =>
+        void (await generator({
+          action: 'attempt',
+          prospectId: prospect.id,
+          channel,
+          result: 'enviado',
+        })),
+      'Envío registrado. Aparece en Llamadas de hoy cuando toque el seguimiento.',
+    )
 
-  const set = <K extends keyof ReportContent>(key: K, value: ReportContent[K]) => setReport((r) => (r ? { ...r, [key]: value } : r))
+  const set = <K extends keyof ReportContent>(key: K, value: ReportContent[K]) =>
+    setReport((r) => (r ? { ...r, [key]: value } : r))
   const setFinding = (i: number, key: keyof Finding, value: string) =>
-    setReport((r) => (r ? { ...r, findings: r.findings.map((f, k) => (k === i ? { ...f, [key]: value } : f)) } : r))
+    setReport((r) =>
+      r
+        ? {
+            ...r,
+            findings: r.findings.map((f, k) => (k === i ? { ...f, [key]: value } : f)),
+          }
+        : r,
+    )
 
   if (!report) {
     return (
@@ -115,6 +199,32 @@ export function ReportEditor({ prospect, onSaved }: { prospect: GeneratedProspec
           <input value={report.headline} onChange={(e) => set('headline', e.target.value)} />
         </label>
       </div>
+      <div className={styles.logoField}>
+        <strong>Logo del cliente</strong>
+        {report.logo ? (
+          <div className={styles.logoRow}>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={report.logo.url} alt={`Logo de ${report.company}`} className={styles.logoPreview} />
+            <button type="button" disabled={busy} onClick={() => void removeLogo()}>
+              Quitar logo
+            </button>
+          </div>
+        ) : (
+          <span className={styles.muted}>Se muestra junto al título del informe. PNG, JPG o WEBP, hasta 2 MB.</span>
+        )}
+        <input
+          type="file"
+          accept={LOGO_TYPES.join(',')}
+          disabled={busy}
+          aria-label={report.logo ? 'Cambiar el logo' : 'Subir el logo'}
+          onChange={(e) => {
+            const file = e.target.files?.[0]
+            e.target.value = ''
+            if (file) uploadLogo(file)
+          }}
+        />
+      </div>
+
       <label className={styles.field}>
         Introducción
         <textarea rows={3} value={report.intro} onChange={(e) => set('intro', e.target.value)} />
@@ -164,7 +274,12 @@ export function ReportEditor({ prospect, onSaved }: { prospect: GeneratedProspec
                 <button
                   type="button"
                   disabled={busy}
-                  onClick={() => set('competitors', (report.competitors ?? []).filter((x) => x.placeId !== c.placeId))}
+                  onClick={() =>
+                    set(
+                      'competitors',
+                      (report.competitors ?? []).filter((x) => x.placeId !== c.placeId),
+                    )
+                  }
                 >
                   Quitar
                 </button>

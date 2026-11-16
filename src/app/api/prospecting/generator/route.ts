@@ -13,6 +13,7 @@ import {
   ensureDefaultProfiles,
   proposeProfile,
   recordAttempt,
+  reportLogo,
   runBatch,
   selfRow,
   startBatch,
@@ -204,8 +205,12 @@ export async function POST(req: Request) {
         const findings = Array.isArray(input.findings) ? input.findings.slice(0, 5) : current.findings
         // Competitors can be removed from the report, never added or changed by hand.
         const keep = Array.isArray(input.competitors) ? new Set(input.competitors.map((c) => c?.placeId)) : null
+        // The logo is looked up again by its ID: null removes it, missing keeps the one it had.
+        const logo =
+          input.logo === null ? null : input.logo?.id !== undefined ? await reportLogo(payload, input.logo.id) : (current.logo ?? null)
         const report: ReportContent = {
           ...current,
+          logo,
           competitors: (current.competitors ?? []).filter((c) => !keep || keep.has(c.placeId)),
           company: clean(input.company, 160) || current.company,
           headline: clean(input.headline, 200) || current.headline,

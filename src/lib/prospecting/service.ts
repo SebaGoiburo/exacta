@@ -676,8 +676,27 @@ export async function competitorsFor(prospect: Prospect, zone: string): Promise<
   }
 }
 
+/** The client's logo, from the media library. Only the team uploads it, from the report editor. */
+export type ReportLogo = { id: number; url: string; width?: number | null; height?: number | null }
+
+/** Only raster images: an SVG served from our own domain could carry a script. */
+const LOGO_TYPES = ['image/png', 'image/jpeg', 'image/webp']
+
+/** Reads the logo from the media library, so the report never stores an address someone typed. */
+export async function reportLogo(payload: Payload, id: unknown): Promise<ReportLogo | null> {
+  const logoId = Number(id)
+  if (!Number.isInteger(logoId) || logoId <= 0) return null
+  const media = await payload.findByID({ collection: 'media', id: logoId, depth: 0, overrideAccess: true }).catch(() => null)
+  if (!media?.url || !LOGO_TYPES.includes(media.mimeType ?? '')) return null
+  const card = media.sizes?.card
+  return card?.url
+    ? { id: media.id, url: card.url, width: card.width, height: card.height }
+    : { id: media.id, url: media.url, width: media.width, height: media.height }
+}
+
 export type ReportContent = {
   company: string
+  logo?: ReportLogo | null
   /** The prospect's own row in the comparison, from what we measured. */
   self?: Omit<Competitor, 'placeId'> & { placeId: string }
   competitors?: Competitor[]
