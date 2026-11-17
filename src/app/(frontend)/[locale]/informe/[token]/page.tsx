@@ -431,11 +431,12 @@ export default async function ProspectReport({ params }: Props) {
               <p className="mb-4 inline-block bg-accent px-3 py-1.5 font-mono text-xs font-semibold tracking-[0.08em] text-accent-ink uppercase">
                 Calculá vos si conviene invertir en esto
               </p>
-              <h2 className={H2}>Cuánto te cuesta hoy</h2>
+              <h2 className={H2}>{calculator?.title ?? 'Cuánto te cuesta hoy'}</h2>
               {calculator ? (
                 <>
-                  <p className="mt-4 max-w-2xl text-ink-soft">
-                    No ponemos una cifra que no conocemos: completala con tus números.
+                  <p className="mt-4 max-w-2xl text-lg leading-relaxed text-ink">{calculator.purpose}</p>
+                  <p className="mt-2 max-w-2xl text-sm text-ink-soft">
+                    Los valores los ponés vos: no inventamos cifras que no conocemos.
                   </p>
                   <CostCalculator calculator={calculator} formula={report.costFormula} price={calculatorPrice} />
                 </>

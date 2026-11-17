@@ -12,6 +12,10 @@ export type CalculatorInput = {
 }
 
 export type Calculator = {
+  /** The section's title, so the reader knows at once what it calculates. */
+  title: string
+  /** One plain sentence on what to put in and what comes out. */
+  purpose: string
   inputs: CalculatorInput[]
   /** Monthly loss: the sum of each term's inputs multiplied together, times its factor. */
   terms: { keys: string[]; factor: number }[]
@@ -23,6 +27,9 @@ const WEEKS_PER_MONTH = 4.3
 
 const CALCULATORS: Record<string, Calculator> = {
   'turnos-online': {
+    title: 'Calculadora de costos por inasistencias',
+    purpose:
+      'Poné cuántos turnos se pierden por semana y cuánto vale una consulta: te mostramos cuánta plata se va por mes y si la solución se paga sola.',
     inputs: [
       { key: 'turnos', label: 'Turnos por semana que se cancelan sobre la hora o quedan vacíos', example: 3 },
       { key: 'consulta', label: 'Valor de una consulta', money: true },
@@ -36,6 +43,9 @@ const CALCULATORS: Record<string, Calculator> = {
     unit: { key: 'consulta', singular: 'una consulta', plural: 'consultas' },
   },
   'sitio-web': {
+    title: 'Calculadora de consultas perdidas',
+    purpose:
+      'Poné cuántas consultas creés que hoy no te llegan y cuánto deja un cliente: te mostramos cuánta plata se pierde por mes y si la solución se paga sola.',
     inputs: [
       { key: 'consultas', label: 'Consultas por mes que hoy no te llegan', example: 10 },
       { key: 'cierre', label: 'De cada 10 consultas, cuántas se vuelven clientes', example: 3 },
