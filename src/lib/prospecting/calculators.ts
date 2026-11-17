@@ -31,7 +31,7 @@ const CALCULATORS: Record<string, Calculator> = {
   'turnos-online': {
     title: 'Calculadora de costos por inasistencias',
     purpose:
-      'Poné cuántos turnos se pierden por semana y cuánto vale una consulta: te mostramos cuánta plata se va por mes y si la solución se paga sola.',
+      'Poné cuántos turnos se pierden por semana y cuánto vale un turno: te mostramos cuánta plata se va por mes y si la solución se paga sola.',
     inputs: [
       { key: 'turnos', label: 'Turnos por semana que se cancelan sobre la hora o quedan vacíos', example: 3 },
       { key: 'consulta', label: 'Valor de un turno', money: true, example: 18000 },
