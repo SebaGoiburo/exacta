@@ -23,6 +23,8 @@ export type Profile = {
   signals?: { key: string; label: string; weight: number; area: string }[] | null
   proof?: string | null
   costFormula?: string | null
+  benefits?: string | null
+  proofResult?: string | null
 }
 
 export type Batch = {

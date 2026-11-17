@@ -78,8 +78,12 @@ function cleanOffer(input: Partial<ReportOffer>): ReportOffer | null {
     .slice(0, OFFER_LIMITS.services)
   if (!services.length) return null
   return {
-    title: clean(input.title, OFFER_LIMITS.title) || 'Lo que te proponemos',
+    title: clean(input.title, OFFER_LIMITS.title) || 'Cómo lo resolvemos',
     intro: clean(input.intro, OFFER_LIMITS.intro),
+    benefits: (Array.isArray(input.benefits) ? input.benefits : [])
+      .map((b) => clean(b, OFFER_LIMITS.benefit))
+      .filter(Boolean)
+      .slice(0, OFFER_LIMITS.benefits),
     services,
   }
 }
@@ -312,6 +316,14 @@ export async function POST(req: Request) {
             impact: clean(f.impact, 1000),
             source: clean(f.source, 500),
           })),
+          audience: clean(input.audience, 30).toLowerCase() || current.audience || 'clientes',
+          summary: Array.isArray(input.summary)
+            ? input.summary.map((line) => clean(line, 300)).filter(Boolean).slice(0, 3)
+            : (current.summary ?? []),
+          summaryClose: typeof input.summaryClose === 'string' ? clean(input.summaryClose, 200) : current.summaryClose,
+          calcExample:
+            input.calcExample === null ? null : input.calcExample !== undefined ? amountOf(input.calcExample) || null : current.calcExample,
+          proofResult: typeof input.proofResult === 'string' ? clean(input.proofResult, 160) : current.proofResult,
           comparison: clean(input.comparison, 1500),
           costFormula: clean(input.costFormula, 1000),
           question: clean(input.question, 500),

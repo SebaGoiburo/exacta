@@ -11,7 +11,7 @@ import { sendToN8n } from '@/lib/n8n'
 import { placeContact, placeForResearch, searchPlacesForBatch, type ScoredPlace } from '@/lib/places'
 import { getSettings } from '@/lib/settings'
 import { site } from '@/lib/site'
-import { BLOCK_DAYS, DEFAULT_PROFILES, type Knockout, type ProfileSignal, type Scores } from './model'
+import { BLOCK_DAYS, DEFAULT_PROFILES, PROFILE_EXTRAS, type Knockout, type ProfileSignal, type Scores } from './model'
 import { findingsForScore, parseProfile, parseResearch, profileRequest, researchRequest, type Research } from './research'
 import { recordUsage } from '../ai-usage'
 import { rescoreWithAi, scoreCandidate, type BatchContext, type Candidate, type Flags, type ProfileForScoring, type SiteFacts } from './scoring'
@@ -46,6 +46,16 @@ const inDays = (days: number) => new Date(Date.now() + days * DAY).toISOString()
 export async function ensureDefaultProfiles(payload: Payload) {
   const { docs } = await payload.find({ collection: 'offer-profiles', limit: 200, depth: 0, overrideAccess: true, pagination: false })
   const byKey = new Map(docs.map((d) => [d.key, d.id]))
+  for (const doc of docs) {
+    const extras = PROFILE_EXTRAS[doc.key]
+    if (!extras || doc.benefits) continue
+    await payload.update({
+      collection: 'offer-profiles',
+      id: doc.id,
+      overrideAccess: true,
+      data: { benefits: extras.benefits, proofResult: doc.proofResult || extras.proofResult || '' },
+    })
+  }
   for (const draft of DEFAULT_PROFILES) {
     if (byKey.has(draft.key)) continue
     const created = await payload.create({
@@ -63,6 +73,8 @@ export async function ensureDefaultProfiles(payload: Payload) {
         signals: draft.signals,
         proof: draft.proof,
         costFormula: draft.costFormula,
+        benefits: PROFILE_EXTRAS[draft.key]?.benefits ?? '',
+        proofResult: PROFILE_EXTRAS[draft.key]?.proofResult ?? '',
       },
     })
     byKey.set(draft.key, created.id)
@@ -790,19 +802,36 @@ export type OfferService = { name: string; description: string; when?: string; p
 export type ReportOffer = {
   title: string
   intro: string
+  /** What changes for the client, in plain words. Shown before what the services include. */
+  benefits?: string[]
   services: OfferService[]
 }
 
-export const OFFER_LIMITS = { title: 120, intro: 1000, name: 120, description: 600, when: 80, services: 5 }
+export const OFFER_LIMITS = { title: 120, intro: 1000, name: 120, description: 600, when: 80, services: 5, benefit: 200, benefits: 6 }
+
+/** One benefit per line, as the offer profile keeps them. */
+export const benefitLines = (text?: string | null) =>
+  (text ?? '')
+    .split('\n')
+    .map((l) => l.trim())
+    .filter(Boolean)
+    .slice(0, OFFER_LIMITS.benefits)
 
 /** The offer as the draft proposes it, from the batch's offer profile. */
-export function defaultOffer(company: string, profile: Pick<OfferProfile, 'name' | 'description'>): ReportOffer {
+export function defaultOffer(
+  company: string,
+  profile: Pick<OfferProfile, 'name' | 'description'> & { benefits?: string | null },
+): ReportOffer {
   return {
-    title: 'Lo que te proponemos',
-    intro: `Con lo que vimos, esto es lo que haríamos para ${company}:`,
+    title: 'Cómo lo resolvemos',
+    intro: `Esto es lo que haríamos para ${company}.`,
+    benefits: benefitLines(profile.benefits),
     services: [{ name: profile.name, description: profile.description ?? '' }],
   }
 }
+
+/** The closing line of the 30-second summary, unless the team writes another. */
+export const SUMMARY_CLOSE = 'Las tres cosas tienen arreglo: abajo te contamos cómo.'
 
 export type ReportContent = {
   company: string
@@ -817,6 +846,15 @@ export type ReportContent = {
   competitors?: Competitor[]
   headline: string
   intro: string
+  /** How this business calls its clients: pacientes, clientes, alumnos… */
+  audience?: string
+  /** "En 30 segundos": the three things to know, for whoever reads only this. */
+  summary?: string[]
+  summaryClose?: string
+  /** The example the cost calculator starts with (the value of one appointment, sale…). Always shown as an example. */
+  calcExample?: number | null
+  /** The proof's result in one line, shown large: "De 3 horas a 20 minutos de trabajo administrativo". */
+  proofResult?: string
   findings: { title: string; detail: string; impact: string; source: string }[]
   comparison: string
   costFormula: string
@@ -842,12 +880,6 @@ export function selfRow(prospect: Prospect): NonNullable<ReportContent['self']> 
 /** Offers where the digital maturity scores tell the reader something; for the rest they're noise. */
 const AREAS_OFFERS = ['software-a-medida', 'agentes-ia', 'embudo-automatizado']
 
-/** Where the reader stands: whether they have a site changes what we can say we looked at. */
-function draftIntro(prospect: Prospect, facts: Facts | null) {
-  const niche = facts?.query ?? prospect.niche ?? 'negocios'
-  return `Lo que ve alguien que busca ${niche} en ${prospect.zone ?? 'tu zona'} antes de elegirte, y cómo quedás frente a los primeros.`
-}
-
 export function draftReport(
   prospect: Prospect,
   profile: OfferProfile,
@@ -857,16 +889,22 @@ export function draftReport(
 ): ReportContent {
   const research = prospect.research as unknown as Research | null
   const facts = prospect.facts as unknown as Facts | null
+  const audience = research?.audience || 'clientes'
+  const findings = research?.findings ?? []
   return {
     company,
     self: selfRow(prospect),
     competitors,
     offer: defaultOffer(company, profile),
+    audience,
+    summary: research?.quickSummary?.length ? research.quickSummary : findings.map((f) => f.title),
+    summaryClose: SUMMARY_CLOSE,
+    proofResult: profile.proofResult ?? '',
     signer,
     showAreas: AREAS_OFFERS.includes(profile.key),
     headline: research?.headline || `Lo que vimos de ${company} desde afuera`,
-    intro: draftIntro(prospect, facts),
-    findings: research?.findings ?? [],
+    intro: `Analizamos gratis cómo te encuentran tus ${audience} en internet. Esto es lo que vimos.`,
+    findings,
     comparison: research?.comparison ?? '',
     costFormula: profile.costFormula ?? '',
     question: research?.openQuestion ?? '',

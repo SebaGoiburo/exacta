@@ -225,3 +225,62 @@ export const DEFAULT_PROFILES: ProfileDraft[] = [
 export const BASE_WEIGHTS = w(20, 30, 15, 10, 15, 10)
 
 export const isAutoSignal = (key: string): key is AutoSignal => key in AUTO_SIGNALS
+
+/**
+ * What each offer changes for the client, in words anyone understands (one per line), and the one result
+ * of our proof worth showing large. The report's proposal starts from these; the team can edit them.
+ */
+export const PROFILE_EXTRAS: Record<string, { benefits: string; proofResult?: string }> = {
+  'sitio-web': {
+    benefits: [
+      'Cuando te buscan en Google, aparecés con una página propia y clara.',
+      'Quien entra entiende en segundos qué hacés y cómo contactarte.',
+      'Las consultas te llegan directo a tu WhatsApp o a tu email.',
+      'Se ve bien y abre rápido en el celular, que es desde donde te buscan.',
+    ].join('\n'),
+  },
+  'turnos-online': {
+    benefits: [
+      'Tus pacientes sacan turno solos, a cualquier hora, desde el celular.',
+      'Un día antes les llega un recordatorio por WhatsApp: faltan menos, y los que no pueden ir avisan a tiempo.',
+      'Cuando te buscan en Google, aparecés con una página propia.',
+      'Recepción deja de pasar horas dando, confirmando y moviendo turnos.',
+    ].join('\n'),
+    proofResult: 'De 3 horas a 20 minutos de trabajo administrativo',
+  },
+  ecommerce: {
+    benefits: [
+      'Vendés las 24 horas, aunque no estés atendiendo.',
+      'El stock se descuenta solo y cobrás con tarjeta o transferencia.',
+      'Los envíos se calculan y se avisan sin hacer nada a mano.',
+    ].join('\n'),
+  },
+  'publicidad-digital': {
+    benefits: [
+      'Tus anuncios le aparecen a gente de tu zona que busca lo que vendés.',
+      'Sabés cuántas consultas trae cada peso que invertís.',
+      'Se ajusta cada mes según los resultados, no a ciegas.',
+    ].join('\n'),
+  },
+  'embudo-automatizado': {
+    benefits: [
+      'Ninguna consulta queda sin respuesta, aunque llegue de noche.',
+      'El seguimiento por WhatsApp y email sale solo, en el momento justo.',
+      'Ves en un solo lugar a cada cliente y en qué punto está.',
+    ].join('\n'),
+  },
+  'agentes-ia': {
+    benefits: [
+      'Tus clientes reciben respuesta al instante, a cualquier hora.',
+      'Las preguntas de siempre se responden solas; las importantes pasan a una persona.',
+      'Tu equipo deja de contestar lo mismo todo el día.',
+    ].join('\n'),
+  },
+  'software-a-medida': {
+    benefits: [
+      'Tus sistemas se hablan entre sí: se termina el copiar y pegar.',
+      'La información que necesitás está en un solo lugar y al día.',
+      'Las tareas repetitivas se hacen solas.',
+    ].join('\n'),
+  },
+}

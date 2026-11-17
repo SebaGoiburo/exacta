@@ -343,8 +343,12 @@ export function ReportEditor({ prospect, profiles, profileId, team, terms, onSav
   const startingOffer = (company: string): Offer => {
     const own = profiles.find((p) => p.id === profileId)
     return {
-      title: 'Lo que te proponemos',
-      intro: `Con lo que vimos, esto es lo que haríamos para ${company}:`,
+      title: 'Cómo lo resolvemos',
+      intro: `Esto es lo que haríamos para ${company}.`,
+      benefits: (own?.benefits ?? '')
+        .split('\n')
+        .map((l) => l.trim())
+        .filter(Boolean),
       services: own ? [{ name: own.name, description: own.description }] : [{ name: '', description: '' }],
     }
   }
@@ -415,9 +419,47 @@ export function ReportEditor({ prospect, profiles, profileId, team, terms, onSav
       </div>
 
       <label className={styles.field}>
-        Introducción
-        <textarea rows={3} value={report.intro} onChange={(e) => set('intro', e.target.value)} />
+        Bajada (debajo del título: quiénes somos y por qué recibe esto)
+        <textarea rows={2} value={report.intro} onChange={(e) => set('intro', e.target.value)} />
       </label>
+      <label className={styles.field}>
+        Cómo llama este negocio a sus clientes
+        <input
+          value={report.audience ?? ''}
+          placeholder="pacientes, clientes, alumnos…"
+          maxLength={30}
+          onChange={(e) => set('audience', e.target.value)}
+          style={{ maxWidth: 260 }}
+        />
+      </label>
+
+      <div className={styles.finding}>
+        <strong>En 30 segundos (para quien lee solo esto)</strong>
+        {[0, 1, 2].map((i) => (
+          <label key={i} className={styles.field}>
+            Frase {i + 1}
+            <input
+              value={report.summary?.[i] ?? ''}
+              maxLength={300}
+              onChange={(e) => {
+                const next = [...(report.summary ?? []), '', '', ''].slice(0, 3)
+                next[i] = e.target.value
+                set('summary', next)
+              }}
+            />
+          </label>
+        ))}
+        <label className={styles.field}>
+          Cierre
+          <input
+            value={report.summaryClose ?? ''}
+            placeholder="Las tres cosas tienen arreglo: abajo te contamos cómo."
+            maxLength={200}
+            onChange={(e) => set('summaryClose', e.target.value)}
+          />
+        </label>
+        <span className={styles.muted}>Palabras de todos los días: quien lo lee no sabe de tecnología.</span>
+      </div>
 
       {report.findings.map((f, i) => (
         <div key={i} className={styles.finding}>
@@ -515,13 +557,29 @@ export function ReportEditor({ prospect, profiles, profileId, team, terms, onSav
           <textarea rows={3} value={report.costFormula} onChange={(e) => set('costFormula', e.target.value)} />
         </label>
         <label className={styles.field}>
-          Pregunta abierta
-          <textarea rows={3} value={report.question} onChange={(e) => set('question', e.target.value)} />
+          Valor de ejemplo en la calculadora ($)
+          <input
+            inputMode="numeric"
+            value={report.calcExample ? report.calcExample.toLocaleString('es-AR') : ''}
+            placeholder="18.000 (el de siempre)"
+            onChange={(e) => set('calcExample', Number(e.target.value.replace(/\D/g, '')) || null)}
+          />
+          <span className={styles.muted} style={{ fontWeight: 400 }}>
+            El valor de un turno o de un cliente con el que arranca la calculadora. Se muestra como ejemplo.
+          </span>
         </label>
       </div>
       <label className={styles.field}>
-        Tu observación propia (lo que viste vos en 10 minutos)
+        Tu nota (lo que viste vos en 10 minutos)
         <textarea rows={3} value={report.note} onChange={(e) => set('note', e.target.value)} />
+        {(() => {
+          const words = report.note.trim() ? report.note.trim().split(/\s+/).length : 0
+          return (
+            <span className={words > 40 ? base.error : styles.muted} style={{ fontWeight: 400 }}>
+              {words} palabras{words > 40 ? ': conviene que sean 40 o menos, la gente no lee textos largos.' : ''}
+            </span>
+          )
+        })()}
       </label>
 
       <div className={styles.offer}>
@@ -546,6 +604,14 @@ export function ReportEditor({ prospect, profiles, profileId, team, terms, onSav
                 />
               </label>
             </div>
+            <label className={styles.field}>
+              Qué cambia para el cliente (uno por línea, sin términos técnicos)
+              <textarea
+                rows={4}
+                value={(report.offer.benefits ?? []).join('\n')}
+                onChange={(e) => setOffer({ ...report.offer!, benefits: e.target.value.split('\n') })}
+              />
+            </label>
             {report.offer.services.map((s, i) => (
               <div key={i} className={styles.offerService}>
                 <label className={styles.field}>
@@ -621,7 +687,16 @@ export function ReportEditor({ prospect, profiles, profileId, team, terms, onSav
       </div>
 
       <label className={styles.field}>
-        Lo que ya hicimos (caso o producto)
+        Ya lo hicimos: resultado en una línea (se muestra grande)
+        <input
+          value={report.proofResult ?? ''}
+          maxLength={160}
+          placeholder="De 3 horas a 20 minutos de trabajo administrativo"
+          onChange={(e) => set('proofResult', e.target.value)}
+        />
+      </label>
+      <label className={styles.field}>
+        Ya lo hicimos: el caso
         <textarea rows={3} value={report.proof} onChange={(e) => set('proof', e.target.value)} />
       </label>
 

@@ -6,9 +6,11 @@
 export type CalculatorInput = {
   key: string
   label: string
-  /** Money fields start empty; counts start with a modest example the reader is invited to change. */
   money?: boolean
+  /** What the field starts with, always shown as an example for the reader to change. */
   example?: number
+  /** Left empty, its part of the sum counts as zero instead of holding back the result. */
+  optional?: boolean
 }
 
 export type Calculator = {
@@ -32,15 +34,15 @@ const CALCULATORS: Record<string, Calculator> = {
       'Poné cuántos turnos se pierden por semana y cuánto vale una consulta: te mostramos cuánta plata se va por mes y si la solución se paga sola.',
     inputs: [
       { key: 'turnos', label: 'Turnos por semana que se cancelan sobre la hora o quedan vacíos', example: 3 },
-      { key: 'consulta', label: 'Valor de una consulta', money: true },
+      { key: 'consulta', label: 'Valor de un turno', money: true, example: 18000 },
       { key: 'horas', label: 'Horas por semana dando, confirmando y moviendo turnos', example: 6 },
-      { key: 'hora', label: 'Valor de una hora de quien atiende los turnos', money: true },
+      { key: 'hora', label: 'Valor de una hora de quien atiende los turnos (opcional)', money: true, optional: true },
     ],
     terms: [
       { keys: ['turnos', 'consulta'], factor: WEEKS_PER_MONTH },
       { keys: ['horas', 'hora'], factor: WEEKS_PER_MONTH },
     ],
-    unit: { key: 'consulta', singular: 'una consulta', plural: 'consultas' },
+    unit: { key: 'consulta', singular: 'un turno', plural: 'turnos' },
   },
   'sitio-web': {
     title: 'Calculadora de consultas perdidas',

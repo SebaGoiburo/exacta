@@ -9,6 +9,7 @@ import * as migration_20261113_223222_whatsapp_meta_type from './20261113_223222
 import * as migration_20261116_144935_report_reading from './20261116_144935_report_reading';
 import * as migration_20261116_152621_batch_research_ai_usage from './20261116_152621_batch_research_ai_usage';
 import * as migration_20261116_180317_payment_terms from './20261116_180317_payment_terms';
+import * as migration_20261117_150524_offer_benefits from './20261117_150524_offer_benefits';
 
 export const migrations = [
   {
@@ -64,6 +65,11 @@ export const migrations = [
   {
     up: migration_20261116_180317_payment_terms.up,
     down: migration_20261116_180317_payment_terms.down,
-    name: '20261116_180317_payment_terms'
+    name: '20261116_180317_payment_terms',
+  },
+  {
+    up: migration_20261117_150524_offer_benefits.up,
+    down: migration_20261117_150524_offer_benefits.down,
+    name: '20261117_150524_offer_benefits'
   },
 ];

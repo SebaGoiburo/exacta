@@ -700,7 +700,15 @@ export interface OfferProfile {
         id?: string | null;
       }[]
     | null;
+  /**
+   * En palabras de cualquiera, sin términos técnicos. Es lo primero de la propuesta del informe.
+   */
+  benefits?: string | null;
   proof?: string | null;
+  /**
+   * Se muestra grande en el informe. Por ejemplo: "De 3 horas a 20 minutos de trabajo administrativo".
+   */
+  proofResult?: string | null;
   costFormula?: string | null;
   approvedBy?: (number | null) | User;
   approvedAt?: string | null;
@@ -1462,7 +1470,9 @@ export interface OfferProfilesSelect<T extends boolean = true> {
         area?: T;
         id?: T;
       };
+  benefits?: T;
   proof?: T;
+  proofResult?: T;
   costFormula?: T;
   approvedBy?: T;
   approvedAt?: T;
