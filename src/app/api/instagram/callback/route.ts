@@ -7,7 +7,11 @@ import { publicUrl } from '@/lib/leads'
 
 const sameState = (a: string, b: string) => a.length === b.length && timingSafeEqual(Buffer.from(a), Buffer.from(b))
 
-/** Meta sends the admin back here after they accept. The state cookie proves it's the same sign-in we started. */
+/**
+ * Meta sends the admin back here after they accept. Payload ignores its session cookie on a request that comes
+ * from another site (facebook.com), so the panel session can't be checked here. The state cookie is the proof
+ * instead: only /api/instagram/connect sets it, after checking the person is an admin, and it lasts 10 minutes.
+ */
 export async function GET(req: Request) {
   const params = new URL(req.url).searchParams
   const back = (result: string) => {
@@ -17,9 +21,6 @@ export async function GET(req: Request) {
   }
 
   const payload = await getPayload({ config })
-  const { user } = await payload.auth({ headers: req.headers })
-  if (user?.collection !== 'users' || (user as { role?: string }).role !== 'admin') return back('not_admin')
-
   const cookie = req.headers.get('cookie')?.match(new RegExp(`(?:^|;\\s*)${STATE_COOKIE}=([a-f0-9]+)`))?.[1] ?? ''
   const state = params.get('state') ?? ''
   if (!cookie || !sameState(cookie, state)) return back('expired')
