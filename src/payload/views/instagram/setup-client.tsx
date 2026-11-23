@@ -9,7 +9,8 @@ const RESULTS: Record<string, string> = {
   cancelled: 'Se canceló la conexión en Meta.',
   missing_permissions:
     'Meta no dio todos los permisos. La configuración tiene que incluir instagram_basic, instagram_manage_messages e instagram_manage_comments.',
-  no_accounts: 'No se eligió ninguna cuenta de Instagram. Volvé a conectar y marcá las dos cuentas cuando Meta lo pregunte.',
+  no_accounts:
+    'Meta conectó, pero no encontramos la cuenta de Instagram entre lo compartido. Si Meta te deja elegir activos, marcá la cuenta de Instagram de Exacta. Si vuelve a pasar, quedó registrado qué respondió Meta para revisarlo.',
   no_access:
     'Meta conectó, pero no deja leer las cuentas. Agregá el permiso business_management a la configuración y volvé a conectar.',
   exchange_failed: 'Meta no aceptó la conexión. Revisá que la URL de redireccionamiento esté registrada en la app.',

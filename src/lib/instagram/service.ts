@@ -111,11 +111,7 @@ export async function connectAccounts(payload: Payload, code: string) {
   if (!['instagram_basic', 'instagram_manage_messages', 'instagram_manage_comments'].every((s) => scopes.includes(s))) {
     throw new InstagramError('missing_permissions')
   }
-  const ids = [
-    ...new Set(
-      (debug.data?.granular_scopes ?? []).filter((g) => g.scope.startsWith('instagram_')).flatMap((g) => g.target_ids ?? []),
-    ),
-  ]
+  const ids = await findInstagramIds(token, debug.data)
   if (!ids.length) throw new InstagramError('no_accounts')
   const expiresAt = debug.data?.expires_at ? new Date(debug.data.expires_at * 1000).toISOString() : null
 
@@ -144,6 +140,58 @@ export async function connectAccounts(payload: Payload, code: string) {
   }
   if (!connected.length) throw new InstagramError('no_access')
   return connected
+}
+
+type Found = { id?: string; username?: string }
+
+/**
+ * The Instagram accounts the sign-in shared. Meta doesn't document where the Unified login lists them, so every
+ * known place is tried: the token's targets (accounts, Pages or business portfolios), the Pages, and the portfolios.
+ * What each place answered goes to the log, without the token, so a failed connection can be diagnosed.
+ */
+async function findInstagramIds(token: string, debug: DebugToken['data']) {
+  const found = new Set<string>()
+  const notes: string[] = []
+  const ask = async <T>(path: string, fields?: string): Promise<T | null> => {
+    try {
+      const data = await graph<T>(path, { token, query: fields ? { fields } : {} })
+      notes.push(`${path} -> ${JSON.stringify(data).slice(0, 300)}`)
+      return data
+    } catch (err) {
+      notes.push(`${path} -> ${err instanceof Error ? err.message : 'error'}`)
+      return null
+    }
+  }
+  const add = (items?: Found[] | null) => items?.forEach((a) => a?.id && a.username && found.add(a.id))
+
+  notes.push(`scopes ${JSON.stringify((debug?.granular_scopes ?? []).map((g) => [g.scope, g.target_ids ?? []]))}`)
+  const targets = [...new Set((debug?.granular_scopes ?? []).flatMap((g) => g.target_ids ?? []))]
+  for (const target of targets.slice(0, 10)) {
+    const node = await ask<Found & { instagram_business_account?: Found }>(
+      `/${target}`,
+      'id,username,instagram_business_account{id,username}',
+    )
+    add([node ?? {}, node?.instagram_business_account ?? {}])
+    if (!node?.username && !node?.instagram_business_account) {
+      add((await ask<{ data?: Found[] }>(`/${target}/instagram_business_accounts`, 'id,username'))?.data)
+      add((await ask<{ data?: Found[] }>(`/${target}/owned_instagram_accounts`, 'id,username'))?.data)
+    }
+  }
+  if (!found.size) {
+    await ask('/me', 'id,name')
+    const pages = await ask<{ data?: { instagram_business_account?: Found }[] }>(
+      '/me/accounts',
+      'instagram_business_account{id,username}',
+    )
+    add(pages?.data?.map((p) => p.instagram_business_account ?? {}))
+    const businesses = await ask<{ data?: { id: string }[] }>('/me/businesses', 'id,name')
+    for (const b of businesses?.data?.slice(0, 5) ?? []) {
+      add((await ask<{ data?: Found[] }>(`/${b.id}/instagram_business_accounts`, 'id,username'))?.data)
+      add((await ask<{ data?: Found[] }>(`/${b.id}/owned_instagram_accounts`, 'id,username'))?.data)
+    }
+  }
+  console.log(`[instagram] looking for accounts: ${notes.join(' | ')}`.slice(0, 6000))
+  return [...found]
 }
 
 /* ---------- Webhook ---------- */
