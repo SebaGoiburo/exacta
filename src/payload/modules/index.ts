@@ -13,6 +13,7 @@ import { OfferProfiles, ProspectBatches, ProspectJobs, Prospects } from './prosp
 import { ManagementTasks } from './management/collections'
 import { ContentJobs, ContentPieces, ContentTopics } from './content-engine/collections'
 import { Subscribers } from './newsletter/collections'
+import { InstagramAccounts, InstagramKeywords, InstagramReplies } from './instagram/collections'
 
 /**
  * Backend modules. Each business function the site serves is a module with its own
@@ -31,4 +32,5 @@ export const modules: BackendModule[] = [
   { name: 'management', collections: [ManagementTasks] },
   { name: 'content-engine', collections: [ContentTopics, ContentPieces, ContentJobs] },
   { name: 'newsletter', collections: [Subscribers] },
+  { name: 'instagram', collections: [InstagramKeywords, InstagramReplies, InstagramAccounts] },
 ]

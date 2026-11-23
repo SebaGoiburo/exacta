@@ -1,6 +1,6 @@
 import { revalidateTag } from 'next/cache'
 import type { GlobalConfig } from 'payload'
-import { isAdmin, isAuthenticated } from '../../access'
+import { isAdmin, isAdminField, isAuthenticated } from '../../access'
 import { cmsTag } from '../../hooks/revalidate'
 
 /** Marketing settings editable without a deploy. Empty IDs mean that tool stays off. */
@@ -110,6 +110,29 @@ export const Settings: GlobalConfig = {
           type: 'text',
           label: 'Plantilla aprobada en Meta para el aviso',
           defaultValue: 'aviso_derivacion',
+        },
+      ],
+    },
+    {
+      type: 'collapsible',
+      label: 'Respuestas automáticas de Instagram',
+      admin: {
+        description:
+          'Están en Meta for Developers → la app de Exacta → Instagram → "Configuración de la API con inicio de sesión para empresas".',
+      },
+      fields: [
+        {
+          type: 'row',
+          fields: [
+            { name: 'instagramAppId', type: 'text', label: 'Identificador de la app de Instagram', admin: { width: '50%' } },
+            {
+              name: 'instagramAppSecret',
+              type: 'text',
+              label: 'Clave secreta de la app de Instagram',
+              access: { read: isAdminField },
+              admin: { width: '50%' },
+            },
+          ],
         },
       ],
     },

@@ -15,6 +15,7 @@ export const SOURCES = [
   { label: 'Diagnóstico', value: 'diagnostico' },
   { label: 'Prospección', value: 'prospeccion' },
   { label: 'WhatsApp', value: 'whatsapp' },
+  { label: 'Instagram', value: 'instagram' },
   { label: 'Referido', value: 'referido' },
   { label: 'Carga manual', value: 'manual' },
   { label: 'Automatización (n8n)', value: 'n8n' },
@@ -53,6 +54,19 @@ export const Contacts: CollectionConfig = {
       fields: [
         { name: 'company', type: 'text', label: 'Empresa u organización' },
         { name: 'website', type: 'text', label: 'Sitio web' },
+      ],
+    },
+    {
+      type: 'row',
+      fields: [
+        { name: 'instagram', type: 'text', label: 'Usuario de Instagram' },
+        {
+          name: 'instagramId',
+          type: 'text',
+          label: 'ID de Instagram',
+          index: true,
+          admin: { readOnly: true, description: 'Lo completa la respuesta automática de Instagram.' },
+        },
       ],
     },
     {
@@ -168,6 +182,7 @@ export const Leads: CollectionConfig = {
                 { label: 'Nota', value: 'nota' },
                 { label: 'Llamada', value: 'llamada' },
                 { label: 'WhatsApp', value: 'whatsapp' },
+                { label: 'Instagram', value: 'instagram' },
                 { label: 'Email', value: 'email' },
                 { label: 'Reunión', value: 'reunion' },
               ],

@@ -10,6 +10,7 @@ import * as migration_20261116_144935_report_reading from './20261116_144935_rep
 import * as migration_20261116_152621_batch_research_ai_usage from './20261116_152621_batch_research_ai_usage';
 import * as migration_20261116_180317_payment_terms from './20261116_180317_payment_terms';
 import * as migration_20261117_150524_offer_benefits from './20261117_150524_offer_benefits';
+import * as migration_20261123_185841_instagram_auto_replies from './20261123_185841_instagram_auto_replies';
 
 export const migrations = [
   {
@@ -70,6 +71,11 @@ export const migrations = [
   {
     up: migration_20261117_150524_offer_benefits.up,
     down: migration_20261117_150524_offer_benefits.down,
-    name: '20261117_150524_offer_benefits'
+    name: '20261117_150524_offer_benefits',
+  },
+  {
+    up: migration_20261123_185841_instagram_auto_replies.up,
+    down: migration_20261123_185841_instagram_auto_replies.down,
+    name: '20261123_185841_instagram_auto_replies'
   },
 ];

@@ -93,6 +93,9 @@ export interface Config {
     'content-pieces': ContentPiece;
     'content-jobs': ContentJob;
     subscribers: Subscriber;
+    'instagram-keywords': InstagramKeyword;
+    'instagram-replies': InstagramReply;
+    'instagram-accounts': InstagramAccount;
     'payload-kv': PayloadKv;
     'payload-locked-documents': PayloadLockedDocument;
     'payload-preferences': PayloadPreference;
@@ -129,6 +132,9 @@ export interface Config {
     'content-pieces': ContentPiecesSelect<false> | ContentPiecesSelect<true>;
     'content-jobs': ContentJobsSelect<false> | ContentJobsSelect<true>;
     subscribers: SubscribersSelect<false> | SubscribersSelect<true>;
+    'instagram-keywords': InstagramKeywordsSelect<false> | InstagramKeywordsSelect<true>;
+    'instagram-replies': InstagramRepliesSelect<false> | InstagramRepliesSelect<true>;
+    'instagram-accounts': InstagramAccountsSelect<false> | InstagramAccountsSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
     'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
     'payload-preferences': PayloadPreferencesSelect<false> | PayloadPreferencesSelect<true>;
@@ -448,9 +454,15 @@ export interface Contact {
   phone?: string | null;
   company?: string | null;
   website?: string | null;
+  instagram?: string | null;
+  /**
+   * Lo completa la respuesta automática de Instagram.
+   */
+  instagramId?: string | null;
   role?: string | null;
   companySize?: string | null;
-  source?: ('web-contacto' | 'diagnostico' | 'prospeccion' | 'whatsapp' | 'referido' | 'manual' | 'n8n') | null;
+  source?:
+    ('web-contacto' | 'diagnostico' | 'prospeccion' | 'whatsapp' | 'instagram' | 'referido' | 'manual' | 'n8n') | null;
   notes?: string | null;
   /**
    * Si llegó por prospección. Sirve para no volver a prospectar a un cliente.
@@ -487,7 +499,7 @@ export interface Lead {
   lostReason?: string | null;
   activity?:
     | {
-        type?: ('nota' | 'llamada' | 'whatsapp' | 'email' | 'reunion') | null;
+        type?: ('nota' | 'llamada' | 'whatsapp' | 'instagram' | 'email' | 'reunion') | null;
         date?: string | null;
         text: string;
         id?: string | null;
@@ -497,7 +509,8 @@ export interface Lead {
   tier?: ('A' | 'B' | 'C') | null;
   fit?: number | null;
   maturity?: number | null;
-  source?: ('web-contacto' | 'diagnostico' | 'prospeccion' | 'whatsapp' | 'referido' | 'manual' | 'n8n') | null;
+  source?:
+    ('web-contacto' | 'diagnostico' | 'prospeccion' | 'whatsapp' | 'instagram' | 'referido' | 'manual' | 'n8n') | null;
   page?: string | null;
   locale?: ('es' | 'en') | null;
   attribution?:
@@ -947,6 +960,87 @@ export interface Subscriber {
   createdAt: string;
 }
 /**
+ * Cuando alguien comenta o escribe una de estas palabras, le llega el mensaje por privado y queda como oportunidad nueva en el pipeline.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "instagram-keywords".
+ */
+export interface InstagramKeyword {
+  id: number;
+  /**
+   * Se guarda en mayúsculas y sin tildes. Da igual cómo la escriba la persona: "turnos", "Turnos!" o "TURNOS".
+   */
+  keyword: string;
+  active?: boolean | null;
+  /**
+   * Lo que le llega por mensaje directo. El enlace se agrega solo al final. Instagram deja mandar uno solo por comentario.
+   */
+  message: string;
+  /**
+   * El diagnóstico, el ebook o la página que corresponda. Si es de nuestro sitio y la persona completa el formulario, su oportunidad se completa sola con sus datos.
+   */
+  link?: string | null;
+  /**
+   * Vacío = no se responde en público. No uses la palabra clave acá.
+   */
+  publicReply?: string | null;
+  /**
+   * Lo que se anota en la oportunidad. Por ejemplo: "Turnos online".
+   */
+  interest?: string | null;
+  /**
+   * Vacío = en todas las cuentas conectadas.
+   */
+  accounts?: (number | InstagramAccount)[] | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * Las cuentas que responden solas. Se suman con el botón "Conectar cuenta de Instagram".
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "instagram-accounts".
+ */
+export interface InstagramAccount {
+  id: number;
+  username: string;
+  /**
+   * Destildalo para pausar las respuestas de esta cuenta sin desconectarla.
+   */
+  active?: boolean | null;
+  igId: string;
+  /**
+   * Se renueva solo cada semana. Si vence, volvé a conectar la cuenta.
+   */
+  tokenExpiresAt?: string | null;
+  tokenRefreshedAt?: string | null;
+  token?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * Cada palabra clave que llegó y qué se respondió.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "instagram-replies".
+ */
+export interface InstagramReply {
+  id: number;
+  eventKey: string;
+  username?: string | null;
+  kind?: ('comentario' | 'mensaje' | 'respuesta') | null;
+  status?: ('procesando' | 'enviado' | 'fallo' | 'avisado') | null;
+  text?: string | null;
+  keyword?: (number | null) | InstagramKeyword;
+  account?: (number | null) | InstagramAccount;
+  lead?: (number | null) | Lead;
+  permalink?: string | null;
+  error?: string | null;
+  igUserId?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "payload-kv".
  */
@@ -1069,6 +1163,18 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'subscribers';
         value: number | Subscriber;
+      } | null)
+    | ({
+        relationTo: 'instagram-keywords';
+        value: number | InstagramKeyword;
+      } | null)
+    | ({
+        relationTo: 'instagram-replies';
+        value: number | InstagramReply;
+      } | null)
+    | ({
+        relationTo: 'instagram-accounts';
+        value: number | InstagramAccount;
       } | null);
   globalSlug?: string | null;
   user:
@@ -1324,6 +1430,8 @@ export interface ContactsSelect<T extends boolean = true> {
   phone?: T;
   company?: T;
   website?: T;
+  instagram?: T;
+  instagramId?: T;
   role?: T;
   companySize?: T;
   source?: T;
@@ -1676,6 +1784,54 @@ export interface SubscribersSelect<T extends boolean = true> {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "instagram-keywords_select".
+ */
+export interface InstagramKeywordsSelect<T extends boolean = true> {
+  keyword?: T;
+  active?: T;
+  message?: T;
+  link?: T;
+  publicReply?: T;
+  interest?: T;
+  accounts?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "instagram-replies_select".
+ */
+export interface InstagramRepliesSelect<T extends boolean = true> {
+  eventKey?: T;
+  username?: T;
+  kind?: T;
+  status?: T;
+  text?: T;
+  keyword?: T;
+  account?: T;
+  lead?: T;
+  permalink?: T;
+  error?: T;
+  igUserId?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "instagram-accounts_select".
+ */
+export interface InstagramAccountsSelect<T extends boolean = true> {
+  username?: T;
+  active?: T;
+  igId?: T;
+  tokenExpiresAt?: T;
+  tokenRefreshedAt?: T;
+  token?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "payload-kv_select".
  */
 export interface PayloadKvSelect<T extends boolean = true> {
@@ -1742,6 +1898,8 @@ export interface Setting {
    */
   handoffPhone?: string | null;
   handoffTemplate?: string | null;
+  instagramAppId?: string | null;
+  instagramAppSecret?: string | null;
   contentThemes?: string | null;
   /**
    * El motor prioriza los temas que puedan generar negocios en estos servicios.
@@ -1778,6 +1936,8 @@ export interface SettingsSelect<T extends boolean = true> {
   mpVat?: T;
   handoffPhone?: T;
   handoffTemplate?: T;
+  instagramAppId?: T;
+  instagramAppSecret?: T;
   contentThemes?: T;
   contentPriorities?: T;
   contentReader?: T;
