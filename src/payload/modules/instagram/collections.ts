@@ -46,10 +46,9 @@ export const InstagramAccounts: CollectionConfig = {
       admin: {
         readOnly: true,
         position: 'sidebar',
-        description: 'Se renueva solo cada semana. Si vence, volvé a conectar la cuenta.',
+        description: 'Vacío = no vence. Si vence o Meta lo revoca, volvé a conectar la cuenta.',
       },
     },
-    { name: 'tokenRefreshedAt', type: 'date', admin: { hidden: true } },
     {
       name: 'token',
       type: 'text',

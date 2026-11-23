@@ -1010,10 +1010,9 @@ export interface InstagramAccount {
   active?: boolean | null;
   igId: string;
   /**
-   * Se renueva solo cada semana. Si vence, volvé a conectar la cuenta.
+   * Vacío = no vence. Si vence o Meta lo revoca, volvé a conectar la cuenta.
    */
   tokenExpiresAt?: string | null;
-  tokenRefreshedAt?: string | null;
   token?: string | null;
   updatedAt: string;
   createdAt: string;
@@ -1825,7 +1824,6 @@ export interface InstagramAccountsSelect<T extends boolean = true> {
   active?: T;
   igId?: T;
   tokenExpiresAt?: T;
-  tokenRefreshedAt?: T;
   token?: T;
   updatedAt?: T;
   createdAt?: T;
@@ -1898,8 +1896,10 @@ export interface Setting {
    */
   handoffPhone?: string | null;
   handoffTemplate?: string | null;
-  instagramAppId?: string | null;
-  instagramAppSecret?: string | null;
+  /**
+   * La genera Meta for Developers → la app de Exacta → Instagram → "API setup with Unified login", después de crear la configuración y guardar la URL de redireccionamiento. Pegala entera.
+   */
+  instagramLoginUrl?: string | null;
   contentThemes?: string | null;
   /**
    * El motor prioriza los temas que puedan generar negocios en estos servicios.
@@ -1936,8 +1936,7 @@ export interface SettingsSelect<T extends boolean = true> {
   mpVat?: T;
   handoffPhone?: T;
   handoffTemplate?: T;
-  instagramAppId?: T;
-  instagramAppSecret?: T;
+  instagramLoginUrl?: T;
   contentThemes?: T;
   contentPriorities?: T;
   contentReader?: T;

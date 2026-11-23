@@ -6,21 +6,20 @@ import { teamNotice } from '../emails'
 import { emitEvent, publicUrl } from '../leads'
 import { getSettings } from '../settings'
 import { site } from '../site'
-import { linkWithRef, matchKeyword, replyText } from './keywords'
+import { linkWithRef, loginUrlParts, matchKeyword, replyText } from './keywords'
 
 export { validSignature } from './keywords'
 
 /*
- * Instagram auto-replies with the Instagram API with Instagram Login (graph.instagram.com).
+ * Instagram auto-replies with the Instagram API with Unified Login: the setup Meta gives new apps. An admin signs
+ * in once through the configuration created in the app, which gives a system user token that doesn't expire.
  * Meta posts comments and direct messages to /api/instagram/webhook; a keyword gets its link by private message
  * (one per comment, Meta's rule) and the person becomes a new opportunity, with source Instagram.
  */
 
-const GRAPH = 'https://graph.instagram.com/v24.0'
-const SCOPES = ['instagram_business_basic', 'instagram_business_manage_messages', 'instagram_business_manage_comments']
+const VERSION = 'v24.0'
+const GRAPH = `https://graph.facebook.com/${VERSION}`
 const DAY_MS = 24 * 60 * 60 * 1000
-/** Tokens last 60 days; refreshing weekly leaves plenty of room for a quiet month. */
-const REFRESH_EVERY_MS = 7 * DAY_MS
 /** Past this many replies a day the team stops getting one email each: the pipeline already has them. */
 const NOTICES_PER_DAY = 20
 
@@ -29,10 +28,14 @@ export class InstagramError extends Error {}
 export const STATE_COOKIE = 'exacta_ig_state'
 export const ACCOUNTS_PAGE = '/admin/collections/instagram-accounts'
 
-/** The app's ID and secret, from Ajustes. The secret is only readable by admins and server code. */
+/**
+ * The sign-in URL Meta generates for the configuration (pasted in Ajustes) gives the app and configuration IDs.
+ * The secret is the Meta app's, the one WhatsApp already uses, and lives only on the server.
+ */
 export async function appConfig(payload: Payload) {
   const s = await payload.findGlobal({ slug: 'settings', overrideAccess: true })
-  return { appId: s.instagramAppId?.trim() || '', appSecret: s.instagramAppSecret?.trim() || '' }
+  const { appId, configId } = loginUrlParts(s.instagramLoginUrl ?? '')
+  return { appId, configId, appSecret: process.env.META_APP_SECRET?.trim() || '' }
 }
 
 /** The token Meta's webhook setup asks for. Derived from the site's secret, so there's nothing to store. */
@@ -46,21 +49,21 @@ export function webhookVerifyToken() {
 export const redirectUri = () => `${publicUrl()}/api/instagram/callback`
 export const webhookUrl = () => `${publicUrl()}/api/instagram/webhook`
 
-export function authorizeUrl(appId: string, state: string) {
-  const url = new URL('https://www.instagram.com/oauth/authorize')
-  url.searchParams.set('client_id', appId)
+export function authorizeUrl(a: { appId: string; configId: string }, state: string) {
+  const url = new URL(`https://www.facebook.com/${VERSION}/dialog/oauth`)
+  url.searchParams.set('client_id', a.appId)
+  url.searchParams.set('config_id', a.configId)
   url.searchParams.set('redirect_uri', redirectUri())
   url.searchParams.set('response_type', 'code')
-  url.searchParams.set('scope', SCOPES.join(','))
+  url.searchParams.set('override_default_response_type', 'true')
   url.searchParams.set('state', state)
-  url.searchParams.set('force_reauth', 'true')
   return url.toString()
 }
 
 type GraphOptions = { token?: string; method?: 'GET' | 'POST'; query?: Record<string, string>; body?: unknown }
 
-async function graph<T>(url: string, { token, method = 'GET', query, body }: GraphOptions = {}): Promise<T> {
-  const target = new URL(url.startsWith('http') ? url : `${GRAPH}${url}`)
+async function graph<T>(path: string, { token, method = 'GET', query, body }: GraphOptions = {}): Promise<T> {
+  const target = new URL(`${GRAPH}${path}`)
   for (const [k, v] of Object.entries(query ?? {})) target.searchParams.set(k, v)
   const res = await fetch(target, {
     method,
@@ -73,108 +76,74 @@ async function graph<T>(url: string, { token, method = 'GET', query, body }: Gra
   })
   const data = (await res.json().catch(() => ({}))) as T & { error?: { message?: string; code?: number } }
   if (!res.ok || data.error) {
-    throw new InstagramError(`Instagram ${res.status}: ${data.error?.message ?? 'sin detalle'}`.slice(0, 300))
+    throw new InstagramError(
+      `Instagram ${res.status} (${data.error?.code ?? '?'}): ${data.error?.message ?? 'sin detalle'}`.slice(0, 300),
+    )
   }
   return data
 }
 
-/* ---------- Connecting an account ---------- */
+/* ---------- Connecting accounts ---------- */
 
-/** Turns the code from Instagram's sign-in into a 60-day token and subscribes the account to comments and messages. */
-export async function connectAccount(payload: Payload, code: string) {
-  const { appId, appSecret } = await appConfig(payload)
-  if (!appId || !appSecret) throw new InstagramError('not_configured')
-
-  const form = new URLSearchParams({
-    client_id: appId,
-    client_secret: appSecret,
-    grant_type: 'authorization_code',
-    redirect_uri: redirectUri(),
-    code: code.replace(/#_$/, ''),
-  })
-  const res = await fetch('https://api.instagram.com/oauth/access_token', {
-    method: 'POST',
-    body: form,
-    signal: AbortSignal.timeout(15000),
-  })
-  const short = (await res.json().catch(() => ({}))) as {
-    access_token?: string
-    data?: { access_token?: string; permissions?: string | string[] }[]
-    permissions?: string | string[]
-  }
-  const shortToken = short.access_token ?? short.data?.[0]?.access_token
-  if (!res.ok || !shortToken) throw new InstagramError('exchange_failed')
-
-  const granted = String(short.permissions ?? short.data?.[0]?.permissions ?? '')
-  if (granted && SCOPES.some((s) => !granted.includes(s))) throw new InstagramError('missing_permissions')
-
-  const long = await graph<{ access_token: string; expires_in: number }>('https://graph.instagram.com/access_token', {
-    query: { grant_type: 'ig_exchange_token', client_secret: appSecret, access_token: shortToken },
-  })
-  const me = await graph<{ user_id: string | number; username: string }>('/me', {
-    token: long.access_token,
-    query: { fields: 'user_id,username' },
-  })
-  const igId = String(me.user_id)
-  await graph(`/${igId}/subscribed_apps`, {
-    method: 'POST',
-    query: { subscribed_fields: 'comments,messages', access_token: long.access_token },
-  })
-
-  const now = Date.now()
-  const data = {
-    username: me.username,
-    igId,
-    token: long.access_token,
-    tokenExpiresAt: new Date(now + long.expires_in * 1000).toISOString(),
-    tokenRefreshedAt: new Date(now).toISOString(),
-  }
-  const { docs } = await payload.find({
-    collection: 'instagram-accounts',
-    where: { igId: { equals: igId } },
-    limit: 1,
-    overrideAccess: true,
-  })
-  if (docs[0]) {
-    await payload.update({ collection: 'instagram-accounts', id: docs[0].id, data, overrideAccess: true })
-  } else {
-    await payload.create({ collection: 'instagram-accounts', data: { ...data, active: true }, overrideAccess: true })
-  }
-  return me.username
+type DebugToken = {
+  data?: { expires_at?: number; scopes?: string[]; granular_scopes?: { scope: string; target_ids?: string[] }[] }
 }
 
-/** Renews tokens a week old, so they never reach their 60 days. Called by the webhook and the panel. */
-export async function refreshTokens(payload: Payload) {
-  const { docs } = await payload.find({
-    collection: 'instagram-accounts',
-    where: { tokenRefreshedAt: { less_than: new Date(Date.now() - REFRESH_EVERY_MS).toISOString() } },
-    limit: 20,
-    overrideAccess: true,
+/**
+ * Turns the code from Meta's sign-in into the token, and connects every Instagram account the admin shared in it
+ * (both at once, if both were chosen). Each one is subscribed to comments and messages.
+ */
+export async function connectAccounts(payload: Payload, code: string) {
+  const { appId, configId, appSecret } = await appConfig(payload)
+  if (!appId || !configId || !appSecret) throw new InstagramError('not_configured')
+
+  const exchange = await graph<{ access_token?: string }>('/oauth/access_token', {
+    query: { client_id: appId, client_secret: appSecret, redirect_uri: redirectUri(), code },
+  }).catch(() => ({}) as { access_token?: string })
+  const token = exchange.access_token
+  if (!token) throw new InstagramError('exchange_failed')
+
+  // The token itself says which Instagram accounts it was given, and whether it expires.
+  const debug = await graph<DebugToken>('/debug_token', {
+    query: { input_token: token, access_token: `${appId}|${appSecret}` },
   })
-  for (const account of docs) {
-    if (!account.token || (account.tokenExpiresAt && Date.parse(account.tokenExpiresAt) < Date.now())) continue
-    try {
-      const fresh = await graph<{ access_token: string; expires_in: number }>(
-        'https://graph.instagram.com/refresh_access_token',
-        {
-          query: { grant_type: 'ig_refresh_token', access_token: account.token },
-        },
-      )
-      const now = Date.now()
-      await payload.update({
-        collection: 'instagram-accounts',
-        id: account.id,
-        overrideAccess: true,
-        data: {
-          token: fresh.access_token,
-          tokenExpiresAt: new Date(now + fresh.expires_in * 1000).toISOString(),
-          tokenRefreshedAt: new Date(now).toISOString(),
-        },
-      })
-    } catch (err) {
-      console.error(`[instagram] could not refresh @${account.username}`, err)
-    }
+  const scopes = debug.data?.scopes ?? []
+  if (!['instagram_basic', 'instagram_manage_messages', 'instagram_manage_comments'].every((s) => scopes.includes(s))) {
+    throw new InstagramError('missing_permissions')
   }
+  const ids = [
+    ...new Set(
+      (debug.data?.granular_scopes ?? []).filter((g) => g.scope.startsWith('instagram_')).flatMap((g) => g.target_ids ?? []),
+    ),
+  ]
+  if (!ids.length) throw new InstagramError('no_accounts')
+  const expiresAt = debug.data?.expires_at ? new Date(debug.data.expires_at * 1000).toISOString() : null
+
+  const connected: string[] = []
+  for (const igId of ids) {
+    const profile = await graph<{ id: string; username?: string }>(`/${igId}`, { token, query: { fields: 'id,username' } }).catch(
+      (err) => {
+        console.error(`[instagram] cannot read account ${igId}`, err)
+        return null
+      },
+    )
+    // Not an Instagram account (a Page or an ad account shared in the same sign-in), or one the token can't read.
+    if (!profile?.username) continue
+    await graph(`/${igId}/subscribed_apps`, { token, method: 'POST', query: { subscribed_fields: 'comments,messages' } })
+
+    const data = { username: profile.username, igId, token, tokenExpiresAt: expiresAt }
+    const { docs } = await payload.find({
+      collection: 'instagram-accounts',
+      where: { igId: { equals: igId } },
+      limit: 1,
+      overrideAccess: true,
+    })
+    if (docs[0]) await payload.update({ collection: 'instagram-accounts', id: docs[0].id, data, overrideAccess: true })
+    else await payload.create({ collection: 'instagram-accounts', data: { ...data, active: true }, overrideAccess: true })
+    connected.push(profile.username)
+  }
+  if (!connected.length) throw new InstagramError('no_access')
+  return connected
 }
 
 /* ---------- Webhook ---------- */
@@ -210,7 +179,6 @@ export async function handleWebhook(body: WebhookBody) {
       await handleMessage(payload, account, event).catch((err) => console.error('[instagram] message failed', err))
     }
   }
-  await refreshTokens(payload).catch((err) => console.error('[instagram] refresh failed', err))
 }
 
 async function accountFor(payload: Payload, igId?: string) {

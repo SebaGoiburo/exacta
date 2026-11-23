@@ -4,6 +4,7 @@ import { test } from 'node:test'
 import {
   instagramLeadRef,
   linkWithRef,
+  loginUrlParts,
   matchKeyword,
   normalizeKeyword,
   replyText,
@@ -61,4 +62,15 @@ test("Meta's signature is accepted with either secret", () => {
   assert.equal(validSignature(body, sign('otro'), ['instagram', 'meta']), false)
   assert.equal(validSignature(body, sign(''), ['', '']), false)
   assert.equal(validSignature(body, null, ['instagram']), false)
+})
+
+test('the app and configuration come from the sign-in URL Meta generates', () => {
+  assert.deepEqual(
+    loginUrlParts(
+      ' https://www.facebook.com/v24.0/dialog/oauth?client_id=886929724445736&config_id=1234567890123&redirect_uri=https%3A%2F%2Fx.com&response_type=code ',
+    ),
+    { appId: '886929724445736', configId: '1234567890123' },
+  )
+  assert.deepEqual(loginUrlParts('1234567890123'), { appId: '', configId: '' })
+  assert.deepEqual(loginUrlParts('https://x.com/?client_id=abc&config_id=1'), { appId: '', configId: '' })
 })

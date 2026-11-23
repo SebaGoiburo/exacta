@@ -1,5 +1,5 @@
 import type { Payload } from 'payload'
-import { appConfig, redirectUri, refreshTokens, webhookUrl, webhookVerifyToken } from '@/lib/instagram/service'
+import { appConfig, redirectUri, webhookUrl, webhookVerifyToken } from '@/lib/instagram/service'
 import { ConnectResult, CopyValue } from './setup-client'
 
 const box = {
@@ -16,9 +16,8 @@ const muted = { color: 'var(--theme-elevation-700)', margin: 0 } as const
 /** Above the accounts list: what Meta needs, and the button that connects an account. */
 export async function InstagramSetup({ payload, user }: { payload: Payload; user?: { role?: string } | null }) {
   const isAdmin = user?.role === 'admin'
-  const { appId, appSecret } = await appConfig(payload).catch(() => ({ appId: '', appSecret: '' }))
-  const configured = Boolean(appId && appSecret)
-  await refreshTokens(payload).catch(() => undefined)
+  const app = await appConfig(payload).catch(() => ({ appId: '', configId: '', appSecret: '' }))
+  const configured = Boolean(app.appId && app.configId && app.appSecret)
   const { docs } = await payload.find({ collection: 'instagram-accounts', limit: 20, overrideAccess: true, depth: 0 })
   const soon = docs.filter((a) => a.tokenExpiresAt && Date.parse(a.tokenExpiresAt) - Date.now() < 15 * 24 * 60 * 60 * 1000)
 
@@ -29,20 +28,27 @@ export async function InstagramSetup({ payload, user }: { payload: Payload; user
         <div style={{ display: 'grid', gap: 4 }}>
           <h2 style={{ margin: 0, fontSize: 18 }}>Respuestas automáticas de Instagram</h2>
           <p style={muted}>
-            Conectá cada cuenta una vez. Después, las palabras clave responden solas y suman a la persona al pipeline.
+            Conectá las cuentas una vez. Después, las palabras clave responden solas y suman a la persona al pipeline.
           </p>
         </div>
         {isAdmin && configured && (
           <a href="/api/instagram/connect" className="btn btn--style-primary btn--size-medium" style={{ margin: 0 }}>
-            Conectar cuenta de Instagram
+            Conectar cuentas de Instagram
           </a>
         )}
       </div>
 
       {!configured && (
         <p style={{ margin: 0 }}>
-          <strong>Falta un paso:</strong> cargá el identificador y la clave secreta de la app de Instagram en{' '}
-          <a href="/admin/globals/settings">Ajustes</a> → "Respuestas automáticas de Instagram".
+          <strong>Falta un paso:</strong>{' '}
+          {app.appSecret ? (
+            <>
+              pegá la URL de inicio de sesión que genera Meta en <a href="/admin/globals/settings">Ajustes</a> → "Respuestas
+              automáticas de Instagram".
+            </>
+          ) : (
+            'el servidor no tiene la clave secreta de la app de Meta (META_APP_SECRET).'
+          )}
         </p>
       )}
 
@@ -53,16 +59,19 @@ export async function InstagramSetup({ payload, user }: { payload: Payload; user
       ))}
 
       {isAdmin && (
-        <details>
+        <details open={!configured || !docs.length}>
           <summary style={{ cursor: 'pointer' }}>Datos para configurar la app en Meta</summary>
           <div style={{ display: 'grid', gap: 10, marginTop: 12 }}>
             <p style={muted}>
-              En Meta for Developers → la app → Instagram → "Configuración de la API con inicio de sesión para empresas":
+              1. En Meta for Developers → la app → Instagram → "API setup with Unified login", registrá esta URL de
+              redireccionamiento:
             </p>
-            <CopyValue label="URL de devolución de llamada (webhooks)" value={webhookUrl()} />
+            <CopyValue label="URL de redireccionamiento" value={redirectUri()} />
+            <p style={muted}>
+              2. En Webhooks, elegí "Instagram" y cargá estos dos datos. Después suscribí "comments" y "messages":
+            </p>
+            <CopyValue label="URL de devolución de llamada" value={webhookUrl()} />
             <CopyValue label="Token de verificación" value={webhookVerifyToken()} />
-            <CopyValue label="URI de redireccionamiento de OAuth válido" value={redirectUri()} />
-            <p style={muted}>En los webhooks, suscribí los campos "comments" y "messages".</p>
           </div>
         </details>
       )}

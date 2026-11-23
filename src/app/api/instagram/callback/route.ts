@@ -2,12 +2,12 @@ import { timingSafeEqual } from 'node:crypto'
 import { NextResponse } from 'next/server'
 import { getPayload } from 'payload'
 import config from '@payload-config'
-import { ACCOUNTS_PAGE, connectAccount, InstagramError, STATE_COOKIE } from '@/lib/instagram/service'
+import { ACCOUNTS_PAGE, connectAccounts, InstagramError, STATE_COOKIE } from '@/lib/instagram/service'
 import { publicUrl } from '@/lib/leads'
 
 const sameState = (a: string, b: string) => a.length === b.length && timingSafeEqual(Buffer.from(a), Buffer.from(b))
 
-/** Instagram sends the admin back here after they accept. The state cookie proves it's the same sign-in we started. */
+/** Meta sends the admin back here after they accept. The state cookie proves it's the same sign-in we started. */
 export async function GET(req: Request) {
   const params = new URL(req.url).searchParams
   const back = (result: string) => {
@@ -28,8 +28,8 @@ export async function GET(req: Request) {
   const code = params.get('code')
   if (!code) return back('cancelled')
   try {
-    const username = await connectAccount(payload, code)
-    return back(`connected:${username}`)
+    const usernames = await connectAccounts(payload, code)
+    return back(`connected:${usernames.join(',')}`)
   } catch (err) {
     console.error('[instagram] connect failed', err)
     return back(err instanceof InstagramError && /^[a-z_]+$/.test(err.message) ? err.message : 'failed')

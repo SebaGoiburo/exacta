@@ -62,8 +62,7 @@ export function replyText(message: string, link?: string | null) {
 }
 
 /**
- * Whether Meta signed the body. Meta's docs don't settle which secret signs Instagram Login webhooks, the
- * Instagram app's or the Meta app's, so either one is accepted: both belong to our own app.
+ * Whether Meta signed the body with one of these secrets (the Meta app's). Compared in constant time.
  */
 export function validSignature(raw: string, header: string | null, secrets: string[]) {
   const received = Buffer.from(header ?? '')
@@ -71,4 +70,18 @@ export function validSignature(raw: string, header: string | null, secrets: stri
     const expected = Buffer.from(`sha256=${createHmac('sha256', secret).update(raw).digest('hex')}`)
     return received.length === expected.length && timingSafeEqual(received, expected)
   })
+}
+
+/**
+ * The app and configuration IDs from the sign-in URL Meta generates for the configuration
+ * (facebook.com/.../dialog/oauth?client_id=...&config_id=...). Empty strings when it isn't one.
+ */
+export function loginUrlParts(value: string) {
+  try {
+    const params = new URL(value.trim()).searchParams
+    const id = (key: string) => (/^\d{5,25}$/.test(params.get(key) ?? '') ? params.get(key)! : '')
+    return { appId: id('client_id'), configId: id('config_id') }
+  } catch {
+    return { appId: '', configId: '' }
+  }
 }

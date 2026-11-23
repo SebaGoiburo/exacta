@@ -3,13 +3,16 @@
 import { useEffect, useState } from 'react'
 
 const RESULTS: Record<string, string> = {
-  not_configured: 'Falta cargar el identificador y la clave de la app de Instagram en Ajustes.',
+  not_configured: 'Falta pegar la URL de inicio de sesión de Meta en Ajustes.',
   not_admin: 'Solo un administrador puede conectar cuentas.',
   expired: 'Pasó demasiado tiempo o se abrió en otra pestaña. Probá de nuevo.',
-  cancelled: 'Se canceló la conexión en Instagram.',
-  missing_permissions: 'Instagram no dio todos los permisos. Volvé a conectar y aceptá todo lo que pide.',
-  exchange_failed:
-    'Instagram no aceptó la conexión. Revisá que el identificador y la clave de Ajustes sean los de la app de Instagram.',
+  cancelled: 'Se canceló la conexión en Meta.',
+  missing_permissions:
+    'Meta no dio todos los permisos. La configuración tiene que incluir instagram_basic, instagram_manage_messages e instagram_manage_comments.',
+  no_accounts: 'No se eligió ninguna cuenta de Instagram. Volvé a conectar y marcá las dos cuentas cuando Meta lo pregunte.',
+  no_access:
+    'Meta conectó, pero no deja leer las cuentas. Agregá el permiso business_management a la configuración y volvé a conectar.',
+  exchange_failed: 'Meta no aceptó la conexión. Revisá que la URL de redireccionamiento esté registrada en la app.',
   failed: 'Algo falló al conectar. Probá de nuevo en unos minutos.',
 }
 
@@ -32,7 +35,13 @@ export function ConnectResult() {
         color: connected ? 'var(--theme-success-800)' : 'var(--theme-error-800)',
       }}
     >
-      {connected ? `Listo: @${result.slice('connected:'.length)} ya responde sola.` : (RESULTS[result] ?? RESULTS.failed)}
+      {connected
+        ? `Listo: ${result
+            .slice('connected:'.length)
+            .split(',')
+            .map((u) => `@${u}`)
+            .join(' y ')} ya ${result.includes(',') ? 'responden solas' : 'responde sola'}.`
+        : (RESULTS[result] ?? RESULTS.failed)}
     </p>
   )
 }

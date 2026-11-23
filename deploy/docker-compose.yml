@@ -21,7 +21,7 @@ services:
       GOOGLE_MAPS_API_KEY: ${GOOGLE_MAPS_API_KEY:-}
       # Read-only access to Search Console and Analytics. The engine works without it, on web research alone.
       GOOGLE_SERVICE_ACCOUNT_B64: ${GOOGLE_SERVICE_ACCOUNT_B64:-}
-      # Checks Instagram's webhook signature when Meta signs with the Meta app's secret instead of Instagram's.
+      # The same Meta app serves Instagram: its secret checks the webhooks and connects the accounts.
       META_APP_SECRET: ${META_APP_SECRET:-}
     depends_on:
       db:

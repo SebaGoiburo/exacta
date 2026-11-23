@@ -17,7 +17,7 @@ export async function POST(req: Request) {
   const raw = await req.text()
   const payload = await getPayload({ config })
   const { appSecret } = await appConfig(payload)
-  if (!validSignature(raw, req.headers.get('x-hub-signature-256'), [appSecret, process.env.META_APP_SECRET ?? ''])) {
+  if (!validSignature(raw, req.headers.get('x-hub-signature-256'), [appSecret])) {
     console.warn('[instagram] webhook with an invalid signature')
     return NextResponse.json({ error: 'invalid_signature' }, { status: 401 })
   }
