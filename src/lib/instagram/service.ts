@@ -111,7 +111,7 @@ export async function connectAccounts(payload: Payload, code: string) {
   if (!['instagram_basic', 'instagram_manage_messages', 'instagram_manage_comments'].every((s) => scopes.includes(s))) {
     throw new InstagramError('missing_permissions')
   }
-  const ids = await findInstagramIds(token, debug.data)
+  const ids = await findInstagramIds(token, debug.data, `${appId}|${appSecret}`)
   if (!ids.length) throw new InstagramError('no_accounts')
   const expiresAt = debug.data?.expires_at ? new Date(debug.data.expires_at * 1000).toISOString() : null
 
@@ -149,7 +149,7 @@ type Found = { id?: string; username?: string }
  * known place is tried: the token's targets (accounts, Pages or business portfolios), the Pages, and the portfolios.
  * What each place answered goes to the log, without the token, so a failed connection can be diagnosed.
  */
-async function findInstagramIds(token: string, debug: DebugToken['data']) {
+async function findInstagramIds(token: string, debug: DebugToken['data'], appToken: string) {
   const found = new Set<string>()
   const notes: string[] = []
   const ask = async <T>(path: string, fields?: string): Promise<T | null> => {
@@ -185,9 +185,24 @@ async function findInstagramIds(token: string, debug: DebugToken['data']) {
     )
     add(pages?.data?.map((p) => p.instagram_business_account ?? {}))
     const businesses = await ask<{ data?: { id: string }[] }>('/me/businesses', 'id,name')
-    for (const b of businesses?.data?.slice(0, 5) ?? []) {
-      add((await ask<{ data?: Found[] }>(`/${b.id}/instagram_business_accounts`, 'id,username'))?.data)
-      add((await ask<{ data?: Found[] }>(`/${b.id}/owned_instagram_accounts`, 'id,username'))?.data)
+    // A system user belongs to the portfolio that owns the app; the app's own token can say which one that is.
+    const owner = await graph<{ owner_business?: { id?: string } }>('/app', {
+      query: { fields: 'owner_business{id}', access_token: appToken },
+    }).catch((err) => {
+      notes.push(`/app -> ${err instanceof Error ? err.message : 'error'}`)
+      return null
+    })
+    const businessIds = [...new Set([...(businesses?.data ?? []).map((b) => b.id), owner?.owner_business?.id].filter(Boolean))]
+    notes.push(`portfolios ${JSON.stringify(businessIds)}`)
+    for (const id of businessIds.slice(0, 5) as string[]) {
+      add((await ask<{ data?: Found[] }>(`/${id}/instagram_business_accounts`, 'id,username'))?.data)
+      add((await ask<{ data?: Found[] }>(`/${id}/owned_instagram_accounts`, 'id,username'))?.data)
+      const pages = await ask<{ data?: { instagram_business_account?: Found }[] }>(
+        `/${id}/owned_pages`,
+        'instagram_business_account{id,username}',
+      )
+      add(pages?.data?.map((p) => p.instagram_business_account ?? {}))
+      if (found.size) break
     }
   }
   console.log(`[instagram] looking for accounts: ${notes.join(' | ')}`.slice(0, 6000))
