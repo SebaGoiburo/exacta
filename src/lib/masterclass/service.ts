@@ -353,7 +353,7 @@ export function classInfo(m: Masterclass, token: string): ClassInfo {
   }
 }
 
-/** Sends what's due: the reminder 24 hours before and the one an hour before. n8n calls this every 10 minutes. */
+/** Sends what's due: the reminder 24 hours before and the one an hour before. The site's clock calls this every 10 minutes. */
 export async function sendReminders() {
   const payload = await getPayload({ config })
   const now = Date.now()
