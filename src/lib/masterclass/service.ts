@@ -5,6 +5,7 @@ import type { Enrollment, Masterclass } from '@/payload-types'
 import type { Attribution } from '../attribution-shared'
 import { teamNotice } from '../emails'
 import { emitEvent, publicUrl, saveLead } from '../leads'
+import { sendServerEvent } from '../meta-capi'
 import { getSettings } from '../settings'
 import { site } from '../site'
 import { confirmationEmail, reminderEmail, type ClassInfo } from './emails'
@@ -99,7 +100,14 @@ export type Availability = Awaited<ReturnType<typeof availability>>
 
 /* ---------- Enrolling ---------- */
 
-export type EnrollInput = { name: string; email: string; phone: string; attribution: Attribution }
+export type EnrollInput = {
+  name: string
+  email: string
+  phone: string
+  attribution: Attribution
+  /** The browser's address and agent, for Meta's server event. Kept only if the person accepted cookies. */
+  client?: { ip?: string; userAgent?: string }
+}
 
 /**
  * Holds a seat and returns Mercado Pago's payment page. Someone who started and didn't finish gets the same
@@ -136,7 +144,9 @@ export async function enroll(input: EnrollInput): Promise<{ url: string } | { pa
     amount: seats.price,
     tier: seats.tier,
     holdUntil,
-    attribution: input.attribution,
+    attribution: input.attribution.consent
+      ? { ...input.attribution, clientIp: input.client?.ip, userAgent: input.client?.userAgent }
+      : input.attribution,
   }
   let enrollment: Enrollment
   if (previous) {
@@ -318,6 +328,21 @@ async function markPaid(payload: Payload, enrollment: Enrollment, base: { mpPaym
   })
 
   const settings = await getSettings()
+  const attribution = (updated.attribution ?? {}) as Attribution & { clientIp?: string; userAgent?: string }
+  if (attribution.consent) {
+    await sendServerEvent(settings.metaPixelId, {
+      name: 'Purchase',
+      // The same ID the thank-you page gives the pixel: Meta counts the purchase once.
+      eventId: `purchase-${updated.token}`,
+      url: `${publicUrl()}${LANDING_PATH}`,
+      email: updated.email,
+      phone: updated.phone,
+      firstName: updated.name.split(/\s+/)[0],
+      value: updated.amount ?? 0,
+      currency: 'ARS',
+      client: { ip: attribution.clientIp, userAgent: attribution.userAgent, fbp: attribution.fbp, fbc: attribution.fbc },
+    })
+  }
   const seats = await availability(payload, m)
   emitEvent('email.send', {
     email: {

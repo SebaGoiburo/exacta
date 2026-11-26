@@ -25,6 +25,8 @@ services:
       META_APP_SECRET: ${META_APP_SECRET:-}
       # IA para Humanos sells its masterclasses with it. Without it the landing shows the page but doesn't charge.
       MERCADOPAGO_ACCESS_TOKEN: ${MERCADOPAGO_ACCESS_TOKEN:-}
+      # Meta's Conversions API: purchases also reported from the server. Optional.
+      META_CAPI_TOKEN: ${META_CAPI_TOKEN:-}
     depends_on:
       db:
         condition: service_healthy

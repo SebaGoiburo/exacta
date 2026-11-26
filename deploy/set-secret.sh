@@ -6,9 +6,11 @@ NAME="$1"
 FILE=/opt/exacta/.env
 
 case "$NAME" in
-  META_APP_SECRET | GOOGLE_MAPS_API_KEY | MERCADOPAGO_ACCESS_TOKEN) ;;
+  META_APP_SECRET | GOOGLE_MAPS_API_KEY | MERCADOPAGO_ACCESS_TOKEN | META_CAPI_TOKEN) ;;
   *)
-    echo "Usage: $0 META_APP_SECRET|GOOGLE_MAPS_API_KEY|MERCADOPAGO_ACCESS_TOKEN"
+    # Never echo the argument: if someone typed the secret here by mistake, it must not reach the screen.
+    echo "Escribí el NOMBRE de la clave, no su valor. El valor se pega después, cuando el script lo pide."
+    echo "Nombres válidos: META_APP_SECRET, GOOGLE_MAPS_API_KEY, MERCADOPAGO_ACCESS_TOKEN, META_CAPI_TOKEN"
     exit 1
     ;;
 esac

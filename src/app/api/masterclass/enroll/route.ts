@@ -25,7 +25,13 @@ export async function POST(req: Request) {
   if (fields.length) return NextResponse.json({ error: 'invalid_fields', fields }, { status: 422 })
 
   try {
-    const result = await enroll({ name, email, phone: phone!, attribution: cleanAttribution(body.attribution) })
+    const result = await enroll({
+      name,
+      email,
+      phone: phone!,
+      attribution: cleanAttribution(body.attribution),
+      client: { ip: clientIp(req), userAgent: req.headers.get('user-agent')?.slice(0, 400) ?? undefined },
+    })
     if ('paid' in result) return NextResponse.json({ url: `${LANDING_PATH}/gracias?e=${result.token}` })
     return NextResponse.json({ url: result.url })
   } catch (err) {
