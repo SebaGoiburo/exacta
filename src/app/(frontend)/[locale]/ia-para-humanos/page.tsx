@@ -402,7 +402,7 @@ export default async function IaParaHumanosPage() {
             {closing.text}
           </p>
           <div className={styles.reply}>
-            <h2 id="iah-close" className={styles.h2}>
+            <h2 id="iah-close" className={styles.replyTitle}>
               {closing.title}
             </h2>
             <div className={styles.seats}>
