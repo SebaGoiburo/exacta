@@ -35,6 +35,8 @@ export async function generateMetadata({ params }: Omit<Props, 'children'>): Pro
     title: t('title'),
     description: t('description'),
     icons: { icon: '/brand/exacta-mark.svg' },
+    // Search Console ownership check for the site.
+    verification: { google: 'FhzleLTBYaZBHD-SCyQH9GH6RlyOPpMhLKzVeSNZqRM' },
     robots: isIndexable() ? undefined : { index: false, follow: false },
     openGraph: {
       title: t('title'),

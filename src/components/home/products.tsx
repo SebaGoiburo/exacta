@@ -8,6 +8,9 @@ import { RegMarks } from '@/components/motion/spotlight'
 import { ArrowRight } from '@/components/ui/icons'
 import { PlexSyncPanel } from './plex-sync-panel'
 
+/** Our own pages that exist only in Spanish, like IA para Humanos. */
+const SPANISH_ONLY = ['/ia-para-humanos']
+
 export async function Products() {
   const t = await getTranslations('products')
   const locale = (await getLocale()) as Locale
@@ -98,6 +101,11 @@ function ProductRow({
         <div className="mt-8" data-reveal data-reveal-delay="0.2">
           {p.external ? (
             <a href={p.href} target="_blank" rel="noopener" className="btn btn-ghost">
+              {cta}
+            </a>
+          ) : SPANISH_ONLY.some((path) => p.href.startsWith(path)) ? (
+            // Same tab, but without the language prefix: from English it must not lead to a page that doesn't exist.
+            <a href={p.href} className="btn btn-ghost">
               {cta}
             </a>
           ) : (
