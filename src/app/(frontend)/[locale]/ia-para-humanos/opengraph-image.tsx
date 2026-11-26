@@ -12,6 +12,24 @@ export const dynamic = 'force-dynamic'
 
 const ISOTIPO = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48"><g stroke="#24122B" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"><line x1="24" y1="12.5" x2="24" y2="16.5"/><polyline points="14,32.5 16,24 24,16.5 32,24 34,32.5"/><polyline points="24,16.5 24,24.5 24,32.5"/><polyline points="16.5,45.5 19.5,39 24,32.5 28.5,39 31.5,45.5"/></g><g fill="#24122B"><circle cx="14" cy="32.5" r="2.3"/><circle cx="16" cy="24" r="2.3"/><circle cx="24" cy="16.5" r="2.3"/><circle cx="32" cy="24" r="2.3"/><circle cx="34" cy="32.5" r="2.3"/><circle cx="24" cy="24.5" r="2.3"/><circle cx="24" cy="32.5" r="2.3"/><circle cx="19.5" cy="39" r="2.3"/><circle cx="28.5" cy="39" r="2.3"/><circle cx="16.5" cy="45.5" r="2.3"/><circle cx="31.5" cy="45.5" r="2.3"/></g><circle cx="24" cy="7.5" r="5" fill="#CC57C7"/></svg>`
 
+/**
+ * The brand's title face for the image, only the letters it needs. Without a user agent Google Fonts answers with
+ * a TrueType file, which is what the image renderer reads. If it fails, the image keeps its default face.
+ */
+async function bricolage(text: string) {
+  try {
+    const css = await fetch(
+      `https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@800&text=${encodeURIComponent(text)}`,
+      { signal: AbortSignal.timeout(4000) },
+    ).then((r) => r.text())
+    const url = /src: url\((.+?)\) format\('(opentype|truetype)'\)/.exec(css)?.[1]
+    if (!url) return null
+    return await fetch(url, { signal: AbortSignal.timeout(4000) }).then((r) => r.arrayBuffer())
+  } catch {
+    return null
+  }
+}
+
 /** What WhatsApp, Instagram and search show when the page is shared: the entry ticket, with the real date. */
 export default async function Image() {
   const m = await getPayload({ config })
@@ -19,6 +37,7 @@ export default async function Image() {
     .catch(() => null)
   const when = m ? `${argDate(m.startsAt).short} · ${argDate(m.startsAt).time} · Online en vivo` : 'Online en vivo'
   const iso = `data:image/svg+xml;base64,${Buffer.from(ISOTIPO).toString('base64')}`
+  const font = await bricolage(hero.title)
 
   return new ImageResponse(
     <div style={{ width: '100%', height: '100%', display: 'flex', background: '#24122B', padding: 40 }}>
@@ -42,12 +61,22 @@ export default async function Image() {
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src={iso} width={200} height={200} alt="" />
           <div style={{ display: 'flex', flexDirection: 'column', gap: 20, flex: 1 }}>
-            <div style={{ fontSize: 66, fontWeight: 800, lineHeight: 1.02, letterSpacing: -2 }}>{hero.title}</div>
+            <div
+              style={{
+                fontSize: 66,
+                fontWeight: 800,
+                lineHeight: 1.02,
+                letterSpacing: -2,
+                fontFamily: font ? 'Bricolage' : undefined,
+              }}
+            >
+              {hero.title}
+            </div>
             <div style={{ fontSize: 28, color: '#5b4866' }}>IA para Humanos · una unidad de Exacta</div>
           </div>
         </div>
       </div>
     </div>,
-    size,
+    { ...size, fonts: font ? [{ name: 'Bricolage', data: font, weight: 800, style: 'normal' }] : undefined },
   )
 }
