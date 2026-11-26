@@ -88,6 +88,8 @@ function addScript(src: string) {
 
 let ids: TrackingIds = {}
 let loaded = false
+/** Events sent before the tags load (a page that tracks on arrival): they go out once the tags are in. */
+const waiting: (() => void)[] = []
 
 /** Injects the tags. Only called after consent, and only once per page load. */
 export function loadTracking(next: TrackingIds) {
@@ -119,6 +121,7 @@ export function loadTracking(next: TrackingIds) {
     window.fbq('init', next.metaPixelId)
     window.fbq('track', 'PageView')
   }
+  waiting.splice(0).forEach((send) => send())
 }
 
 /** Reports a navigation inside the site. The first page view is sent when the tags load. */
@@ -128,14 +131,29 @@ export function trackPageView(path: string) {
   window.gtag?.('event', 'page_view', { page_path: path })
 }
 
-type TrackEvent = 'diagnostic_start' | 'lead' | 'contact_click'
+type TrackEvent = 'diagnostic_start' | 'lead' | 'contact_click' | 'view_content' | 'initiate_checkout' | 'purchase'
 
-/** `eventId` lets Meta merge this browser event with the same one sent from the server. */
-export function track(event: TrackEvent, params: Record<string, string> = {}, eventId?: string) {
-  if (!loaded) return
+/**
+ * `eventId` lets Meta merge this browser event with the same one sent from the server. Before consent nothing is
+ * sent; with consent given but the tags still loading, the event waits for them.
+ */
+export function track(event: TrackEvent, params: Record<string, string | number> = {}, eventId?: string) {
+  if (!loaded) {
+    if (readConsent() === 'granted') waiting.push(() => track(event, params, eventId))
+    return
+  }
   const options = eventId ? { eventID: eventId } : undefined
 
-  if (event === 'lead') {
+  if (event === 'view_content') {
+    window.fbq?.('track', 'ViewContent', params, options)
+    window.gtag?.('event', 'view_item', params)
+  } else if (event === 'initiate_checkout') {
+    window.fbq?.('track', 'InitiateCheckout', params, options)
+    window.gtag?.('event', 'begin_checkout', params)
+  } else if (event === 'purchase') {
+    window.fbq?.('track', 'Purchase', params, options)
+    window.gtag?.('event', 'purchase', { ...params, transaction_id: eventId })
+  } else if (event === 'lead') {
     window.fbq?.('track', 'Lead', params, options)
     window.gtag?.('event', 'generate_lead', params)
     if (ids.googleAdsId && ids.googleAdsLeadLabel) {

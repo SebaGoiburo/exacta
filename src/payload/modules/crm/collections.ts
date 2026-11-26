@@ -16,6 +16,7 @@ export const SOURCES = [
   { label: 'Prospección', value: 'prospeccion' },
   { label: 'WhatsApp', value: 'whatsapp' },
   { label: 'Instagram', value: 'instagram' },
+  { label: 'IA para Humanos', value: 'ia-para-humanos' },
   { label: 'Referido', value: 'referido' },
   { label: 'Carga manual', value: 'manual' },
   { label: 'Automatización (n8n)', value: 'n8n' },

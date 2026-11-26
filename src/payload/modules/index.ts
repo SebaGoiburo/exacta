@@ -14,6 +14,7 @@ import { ManagementTasks } from './management/collections'
 import { ContentJobs, ContentPieces, ContentTopics } from './content-engine/collections'
 import { Subscribers } from './newsletter/collections'
 import { InstagramAccounts, InstagramKeywords, InstagramReplies } from './instagram/collections'
+import { Enrollments, Masterclasses } from './academy/collections'
 
 /**
  * Backend modules. Each business function the site serves is a module with its own
@@ -33,4 +34,5 @@ export const modules: BackendModule[] = [
   { name: 'content-engine', collections: [ContentTopics, ContentPieces, ContentJobs] },
   { name: 'newsletter', collections: [Subscribers] },
   { name: 'instagram', collections: [InstagramKeywords, InstagramReplies, InstagramAccounts] },
+  { name: 'academy', collections: [Masterclasses, Enrollments] },
 ]

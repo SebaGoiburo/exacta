@@ -12,3 +12,7 @@ npm-debug.log*
 
 # Payload uploads (persisted on the server, not in git)
 /media
+
+# Design working files
+/.taste-skill/
+/assets/

@@ -12,6 +12,7 @@ import * as migration_20261116_180317_payment_terms from './20261116_180317_paym
 import * as migration_20261117_150524_offer_benefits from './20261117_150524_offer_benefits';
 import * as migration_20261123_185841_instagram_auto_replies from './20261123_185841_instagram_auto_replies';
 import * as migration_20261123_192406_instagram_unified_login from './20261123_192406_instagram_unified_login';
+import * as migration_20261126_122331_ia_para_humanos from './20261126_122331_ia_para_humanos';
 
 export const migrations = [
   {
@@ -82,6 +83,11 @@ export const migrations = [
   {
     up: migration_20261123_192406_instagram_unified_login.up,
     down: migration_20261123_192406_instagram_unified_login.down,
-    name: '20261123_192406_instagram_unified_login'
+    name: '20261123_192406_instagram_unified_login',
+  },
+  {
+    up: migration_20261126_122331_ia_para_humanos.up,
+    down: migration_20261126_122331_ia_para_humanos.down,
+    name: '20261126_122331_ia_para_humanos'
   },
 ];

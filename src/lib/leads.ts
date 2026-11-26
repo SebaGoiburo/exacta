@@ -17,7 +17,7 @@ export type LeadInput = {
   company?: string
   website?: string
   title: string
-  source: 'web-contacto' | 'diagnostico'
+  source: 'web-contacto' | 'diagnostico' | 'ia-para-humanos'
   interest?: string
   message?: string
   page?: string

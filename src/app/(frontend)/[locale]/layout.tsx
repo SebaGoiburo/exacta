@@ -11,8 +11,6 @@ import { getSettings } from '@/lib/settings'
 import { JsonLd } from '@/components/seo/json-ld'
 import { Analytics } from '@/components/analytics/analytics'
 import { MotionProvider } from '@/components/motion/motion-provider'
-import { SiteHeader } from '@/components/layout/site-header'
-import { SiteFooter } from '@/components/layout/site-footer'
 import '../globals.css'
 
 const sora = Sora({ subsets: ['latin'], variable: '--font-sora', display: 'swap' })
@@ -56,14 +54,9 @@ export default async function LocaleLayout({ children, params }: Props) {
   const t = await getTranslations({ locale, namespace: 'nav' })
   const meta = await getTranslations({ locale, namespace: 'meta' })
   const settings = await getSettings()
-  const hasTracking = Boolean(settings.metaPixelId || settings.ga4Id || settings.googleAdsId)
 
   return (
-    <html
-      lang={locale}
-      suppressHydrationWarning
-      className={`${sora.variable} ${manrope.variable} ${martian.variable}`}
-    >
+    <html lang={locale} suppressHydrationWarning className={`${sora.variable} ${manrope.variable} ${martian.variable}`}>
       <head>
         {/* Lets CSS hide scroll-reveal elements only when JS will reveal them. */}
         <script dangerouslySetInnerHTML={{ __html: "document.documentElement.classList.add('js')" }} />
@@ -96,9 +89,8 @@ export default async function LocaleLayout({ children, params }: Props) {
               {t('skip')}
             </a>
             <MotionProvider>
-              <SiteHeader />
-              <main id="contenido">{children}</main>
-              <SiteFooter hasTracking={hasTracking} />
+              {/* Header, main and footer come from each section's layout: (site) for Exacta, its own for each landing. */}
+              {children}
               <Analytics
                 metaPixelId={settings.metaPixelId}
                 ga4Id={settings.ga4Id}

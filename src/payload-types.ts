@@ -96,6 +96,8 @@ export interface Config {
     'instagram-keywords': InstagramKeyword;
     'instagram-replies': InstagramReply;
     'instagram-accounts': InstagramAccount;
+    masterclasses: Masterclass;
+    enrollments: Enrollment;
     'payload-kv': PayloadKv;
     'payload-locked-documents': PayloadLockedDocument;
     'payload-preferences': PayloadPreference;
@@ -104,6 +106,9 @@ export interface Config {
   collectionsJoins: {
     contacts: {
       leads: 'leads';
+    };
+    masterclasses: {
+      enrollments: 'enrollments';
     };
   };
   collectionsSelect: {
@@ -135,6 +140,8 @@ export interface Config {
     'instagram-keywords': InstagramKeywordsSelect<false> | InstagramKeywordsSelect<true>;
     'instagram-replies': InstagramRepliesSelect<false> | InstagramRepliesSelect<true>;
     'instagram-accounts': InstagramAccountsSelect<false> | InstagramAccountsSelect<true>;
+    masterclasses: MasterclassesSelect<false> | MasterclassesSelect<true>;
+    enrollments: EnrollmentsSelect<false> | EnrollmentsSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
     'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
     'payload-preferences': PayloadPreferencesSelect<false> | PayloadPreferencesSelect<true>;
@@ -462,7 +469,18 @@ export interface Contact {
   role?: string | null;
   companySize?: string | null;
   source?:
-    ('web-contacto' | 'diagnostico' | 'prospeccion' | 'whatsapp' | 'instagram' | 'referido' | 'manual' | 'n8n') | null;
+    | (
+        | 'web-contacto'
+        | 'diagnostico'
+        | 'prospeccion'
+        | 'whatsapp'
+        | 'instagram'
+        | 'ia-para-humanos'
+        | 'referido'
+        | 'manual'
+        | 'n8n'
+      )
+    | null;
   notes?: string | null;
   /**
    * Si llegó por prospección. Sirve para no volver a prospectar a un cliente.
@@ -510,7 +528,18 @@ export interface Lead {
   fit?: number | null;
   maturity?: number | null;
   source?:
-    ('web-contacto' | 'diagnostico' | 'prospeccion' | 'whatsapp' | 'instagram' | 'referido' | 'manual' | 'n8n') | null;
+    | (
+        | 'web-contacto'
+        | 'diagnostico'
+        | 'prospeccion'
+        | 'whatsapp'
+        | 'instagram'
+        | 'ia-para-humanos'
+        | 'referido'
+        | 'manual'
+        | 'n8n'
+      )
+    | null;
   page?: string | null;
   locale?: ('es' | 'en') | null;
   attribution?:
@@ -1040,6 +1069,80 @@ export interface InstagramReply {
   createdAt: string;
 }
 /**
+ * La página /ia-para-humanos muestra la masterclass abierta más próxima.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "masterclasses".
+ */
+export interface Masterclass {
+  id: number;
+  title: string;
+  status: 'borrador' | 'abierta' | 'cerrada';
+  startsAt: string;
+  durationMin?: number | null;
+  capacity: number;
+  /**
+   * Si se llena el cupo, sumá lugares acá: la página avisa "Abrimos X lugares más".
+   */
+  releasedSeats?: number | null;
+  launchSeats?: number | null;
+  launchPrice?: number | null;
+  price: number;
+  /**
+   * Va en el mail de confirmación y en los recordatorios. Si falta 24 horas antes, se avisa al equipo.
+   */
+  meetUrl?: string | null;
+  /**
+   * Para mandar después de la clase.
+   */
+  recordingUrl?: string | null;
+  enrollments?: {
+    docs?: (number | Enrollment)[];
+    hasNextPage?: boolean;
+    totalDocs?: number;
+  };
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * Las pendientes empezaron la inscripción y no pagaron todavía: escribiles por WhatsApp, muchas se recuperan así.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "enrollments".
+ */
+export interface Enrollment {
+  id: number;
+  name: string;
+  email: string;
+  phone: string;
+  status: 'pendiente' | 'pagada' | 'rechazada' | 'devuelta' | 'cancelada';
+  amount?: number | null;
+  tier?: ('lanzamiento' | 'general') | null;
+  seat?: number | null;
+  masterclass: number | Masterclass;
+  lead?: (number | null) | Lead;
+  paidAt?: string | null;
+  holdUntil?: string | null;
+  mpPaymentId?: string | null;
+  mpStatus?: string | null;
+  mpPreferenceId?: string | null;
+  confirmedAt?: string | null;
+  reminded24At?: string | null;
+  reminded1At?: string | null;
+  attribution?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  token: string;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "payload-kv".
  */
@@ -1174,6 +1277,14 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'instagram-accounts';
         value: number | InstagramAccount;
+      } | null)
+    | ({
+        relationTo: 'masterclasses';
+        value: number | Masterclass;
+      } | null)
+    | ({
+        relationTo: 'enrollments';
+        value: number | Enrollment;
       } | null);
   globalSlug?: string | null;
   user:
@@ -1824,6 +1935,53 @@ export interface InstagramAccountsSelect<T extends boolean = true> {
   active?: T;
   igId?: T;
   tokenExpiresAt?: T;
+  token?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "masterclasses_select".
+ */
+export interface MasterclassesSelect<T extends boolean = true> {
+  title?: T;
+  status?: T;
+  startsAt?: T;
+  durationMin?: T;
+  capacity?: T;
+  releasedSeats?: T;
+  launchSeats?: T;
+  launchPrice?: T;
+  price?: T;
+  meetUrl?: T;
+  recordingUrl?: T;
+  enrollments?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "enrollments_select".
+ */
+export interface EnrollmentsSelect<T extends boolean = true> {
+  name?: T;
+  email?: T;
+  phone?: T;
+  status?: T;
+  amount?: T;
+  tier?: T;
+  seat?: T;
+  masterclass?: T;
+  lead?: T;
+  paidAt?: T;
+  holdUntil?: T;
+  mpPaymentId?: T;
+  mpStatus?: T;
+  mpPreferenceId?: T;
+  confirmedAt?: T;
+  reminded24At?: T;
+  reminded1At?: T;
+  attribution?: T;
   token?: T;
   updatedAt?: T;
   createdAt?: T;
