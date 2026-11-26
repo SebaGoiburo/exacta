@@ -35,7 +35,8 @@ export const ACCOUNTS_PAGE = '/admin/collections/instagram-accounts'
 export async function appConfig(payload: Payload) {
   const s = await payload.findGlobal({ slug: 'settings', overrideAccess: true })
   const { appId, configId } = loginUrlParts(s.instagramLoginUrl ?? '')
-  return { appId, configId, appSecret: process.env.META_APP_SECRET?.trim() || '' }
+  const accountIds = (s.instagramAccountIds ?? '').match(/\d{10,25}/g) ?? []
+  return { appId, configId, accountIds, appSecret: process.env.META_APP_SECRET?.trim() || '' }
 }
 
 /** The token Meta's webhook setup asks for. Derived from the site's secret, so there's nothing to store. */
@@ -94,7 +95,7 @@ type DebugToken = {
  * (both at once, if both were chosen). Each one is subscribed to comments and messages.
  */
 export async function connectAccounts(payload: Payload, code: string) {
-  const { appId, configId, appSecret } = await appConfig(payload)
+  const { appId, configId, appSecret, accountIds } = await appConfig(payload)
   if (!appId || !configId || !appSecret) throw new InstagramError('not_configured')
 
   const exchange = await graph<{ access_token?: string }>('/oauth/access_token', {
@@ -111,7 +112,7 @@ export async function connectAccounts(payload: Payload, code: string) {
   if (!['instagram_basic', 'instagram_manage_messages', 'instagram_manage_comments'].every((s) => scopes.includes(s))) {
     throw new InstagramError('missing_permissions')
   }
-  const ids = await findInstagramIds(token, debug.data, `${appId}|${appSecret}`)
+  const ids = await findInstagramIds(token, debug.data, `${appId}|${appSecret}`, accountIds)
   if (!ids.length) throw new InstagramError('no_accounts')
   const expiresAt = debug.data?.expires_at ? new Date(debug.data.expires_at * 1000).toISOString() : null
 
@@ -149,7 +150,7 @@ type Found = { id?: string; username?: string }
  * known place is tried: the token's targets (accounts, Pages or business portfolios), the Pages, and the portfolios.
  * What each place answered goes to the log, without the token, so a failed connection can be diagnosed.
  */
-async function findInstagramIds(token: string, debug: DebugToken['data'], appToken: string) {
+async function findInstagramIds(token: string, debug: DebugToken['data'], appToken: string, known: string[] = []) {
   const found = new Set<string>()
   const notes: string[] = []
   const ask = async <T>(path: string, fields?: string): Promise<T | null> => {
@@ -165,6 +166,11 @@ async function findInstagramIds(token: string, debug: DebugToken['data'], appTok
   const add = (items?: Found[] | null) => items?.forEach((a) => a?.id && a.username && found.add(a.id))
 
   notes.push(`scopes ${JSON.stringify((debug?.granular_scopes ?? []).map((g) => [g.scope, g.target_ids ?? []]))}`)
+  // The accounts written in Ajustes come first: Meta's sign-in doesn't always say which ones it shared, but the
+  // token can read them when they were shared. Each one is checked, so a wrong number simply connects nothing.
+  for (const id of known.slice(0, 10)) {
+    add([(await ask<Found>(`/${id}`, 'id,username')) ?? {}])
+  }
   const targets = [...new Set((debug?.granular_scopes ?? []).flatMap((g) => g.target_ids ?? []))]
   for (const target of targets.slice(0, 10)) {
     const node = await ask<Found & { instagram_business_account?: Found }>(

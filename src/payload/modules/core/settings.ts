@@ -128,6 +128,17 @@ export const Settings: GlobalConfig = {
           validate: (value: string | null | undefined) =>
             !value || /[?&]config_id=\d+/.test(value) || 'Tiene que ser la URL entera que genera Meta, con "config_id=" adentro.',
         },
+        {
+          name: 'instagramAccountIds',
+          type: 'text',
+          label: 'Identificador de las cuentas de Instagram',
+          admin: {
+            description:
+              'Por si Meta no informa la cuenta al conectar. Está en Configuración del negocio → Cuentas de Instagram → Identificador (empieza con 1784). Si son varias, separalas con coma.',
+          },
+          validate: (value: string | null | undefined) =>
+            !value || /^\s*\d{10,25}(\s*,\s*\d{10,25})*\s*$/.test(value) || 'Solo números, separados por coma.',
+        },
       ],
     },
     {

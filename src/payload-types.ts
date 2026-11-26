@@ -2058,6 +2058,10 @@ export interface Setting {
    * La genera Meta for Developers → la app de Exacta → Instagram → "API setup with Unified login", después de crear la configuración y guardar la URL de redireccionamiento. Pegala entera.
    */
   instagramLoginUrl?: string | null;
+  /**
+   * Por si Meta no informa la cuenta al conectar. Está en Configuración del negocio → Cuentas de Instagram → Identificador (empieza con 1784). Si son varias, separalas con coma.
+   */
+  instagramAccountIds?: string | null;
   contentThemes?: string | null;
   /**
    * El motor prioriza los temas que puedan generar negocios en estos servicios.
@@ -2095,6 +2099,7 @@ export interface SettingsSelect<T extends boolean = true> {
   handoffPhone?: T;
   handoffTemplate?: T;
   instagramLoginUrl?: T;
+  instagramAccountIds?: T;
   contentThemes?: T;
   contentPriorities?: T;
   contentReader?: T;
