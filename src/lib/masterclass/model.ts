@@ -50,6 +50,27 @@ export function argDate(iso: string) {
   }
 }
 
+/** The date in ISO 8601 with Argentina's offset ("2026-12-11T19:00:00-03:00"), as search engines read events. */
+export function argIso(iso: string, addMinutes = 0) {
+  const d = new Date(Date.parse(iso) + addMinutes * 60000)
+  const parts = Object.fromEntries(
+    new Intl.DateTimeFormat('en-CA', {
+      timeZone: TIME_ZONE,
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      hourCycle: 'h23',
+    })
+      .formatToParts(d)
+      .map((p) => [p.type, p.value]),
+  )
+  // Argentina has no daylight saving time: the offset is always -03:00.
+  return `${parts.year}-${parts.month}-${parts.day}T${parts.hour}:${parts.minute}:${parts.second}-03:00`
+}
+
 /** Whole days from now until the class, in Argentina's calendar (today = 0). */
 export function daysUntil(iso: string, now = new Date()) {
   const day = (d: Date) => new Intl.DateTimeFormat('en-CA', { timeZone: TIME_ZONE }).format(d)

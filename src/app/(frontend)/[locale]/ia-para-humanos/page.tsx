@@ -1,4 +1,5 @@
 /* eslint-disable @next/next/no-img-element */
+import type { Metadata } from 'next'
 import { getPayload } from 'payload'
 import config from '@payload-config'
 import { CookiePreferences } from '@/components/analytics/cookie-preferences'
@@ -10,12 +11,33 @@ import { PageEffects } from '@/components/ia-humanos/page-effects'
 import { Edge, SeatDots, seatsLine, WhatsappIcon } from '@/components/ia-humanos/parts'
 import styles from '@/components/ia-humanos/ia.module.css'
 import { closing, faqs, hero, includes, outcomes, photoCredits, problems, program, teacher } from '@/content/ia-humanos'
+import { JsonLd } from '@/components/seo/json-ld'
 import { getTeam } from '@/lib/content'
-import { argDate, daysUntil, pesos } from '@/lib/masterclass/model'
-import { availability, currentMasterclass } from '@/lib/masterclass/service'
+import { argDate, argIso, daysUntil, pesos } from '@/lib/masterclass/model'
+import { availability, currentMasterclass, LANDING_PATH } from '@/lib/masterclass/service'
 import { site, whatsappLink } from '@/lib/site'
 
 export const dynamic = 'force-dynamic'
+
+const PAGE_URL = `${site.url}${LANDING_PATH}`
+
+/**
+ * Title and description for search and sharing. They carry what people search for ("curso de inteligencia
+ * artificial", "en vivo") and the real date, so the result already answers when it is.
+ */
+export async function generateMetadata(): Promise<Metadata> {
+  const payload = await getPayload({ config })
+  const m = await currentMasterclass(payload).catch(() => null)
+  const when = m ? ` el ${argDate(m.startsAt).long}, ${argDate(m.startsAt).time} (hora Argentina)` : ''
+  const description = `Masterclass online en vivo${when}: en 2 h 30 aprendés a usar la IA en tu trabajo, sin saber de tecnología. Para comerciantes, profesionales y emprendedores. Queda grabada.`
+  return {
+    title: { absolute: 'Curso de inteligencia artificial en vivo · IA para Humanos' },
+    description,
+    alternates: { canonical: LANDING_PATH, languages: { 'es-AR': LANDING_PATH, 'x-default': LANDING_PATH } },
+    openGraph: { title: hero.title, description, url: PAGE_URL, siteName: 'IA para Humanos', locale: 'es_AR', type: 'website' },
+    twitter: { card: 'summary_large_image', title: hero.title, description },
+  }
+}
 
 const WHATSAPP = whatsappLink('Hola, tengo una duda sobre la masterclass de IA para Humanos')
 const WHATSAPP_COMPANIES = whatsappLink('Hola, quiero capacitar a mi equipo con la masterclass de IA para Humanos')
@@ -84,8 +106,50 @@ export default async function IaParaHumanosPage() {
     </a>
   )
 
+  // Structured data: the class as an online education event, and the questions.
+  const event = {
+    '@context': 'https://schema.org',
+    '@type': 'EducationEvent',
+    '@id': `${PAGE_URL}#masterclass`,
+    name: `${m.title}: la IA en tu trabajo`,
+    description: hero.lead,
+    startDate: argIso(m.startsAt),
+    endDate: argIso(m.startsAt, minutes),
+    eventStatus: 'https://schema.org/EventScheduled',
+    eventAttendanceMode: 'https://schema.org/OnlineEventAttendanceMode',
+    location: { '@type': 'VirtualLocation', url: PAGE_URL },
+    image: ['notebook', 'video', 'cafe'].map((p) => `${site.url}/ia-para-humanos/${p}.webp`),
+    inLanguage: 'es-AR',
+    educationalLevel: 'Principiante',
+    teaches: outcomes.items.map((o) => o.name),
+    maximumAttendeeCapacity: seats.total,
+    remainingAttendeeCapacity: seats.left,
+    organizer: { '@type': 'Organization', name: 'Exacta Transformación Digital', url: site.url },
+    performer: {
+      '@type': 'Person',
+      name: teacher.name,
+      jobTitle: teacher.role,
+      sameAs: ['https://www.instagram.com/sebastiangoiburo/'],
+    },
+    offers: {
+      '@type': 'Offer',
+      url: PAGE_URL,
+      price: seats.price,
+      priceCurrency: 'ARS',
+      availability: open ? 'https://schema.org/InStock' : 'https://schema.org/SoldOut',
+      validFrom: m.createdAt,
+    },
+  }
+  const faqData = {
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: faqs.items.map((f) => ({ '@type': 'Question', name: f.q, acceptedAnswer: { '@type': 'Answer', text: f.a } })),
+  }
+
   return (
     <>
+      <JsonLd data={event} />
+      <JsonLd data={faqData} />
       <header className={styles.bar}>
         <Logo />
         {open && (
@@ -157,13 +221,23 @@ export default async function IaParaHumanosPage() {
               alt="Una emprendedora graba un video con el celular"
               width={1600}
               height={1067}
+              fetchPriority="high"
             />
-            <img src="/ia-para-humanos/notebook.webp" alt="Una mujer trabaja con su notebook" width={1600} height={2400} />
+            <img
+              src="/ia-para-humanos/notebook.webp"
+              alt="Una mujer trabaja con su notebook"
+              width={1600}
+              height={2400}
+              fetchPriority="low"
+              decoding="async"
+            />
             <img
               src="/ia-para-humanos/cafe.webp"
               alt="Una mujer revisa el celular con la notebook abierta"
               width={1600}
               height={1068}
+              fetchPriority="low"
+              decoding="async"
             />
           </div>
         </section>

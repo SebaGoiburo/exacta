@@ -11,18 +11,11 @@ const bricolage = Bricolage_Grotesque({
   display: 'swap',
 })
 
+// Each page sets its own title and description; the landing adds the class date to them.
 export const metadata: Metadata = {
-  title: { absolute: 'Masterclass de IA en vivo · IA para Humanos' },
-  description:
-    'En 2 h 30 salís usando la IA en tu trabajo. Masterclass en vivo para comerciantes, profesionales y emprendedores, sin conocimientos técnicos. Queda grabada.',
+  title: { default: 'IA para Humanos', template: '%s · IA para Humanos' },
   icons: { icon: '/ia-para-humanos/favicon.svg' },
-  openGraph: {
-    title: 'En 2 h 30 salís usando la IA en tu trabajo',
-    description: 'Masterclass en vivo de IA para Humanos, una unidad de Exacta. Sin conocimientos técnicos. Queda grabada.',
-    siteName: 'IA para Humanos',
-    locale: 'es_AR',
-    type: 'website',
-  },
+  openGraph: { siteName: 'IA para Humanos', locale: 'es_AR', type: 'website' },
 }
 
 /** IA para Humanos lives on its own: no Exacta header or footer, its own colours and faces. Spanish only. */

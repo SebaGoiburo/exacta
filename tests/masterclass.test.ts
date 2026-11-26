@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
-import { argDate, daysUntil, googleCalendarUrl, icsFile, normalizePhone, offer } from '../src/lib/masterclass/model'
+import { argDate, argIso, daysUntil, googleCalendarUrl, icsFile, normalizePhone, offer } from '../src/lib/masterclass/model'
 
 const RULES = { capacity: 30, releasedSeats: 0, launchSeats: 10, launchPrice: 35000, price: 45000 }
 
@@ -45,6 +45,11 @@ test('dates are said the Argentine way, in Argentina', () => {
   assert.equal(d.short, 'MIÉ 9/12')
   assert.equal(d.time, '19 h')
   assert.equal(argDate('2026-12-09T22:30:00.000Z').time, '19:30 h')
+})
+
+test('event dates carry the Argentine offset for search engines', () => {
+  assert.equal(argIso('2026-12-11T22:00:00.000Z'), '2026-12-11T19:00:00-03:00')
+  assert.equal(argIso('2026-12-11T22:00:00.000Z', 150), '2026-12-11T21:30:00-03:00')
 })
 
 test('days left count calendar days in Argentina', () => {

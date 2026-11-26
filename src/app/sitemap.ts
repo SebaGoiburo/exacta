@@ -10,7 +10,9 @@ function entry(path: string, lastModified?: string, inEnglish = true): MetadataR
   return {
     url: absoluteUrl('es', path),
     lastModified,
-    alternates: { languages: inEnglish ? { es: absoluteUrl('es', path), en: absoluteUrl('en', path) } : { es: absoluteUrl('es', path) } },
+    alternates: {
+      languages: inEnglish ? { es: absoluteUrl('es', path), en: absoluteUrl('en', path) } : { es: absoluteUrl('es', path) },
+    },
   }
 }
 
@@ -22,6 +24,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     entry('/diagnostico'),
     entry('/blog'),
     entry('/productos/plex-wordpress'),
+    // IA para Humanos is Spanish only.
+    entry('/ia-para-humanos', undefined, false),
     ...landings.map((l) => entry(landingPath(l))),
     entry('/privacidad'),
     // Sample articles are placeholders and stay out of search engines.

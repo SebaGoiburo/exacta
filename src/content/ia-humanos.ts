@@ -5,7 +5,7 @@
 
 export const hero = {
   title: 'En 2 h 30 salís usando la IA en tu trabajo',
-  lead: 'Una masterclass en vivo para comerciantes, profesionales y emprendedores. No necesitás saber nada de tecnología: te vas con tu asistente personal armado, tus redes organizadas y tu primer video editado.',
+  lead: 'Una masterclass online y en vivo de inteligencia artificial para comerciantes, profesionales y emprendedores. No necesitás saber nada de tecnología: te vas con tu asistente personal armado, tus redes organizadas y tu primer video editado.',
 }
 
 export const problems = {
