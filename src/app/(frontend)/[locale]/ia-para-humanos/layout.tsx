@@ -29,5 +29,10 @@ export const metadata: Metadata = {
 export default async function IaLayout({ children, params }: { children: React.ReactNode; params: Promise<{ locale: string }> }) {
   const { locale } = await params
   if (locale !== 'es') notFound()
-  return <div className={`${styles.root} ${bricolage.variable}`}>{children}</div>
+  // The browser's own scrolling: lighter, and predictable with the phone's sticky action and the jump to the ticket.
+  return (
+    <div className={`${styles.root} ${bricolage.variable}`} data-native-scroll>
+      {children}
+    </div>
+  )
 }

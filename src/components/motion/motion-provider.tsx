@@ -32,6 +32,9 @@ export function MotionProvider({ children }: { children: React.ReactNode }) {
       let stopped = false
       let dispose = () => {}
 
+      // Pages that ask for the browser's own scrolling (sales landings with sticky actions) skip it.
+      if (document.querySelector('[data-native-scroll]')) return () => {}
+
       import('lenis')
         .then(({ default: Lenis }) => {
           if (stopped) return

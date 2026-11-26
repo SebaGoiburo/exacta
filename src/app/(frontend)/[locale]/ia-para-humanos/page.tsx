@@ -6,7 +6,7 @@ import { Audiences } from '@/components/ia-humanos/audiences'
 import { EnrollForm } from '@/components/ia-humanos/enroll-form'
 import { FaqCards } from '@/components/ia-humanos/faq-cards'
 import { Logo } from '@/components/ia-humanos/logo'
-import { PageEffects, ProgramButtons } from '@/components/ia-humanos/page-effects'
+import { PageEffects } from '@/components/ia-humanos/page-effects'
 import { Edge, SeatDots, seatsLine, WhatsappIcon } from '@/components/ia-humanos/parts'
 import styles from '@/components/ia-humanos/ia.module.css'
 import { closing, faqs, hero, includes, outcomes, photoCredits, problems, program, teacher } from '@/content/ia-humanos'
@@ -170,13 +170,13 @@ export default async function IaParaHumanosPage() {
 
         {/* The problem */}
         <section className={`${styles.section} ${styles.problem}`} aria-labelledby="iah-problem">
-          <div className={`${styles.problemHead} ${styles.reveal}`} data-reveal>
+          <div className={`${styles.problemHead} ${styles.reveal}`} data-iah-reveal>
             <h2 id="iah-problem" className={styles.h2}>
               {problems.title}
             </h2>
             <p className={styles.problemNote}>{problems.close}</p>
           </div>
-          <ul className={`${styles.pains} ${styles.reveal}`} data-reveal>
+          <ul className={`${styles.pains} ${styles.reveal}`} data-iah-reveal>
             {problems.items.map((p) => (
               <li key={p}>
                 <Three />
@@ -191,7 +191,7 @@ export default async function IaParaHumanosPage() {
 
         {/* What you leave with: the menu sheet */}
         <section className={`${styles.section} ${styles.outcomes}`} aria-labelledby="iah-outcomes">
-          <div className={`${styles.sheetWrap} ${styles.reveal}`} data-reveal>
+          <div className={`${styles.sheetWrap} ${styles.reveal}`} data-iah-reveal>
             <Edge kind="zigzag" side="top" color="#f4f0f7" />
             <div className={styles.sheet}>
               <div className={styles.sheetHead}>
@@ -229,7 +229,7 @@ export default async function IaParaHumanosPage() {
 
         {/* Who it's for: the live sample */}
         <section className={`${styles.section} ${styles.audiences}`} aria-labelledby="iah-aud">
-          <div className={styles.audHead}>
+          <div className={`${styles.audHead} ${styles.reveal}`} data-iah-reveal>
             <h2 id="iah-aud" className={styles.h2}>
               Para quién es
             </h2>
@@ -245,14 +245,13 @@ export default async function IaParaHumanosPage() {
 
         {/* The program: 150 minutes */}
         <section className={styles.section} aria-labelledby="iah-program">
-          <div className={styles.programHead}>
+          <div className={`${styles.programHead} ${styles.reveal}`} data-iah-reveal>
             <div>
               <h2 id="iah-program" className={styles.h2}>
                 {program.title}
               </h2>
               <p className={styles.programLead}>{program.lead}</p>
             </div>
-            <ProgramButtons target="iah-modules" className={styles.scrollBtns} buttonClass={styles.square} />
           </div>
           <div className={styles.timeline} aria-hidden="true">
             {program.modules.map((x) => (
@@ -267,18 +266,15 @@ export default async function IaParaHumanosPage() {
               <i className={styles.concepto} /> Conceptos: {programMinutes - practice} min
             </span>
           </p>
-          <ol className={styles.row} id="iah-modules" tabIndex={0} aria-label="Módulos del programa">
+          <ol className={styles.bars} aria-label="Módulos del programa">
             {program.modules.map((x, i) => (
               <li key={x.name} className={styles.module}>
                 <span className={`${styles.label} ${styles.moduleNum}`}>Módulo {i + 1}</span>
                 <h3 className={styles.moduleName}>{x.name}</h3>
                 <p className={styles.moduleText}>{x.text}</p>
-                <div
-                  className={`${styles.block} ${styles[x.kind]}`}
-                  style={{ height: x.minutes * 6, marginTop: 24 + ((i * 37) % 70) }}
-                >
+                <div className={`${styles.block} ${styles[x.kind]}`} style={{ '--min': x.minutes } as React.CSSProperties}>
                   <span className={styles.blockMin}>{x.minutes} min</span>
-                  <span className={styles.label}>{x.kind === 'practica' ? 'Práctica' : 'Concepto'}</span>
+                  <span className={styles.blockKind}>{x.kind === 'practica' ? 'Práctica' : 'Concepto'}</span>
                 </div>
               </li>
             ))}
@@ -287,7 +283,7 @@ export default async function IaParaHumanosPage() {
 
         {/* Who teaches: the letter */}
         <section className={`${styles.section} ${styles.teacher}`} aria-labelledby="iah-teacher">
-          <div className={`${styles.letterCol} ${styles.reveal}`} data-reveal>
+          <div className={`${styles.letterCol} ${styles.reveal}`} data-iah-reveal>
             <h2 id="iah-teacher" className={styles.h2}>
               {teacher.title}
             </h2>
@@ -310,7 +306,7 @@ export default async function IaParaHumanosPage() {
               </div>
             </div>
           </div>
-          <div>
+          <div className={styles.reveal} data-iah-reveal>
             {sebastian && (
               <figure className={`${styles.figure} ${styles.portrait}`}>
                 <img src={sebastian} alt="Sebastián Goiburo, cofundador de Exacta" width={1254} height={1254} loading="lazy" />
@@ -329,7 +325,7 @@ export default async function IaParaHumanosPage() {
 
         {/* The ticket: what's included, the price and the form */}
         <section id="reservar" className={`${styles.section} ${styles.pricing}`} aria-labelledby="iah-price">
-          <div className={styles.pricingHead}>
+          <div className={`${styles.pricingHead} ${styles.reveal}`} data-iah-reveal>
             <h2 id="iah-price" className={styles.h2}>
               Tu entrada
             </h2>
@@ -363,7 +359,6 @@ export default async function IaParaHumanosPage() {
             </div>
             <div className={styles.ticketStub}>
               <div className={styles.price}>
-                <span className={styles.label}>Hoy</span>
                 <span className={styles.priceNow}>{pesos(seats.price)}</span>
                 {seats.nextPrice && <span className={styles.priceNext}>Después, {pesos(seats.nextPrice)}</span>}
               </div>
@@ -403,7 +398,9 @@ export default async function IaParaHumanosPage() {
 
         {/* Closing: the reply card */}
         <section className={`${styles.section} ${styles.closing}`} aria-labelledby="iah-close">
-          <p className={styles.closingText}>{closing.text}</p>
+          <p className={styles.closingText} data-iah-reveal>
+            {closing.text}
+          </p>
           <div className={styles.reply}>
             <h2 id="iah-close" className={styles.h2}>
               {closing.title}

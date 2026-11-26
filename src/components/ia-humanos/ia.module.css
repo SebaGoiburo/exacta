@@ -54,7 +54,7 @@
   margin: 0;
 }
 
-.root a {
+:where(.root) a {
   color: inherit;
 }
 
@@ -254,20 +254,20 @@
 }
 
 .entryMain {
-  padding: clamp(28px, 4vw, 56px) clamp(20px, 3vw, 44px) clamp(28px, 3vw, 40px);
+  padding: clamp(24px, 3vw, 44px) clamp(20px, 3vw, 44px) clamp(20px, 2vw, 28px);
   display: grid;
-  gap: clamp(20px, 2.4vw, 32px);
+  gap: clamp(16px, 1.8vw, 24px);
   flex: 1;
   align-content: start;
 }
 
 .entryTitle {
-  font-size: clamp(32px, 3.9vw, 60px);
+  font-size: clamp(32px, 3.6vw, 56px);
   max-width: 13em;
 }
 
 .lead {
-  font-size: clamp(17px, 1.35vw, 20px);
+  font-size: clamp(17px, 1.25vw, 19px);
   max-width: 38em;
 }
 
@@ -294,7 +294,7 @@
   margin: 0;
   font-family: var(--display);
   font-weight: 800;
-  font-size: clamp(24px, 2.2vw, 34px);
+  font-size: clamp(22px, 2vw, 30px);
   letter-spacing: -0.03em;
   line-height: 1;
 }
@@ -336,9 +336,9 @@
 .stub {
   display: grid;
   grid-template-columns: auto minmax(0, 1fr);
-  gap: 20px 32px;
+  gap: 16px 32px;
   align-items: end;
-  padding: clamp(20px, 2.4vw, 32px) clamp(20px, 3vw, 44px) clamp(24px, 3vw, 40px);
+  padding: clamp(16px, 1.6vw, 24px) clamp(20px, 3vw, 44px) clamp(20px, 2.4vw, 32px);
 }
 
 .price {
@@ -707,7 +707,7 @@
 .benefit {
   font-family: var(--display);
   font-weight: 700;
-  font-size: clamp(26px, 2.6vw, 40px);
+  font-size: clamp(22px, 2.6vw, 40px);
   letter-spacing: -0.02em;
   line-height: 1.1;
 }
@@ -767,26 +767,6 @@
   color: var(--lila-claro);
 }
 
-.scrollBtns {
-  display: flex;
-  gap: 8px;
-}
-
-.square {
-  width: 52px;
-  height: 52px;
-  border: 0;
-  background: var(--hueso);
-  color: var(--ciruela);
-  font-size: 22px;
-  font-weight: 800;
-  cursor: pointer;
-}
-
-.square:hover {
-  background: var(--menta);
-}
-
 .timeline {
   display: flex;
   gap: 4px;
@@ -827,28 +807,19 @@
   color: var(--ciruela);
 }
 
-.row {
-  display: flex;
-  gap: 28px;
-  margin: 40px calc(var(--m) * -1) 0;
-  padding: 0 var(--m) 8px;
-  overflow-x: auto;
-  scroll-snap-type: x mandatory;
-  scroll-padding-inline: var(--m);
-  scrollbar-width: none;
-}
-
-.row::-webkit-scrollbar {
-  display: none;
+.bars {
+  list-style: none;
+  margin: 48px 0 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 12px;
 }
 
 .module {
-  flex: 0 0 290px;
-  scroll-snap-align: start;
   display: flex;
   flex-direction: column;
-  margin: 0;
-  padding: 0;
+  min-width: 0;
 }
 
 .moduleNum {
@@ -859,31 +830,39 @@
   margin-top: 10px;
   font-family: var(--display);
   font-weight: 700;
-  font-size: 22px;
+  font-size: 20px;
   letter-spacing: -0.02em;
   line-height: 1.15;
 }
 
 .moduleText {
-  margin-top: 10px;
-  font-size: 16px;
+  margin: 10px 0 24px;
+  font-size: 15px;
   color: var(--lila-claro);
 }
 
+/* Each bar is as tall as its minutes: the program reads as a chart of where the time goes. */
 .block {
   margin-top: auto;
+  height: calc(var(--min) * 7px);
   display: flex;
   flex-direction: column;
   justify-content: flex-end;
-  padding: 16px;
+  gap: 4px;
+  padding: 14px;
 }
 
 .blockMin {
   font-family: var(--display);
   font-weight: 800;
-  font-size: 40px;
+  font-size: 32px;
   letter-spacing: -0.03em;
   line-height: 1;
+}
+
+.blockKind {
+  font-weight: 700;
+  font-size: 14px;
 }
 
 /* ---------- Teacher: the letter ---------- */
@@ -1157,7 +1136,11 @@
 
 .honey {
   position: absolute;
-  left: -9999px;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  opacity: 0;
 }
 
 .payRow {
@@ -1253,7 +1236,6 @@
 
 .plus {
   flex: none;
-  font-family: var(--text);
   transition: transform 0.2s var(--ease);
 }
 
@@ -1529,12 +1511,37 @@
     aspect-ratio: 4 / 3;
   }
 
-  .module {
-    flex-basis: 74vw;
+  .bars {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 32px;
   }
 
-  .scrollBtns {
-    display: none;
+  .block {
+    margin-top: 14px;
+    height: auto;
+    width: calc(var(--min) / 30 * 100%);
+    min-width: 150px;
+    flex-direction: row;
+    align-items: baseline;
+    justify-content: space-between;
+    padding: 12px 14px;
+  }
+
+  .blockMin {
+    font-size: 26px;
+  }
+
+  .entryTitle {
+    font-size: clamp(26px, 7.2vw, 40px);
+  }
+
+  .entry {
+    margin-inline: 0;
+  }
+
+  .entryMain,
+  .stub {
+    padding-inline: 18px;
   }
 
   .closing {

@@ -21,7 +21,7 @@ export function PageEffects({ price }: { price: number }) {
       },
       { rootMargin: '0px 0px -10% 0px' },
     )
-    document.querySelectorAll('[data-reveal]').forEach((el) => reveal.observe(el))
+    document.querySelectorAll('[data-iah-reveal]').forEach((el) => reveal.observe(el))
 
     const sticky = document.getElementById('iah-sticky')
     const hero = document.getElementById('iah-hero-cta')
@@ -42,22 +42,4 @@ export function PageEffects({ price }: { price: number }) {
     }
   }, [price])
   return null
-}
-
-/** Back and forward for the row of modules. On a phone the row is swiped and these are hidden. */
-export function ProgramButtons({ target, className, buttonClass }: { target: string; className: string; buttonClass: string }) {
-  const move = (dir: 1 | -1) => {
-    const smooth = !window.matchMedia('(prefers-reduced-motion: reduce)').matches
-    document.getElementById(target)?.scrollBy({ left: dir * 318, behavior: smooth ? 'smooth' : 'auto' })
-  }
-  return (
-    <div className={className}>
-      <button type="button" className={buttonClass} onClick={() => move(-1)} aria-label="Módulo anterior">
-        ←
-      </button>
-      <button type="button" className={buttonClass} onClick={() => move(1)} aria-label="Módulo siguiente">
-        →
-      </button>
-    </div>
-  )
 }
