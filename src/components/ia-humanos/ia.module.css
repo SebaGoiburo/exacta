@@ -852,6 +852,7 @@
 }
 
 .blockMin {
+  white-space: nowrap;
   font-family: var(--display);
   font-weight: 800;
   font-size: 32px;
@@ -1168,7 +1169,7 @@
 }
 
 .card {
-  --tab: 0px;
+  --tab: calc(var(--i, 0) * 150px);
   position: relative;
   margin-top: -14px;
   padding: 0;
@@ -1251,6 +1252,7 @@
 /* ---------- Closing: the reply card ---------- */
 
 .closing {
+  padding-top: clamp(64px, 7vw, 112px);
   background: var(--ciruela-3);
   display: grid;
   grid-template-columns: minmax(0, 5fr) minmax(0, 6fr);
@@ -1318,6 +1320,7 @@
 }
 
 .backLinks a {
+  overflow-wrap: anywhere;
   text-decoration-thickness: 2px;
   text-underline-offset: 4px;
 }
@@ -1522,7 +1525,7 @@
     margin-top: 14px;
     height: auto;
     width: calc(var(--min) / 30 * 100%);
-    min-width: 150px;
+    min-width: 200px;
     flex-direction: row;
     align-items: baseline;
     justify-content: space-between;
@@ -1621,6 +1624,7 @@
   }
 
   .card {
+    --tab: calc(var(--i, 0) * 44px);
     clip-path: polygon(
       var(--tab) 0,
       calc(var(--tab) + 132px) 0,

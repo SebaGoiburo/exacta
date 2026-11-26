@@ -14,7 +14,7 @@ export function FaqCards() {
           key={f.q}
           className={styles.card}
           data-open={i === open || undefined}
-          style={{ '--tab': `${(i % 4) * 150}px`, zIndex: i } as React.CSSProperties}
+          style={{ '--i': i % 4, zIndex: i } as React.CSSProperties}
         >
           <button
             type="button"

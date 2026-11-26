@@ -149,7 +149,10 @@ export const teacher = {
     { big: 'Marketing y TV', text: 'Líder de marketing digital y comunicador con experiencia en televisión.' },
     { big: 'RestoUp y CuotaAlDía', text: 'Creador de las dos plataformas, que hoy usan negocios reales.' },
     { big: '20.300', text: 'personas lo siguen en Instagram.' },
-    { big: '3 h → 20 min', text: 'Con Exacta, un consultorio pasó de 3 horas a 20 minutos por día de trabajo administrativo.' },
+    {
+      big: 'De 3 h a 20 min',
+      text: 'Con Exacta, un consultorio pasó de 3 horas a 20 minutos por día de trabajo administrativo.',
+    },
   ],
 }
 
