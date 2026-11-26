@@ -349,10 +349,6 @@ export default async function IaParaHumanosPage() {
                 <span>Valor de todo junto</span>
                 <span className={styles.strike}>{pesos(totalValue)}</span>
               </p>
-              <p className={styles.guarantee}>
-                <Three />
-                {includes.guarantee}
-              </p>
             </div>
             <div className={styles.vperf} aria-hidden="true">
               <span />

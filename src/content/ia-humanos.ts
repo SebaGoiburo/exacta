@@ -166,7 +166,6 @@ export const includes = {
     { name: 'Plan de 7 días para empezar', value: 8000 },
     { name: 'Certificado de Exacta', value: 0 },
   ],
-  guarantee: 'Si en los primeros 30 minutos sentís que no es para vos, te devolvemos todo. Sin preguntas.',
   payment: 'Pagás con Mercado Pago: crédito en cuotas, débito o dinero en cuenta. Emitimos factura C.',
   companies: '¿Querés capacitar a tu equipo? Hasta 30% de descuento para empresas.',
 }

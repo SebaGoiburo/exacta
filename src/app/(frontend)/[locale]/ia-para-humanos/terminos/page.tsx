@@ -38,11 +38,6 @@ export default function TermsPage() {
           El cupo es limitado. Mientras pagás, tu lugar queda reservado 30 minutos. El lugar es tuyo cuando Mercado Pago confirma
           el pago y te llega el mail de confirmación.
         </p>
-        <h2>Garantía</h2>
-        <p>
-          Si en los primeros 30 minutos de la clase sentís que no es para vos, avisanos y te devolvemos el total por el mismo
-          medio de pago.
-        </p>
         <h2>Arrepentimiento</h2>
         <p>
           Podés arrepentirte de la compra dentro de los 10 días corridos desde que pagaste, sin dar motivos, desde el{' '}
